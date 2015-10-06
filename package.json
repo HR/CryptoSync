@@ -1,0 +1,51 @@
+{
+  "name": "CryptoSync",
+  "productName": "cryptosync",
+  "version": "0.0.1",
+  "description": "A cross-platform end-to-end encryption cloud sync client",
+  "license": "MIT",
+  "repository": "HR/CryptoSync",
+  "author": {
+    "name": "Habib Rehman",
+    "email": "Habib.R@outlook.com",
+    "url": "git.io/HR"
+  },
+  "engines": {
+    "node": ">=4"
+  },
+  "electronVersion": "0.33.3",
+  "scripts": {
+    "test": "xo",
+    "start": "electron .",
+    "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
+  },
+  "files": [
+    "index.js",
+    "index.html",
+    "index.css"
+  ],
+  "keywords": [
+    "cloud",
+    "encryption",
+    "crypto",
+    "end-to-end",
+    "client",
+    "drive",
+    "dropbox"
+  ],
+  "dependencies": {
+    "electron-debug": "^0.2.1"
+  },
+  "devDependencies": {
+    "electron-packager": "^5.0.0",
+    "electron-prebuilt": "^0.33.3",
+    "xo": "^0.9.0"
+  },
+  "xo": {
+    "esnext": true,
+    "envs": [
+      "node",
+      "browser"
+    ]
+  }
+}
