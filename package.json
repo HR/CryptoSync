@@ -1,7 +1,7 @@
 {
   "name": "CryptoSync",
   "productName": "cryptosync",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A cross-platform end-to-end encryption cloud sync client",
   "license": "MIT",
   "repository": "HR/CryptoSync",
@@ -19,11 +19,6 @@
     "start": "electron .",
     "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
   },
-  "files": [
-    "index.js",
-    "index.html",
-    "index.css"
-  ],
   "keywords": [
     "cloud",
     "encryption",
@@ -34,7 +29,32 @@
     "dropbox"
   ],
   "dependencies": {
-    "electron-debug": "^0.2.1"
+    "async": "^1.4.2",
+    "babel-core": "^5.8.29",
+    "bluebird": "^2.10.2",
+    "coffee-react": "^4.0.0",
+    "coffee-script": "^1.10.0",
+    "electron-debug": "^0.2.1",
+    "event-kit": "^1.4.1",
+    "fs-plus": "^2.8.1",
+    "fstream": "^1.0.8",
+    "jquery": "^2.1.4",
+    "less-cache": "^0.22.0",
+    "level-js": "^2.2.2",
+    "leveldown": "^1.4.2",
+    "levelup": "^1.2.1",
+    "lodash": "^3.10.1",
+    "moment": "^2.10.6",
+    "nslog": "^3.0.0",
+    "passport": "^0.3.0",
+    "passport-google-oauth": "^0.2.0",
+    "pathwatcher": "^6.2.5",
+    "promise-queue": "^2.1.1",
+    "q": "^1.4.1",
+    "react": "^0.14.0",
+    "request": "^2.65.0",
+    "request-progress": "^0.3.1",
+    "secrets.js": "^0.1.8"
   },
   "devDependencies": {
     "electron-packager": "^5.0.0",

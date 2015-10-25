@@ -41,6 +41,11 @@ app.on('activate-with-no-open-windows', () => {
 	}
 });
 
+// Check for connection status
+ipc.on('online-status-changed', function(event, status) {
+  console.log(status);
+});
+
 app.on('ready', () => {
 	mainWindow = createMainWindow();
 });
