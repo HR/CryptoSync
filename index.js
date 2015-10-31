@@ -11,6 +11,11 @@ require('electron-debug')();
 // prevent window being garbage collected
 let mainWindow;
 
+// Check for connection status
+ipc.on('online-status-changed', function(event, status) {
+  console.log(status);
+});
+
 function onClosed() {
 	// dereference the window
 	// for multiple windows store them in an array
@@ -39,11 +44,6 @@ app.on('activate-with-no-open-windows', () => {
 	if (!mainWindow) {
 		mainWindow = createMainWindow();
 	}
-});
-
-// Check for connection status
-ipc.on('online-status-changed', function(event, status) {
-  console.log(status);
 });
 
 app.on('ready', () => {

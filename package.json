@@ -21,6 +21,7 @@
   },
   "keywords": [
     "cloud",
+    "sync",
     "encryption",
     "crypto",
     "end-to-end",
@@ -38,6 +39,7 @@
     "event-kit": "^1.4.1",
     "fs-plus": "^2.8.1",
     "fstream": "^1.0.8",
+    "googleapis": "^2.1.5",
     "jquery": "^2.1.4",
     "less-cache": "^0.22.0",
     "level-js": "^2.2.2",
@@ -59,6 +61,7 @@
   "devDependencies": {
     "electron-packager": "^5.0.0",
     "electron-prebuilt": "^0.33.3",
+    "electron-rebuild": "^1.0.2",
     "gulp": "^3.9.0",
     "gulp-shell": "^0.4.3",
     "xo": "^0.9.0"
