@@ -4,7 +4,6 @@ var gulp = require('gulp'),
 gulp.task('default', shell.task([
   // Absolute path '/usr/local/lib/node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
   // Run electron
-  'browserify -t [ babelify --presets [ react ] ] src/components/*.js -o static/bundle.js',
   'node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
 ]));
 
