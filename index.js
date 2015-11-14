@@ -2,6 +2,8 @@
 const app = require('app');
 const BrowserWindow = require('browser-window');
 const ipc = require('ipc');
+var Menu = require('menu');
+var Tray = require('tray');
 
 // report crashes to the Electron project
 require('crash-reporter').start();
@@ -49,4 +51,5 @@ app.on('activate-with-no-open-windows', () => {
 
 app.on('ready', () => {
 	mainWindow = createMainWindow();
+  // var appIcon = new Tray('static/images/mb/trayic_light.png');
 });
