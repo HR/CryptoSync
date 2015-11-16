@@ -2,8 +2,8 @@
 const app = require('app');
 const BrowserWindow = require('browser-window');
 const ipc = require('ipc');
-var Menu = require('menu');
-var Tray = require('tray');
+const fs = require('fs-plus');
+let db = require('src/elements/db');
 
 // report crashes to the Electron project
 require('crash-reporter').start();
@@ -13,6 +13,11 @@ require('electron-debug')();
 
 // prevent window being garbage collected
 let mainWindow;
+global.paths = {
+  home: fs.getHomeDirectory()+"/CryptoSync",
+  mdb: fs.getHomeDirectory()+"/CryptoSync/csmdb",
+};
+let db;
 
 // Check for connection status
 ipc.on('online-status-changed', function(event, status) {
@@ -37,8 +42,17 @@ function createMainWindow() {
 	return win;
 }
 
+function init() {
+  // Check whether it is the first start after install
+  if (!fs.isDirectorySync(paths.home)) {
+    fs.makeTreeSync(paths.home);
+  }
+  db = new Db(paths.mdb);
+}
+
 app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') {
+    db.close();
 		app.quit();
 	}
 });
@@ -50,6 +64,7 @@ app.on('activate-with-no-open-windows', () => {
 });
 
 app.on('ready', () => {
+  init();
 	mainWindow = createMainWindow();
   // var appIcon = new Tray('static/images/mb/trayic_light.png');
 });

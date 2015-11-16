@@ -1,4 +1,5 @@
 {
+  "__note":"need to open atom project from Terminal in OSX >$ atom CryptoSync",
   "parser": "babel-eslint",
   "rules": {
     "strict": 0

@@ -19,4 +19,12 @@ gulp.task('run', function(){
   ]));
 });
 
+gulp.task('lint', function(){
+  return gulp.src('*', {read: false})
+   .pipe(shell([
+    // lint
+    'eslint src/*.js src/*/*.js *.js'
+  ]));
+});
+
 gulp.task('default', ['watch', 'run']);
