@@ -17,7 +17,6 @@ global.paths = {
   home: fs.getHomeDirectory()+"/CryptoSync",
   mdb: fs.getHomeDirectory()+"/CryptoSync/csmdb",
 };
-let db;
 
 // Check for connection status
 ipc.on('online-status-changed', function(event, status) {
@@ -47,7 +46,7 @@ function init() {
   if (!fs.isDirectorySync(paths.home)) {
     fs.makeTreeSync(paths.home);
   }
-  db = new Db(paths.mdb);
+  global.db = new Db(paths.mdb);
 }
 
 app.on('window-all-closed', () => {

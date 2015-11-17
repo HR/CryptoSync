@@ -1,7 +1,8 @@
 let ssscrypto = require('secrets.js'),
     crypto = require('crypto');
 
-const cAlg = 'aes-256-ctr';
+const algorithm = 'aes-256-ctr';
+
 
 /*  Crypto
  *
@@ -9,17 +10,26 @@ const cAlg = 'aes-256-ctr';
  *  - Implement custom encryption as outlined in the requirement spec
  */
 
-exports.encrypt = function (ptext, pass) {
+exports.encrypt = function (ptext, mpass, iterations, keyLength) {
   // decrypts any arbitrary data passed with the pass
-  var cipher = crypto.createCipher(cAlg, pass),
-      crypted = cipher.update(ptext,'utf8','hex');
-  crypted += cipher.final('hex');
+  let i = (iterations) ? iterations : 409;
+  let keyLength = (keyLength) ? keyLength : 128;
+  const buf = crypto.randomBytes(256);
+  crypto.pbkdf2Sync(mpass, buf, iterations, keyLength, 'sha256', function(err, key) {
+    if (err){
+      throw err;
+    }
+    var cipher = crypto.createCipheriv(algorithm, key, iv),
+        crypted = cipher.update(ptext,'utf8','hex');
+    crypted += cipher.final('hex');
+  });
+
   return crypted;
 };
 
 exports.decrypt = function (ctext, pass) {
   // encrypts any arbitrary data passed with the pass
-  var decipher = crypto.createDecipher(cAlg, pass),
+  var decipher = crypto.createDecipher(algorithm, pass),
       decrypted = decipher.update(ptext,'hex','utf8');
   decrypted += decipher.final('utf8');
   return decrypted;

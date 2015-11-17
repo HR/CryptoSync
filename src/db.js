@@ -7,11 +7,12 @@ function Db(file) {
     // prompt user for master password and store temporarily (while running)
     fs.readFileSync(file, 'hex', function (err, data) {
       if (err) throw err;
-      // decrypt db before opening
-      db.decrypt(file, pass);
+      // decrypt Db before opening
+      Db.decrypt(file, pass);
     });
     return levelup(file);
   } else {
+    // Invoke SetMasterPass routine
     return levelup(file);
   }
 }
@@ -23,26 +24,26 @@ function Db(file) {
  *  - Implement treatment accordingly
  */
 
-db.prototype.decrypt = function (file, pass) {
-  // decrypt db
+Db.prototype.decrypt = function (file, pass) {
+  // decrypt Db
   // TO DO;
   let mpass = (Array.isArray(pass)) ? crypto.shares2pass(pass) : pass;
   crypto.decrypt(mpass);
 };
 
-db.prototype.encrypt = function (file, pass) {
-  // encrypt db
+Db.prototype.encrypt = function (file, pass) {
+  // encrypt Db
   let mpass = (Array.isArray(pass)) ? crypto.shares2pass(pass) : pass;
   crypto.encrypt(mpass);
 };
 
-db.prototype.close = function (file) {
-  // encrypt db after closing using the temporarily store MasterPass
+Db.prototype.close = function (file) {
+  // encrypt Db after closing using the temporarily store MasterPass
   levelup.close();
   fs.readFileSync(file, 'utf8', function (err, data) {
     if (err) throw err;
-    db.encrypt(file, pass);
+    Db.encrypt(file, pass);
   });
 };
 
-module.exports = db;
+module.exports = Db;
