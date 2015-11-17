@@ -6,7 +6,8 @@ let defaults = {
   iterations: 4096,
   keyLength: 128,
   algorithm: 'aes-256-ctr',
-  digest: 'sha256'
+  digest: 'sha256',
+  padLength: 1024
 }
 
 
@@ -43,20 +44,29 @@ exports.decrypt = function (ctext, key, iv) {
   return decrypted;
 };
 
-exports.shares2pass = function (shares) {
+exports.shares2pass = function (sharedata) {
   // reconstructs the pass from the shares of the pass
   // using Shamir's Secret Sharing
   /*  TO DO:
    *  Parsing shares[type = Array]:
    *  - Slice array from [Array.length-2:Array.length] to extract the metadata
-   *    i.e. number of shares required (S) and total number originally generated (N)
    *  - Slice array from [0:Array.length-2] to extract the shares
    *  - shares = ["s1", "s2",..., "sS", "S", "N"]
+   *  - N = total number of shares originally generated
+   *  - S = number of shares (threshold) required to reconstruct key and decrypt
    **/
-  return null;
+  // let S = sharedata[2],
+  // let N = sharedata[1];
+
+  // Extract the shares
+  let shares = sharedata[0];
+  let pass = secrets.combine(shares);
+  // convert back to str
+  pass = secrets.hex2str(pass);
+  return pass;
 };
 
-exports.pass2shares = function (shares) {
+exports.pass2shares = function (pass, N, S) {
   // splits the pass into shares using Shamir's Secret Sharing
   /*  TO DO:
    *  Parsing shares[type = Array]:
@@ -65,5 +75,11 @@ exports.pass2shares = function (shares) {
    *  - Slice array from [0:Array.length-2] to extract the shares
    *  - shares = ["MasterPass", "S", "N"]
    **/
-  return null;
+  // convert the text into a hex string
+  let pwHex = secrets.str2hex(pass);
+
+  // split into N shares, with a threshold of S
+  // Zero padding of defaults.padLength applied to ensure minimal info leak (i.e size of pass)
+  let shares = secrets.share(key, N, S, defaults.padLength);
+  return [shares, N, S];
 };
