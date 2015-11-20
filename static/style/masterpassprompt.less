@@ -1,0 +1,166 @@
+/*! normalize.css
+  <here>
+*/
+
+/* Menubar styles
+   ==========================================================================
+*/
+
+@import (less) "mixins.css";
+
+@theme-color: #e3e3e3;
+@focus-color: #333;
+@invalid-color: #9F3A38;
+@sub-textcolor: #222;
+
+section#masterpassprompt {
+  min-height: 100%;
+  position: relative;
+  background-color: #fff;
+  border-radius: 6px;
+  border: 1px solid @theme-color;
+}
+
+div.main {
+  width: 70%;
+  margin: auto;
+  text-align: center;
+  padding: 3rem;
+}
+
+div.none {
+  display:none;
+}
+
+img.info {
+  float: right;
+  height: 0.9rem;
+}
+
+p.info {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  background-color:#efefef;
+  font-size: 0.8rem;
+}
+
+img.info:hover + p.info {
+  max-height: 5rem;
+  padding: 0.5rem 0rem;
+}
+
+div.mpfield > input {
+  width: 98%;
+}
+
+div.checkbox {
+  width: 100%;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  text-align: left;
+}
+
+div.checkbox > label {
+  color: @sub-textcolor;
+}
+
+input[type=password] {
+  margin-top: 1rem;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  outline: none;
+}
+
+input[type=password]:focus {
+  animation-name: colorTrans;
+  animation-duration: 2s;
+  border-bottom: 1px solid @focus-color;
+}
+
+input[type=submit] {
+  margin-top: 1rem;
+  height: 2rem;
+  background-color: #ddd;
+  border: 1px solid #ddd;
+  width: 100%;
+  outline: none;
+}
+
+input[type=submit]:focus {
+  border: 1px solid @focus-color;
+}
+
+div.submit {
+  text-align: right;
+  background-color: #fff;
+  width: 100%;
+}
+
+div.mpfield > label {
+  display: none;
+  font-size: 0.8rem;
+  color: @invalid-color;
+}
+
+.invalid {
+  border-color: @invalid-color !important;
+}
+
+header {
+  margin: 0px;
+}
+
+header > p {
+  color: @sub-textcolor;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 0.1rem;
+}
+
+p {
+  margin:0;
+}
+
+div.main >img {
+  width: 7rem;
+  height: auto;
+}
+
+footer {
+  clear:both;
+  border-top: 1px solid @theme-color;
+  width: 100%;
+  position: absolute;
+  padding-bottom: 0px;
+  background-color: #fff;
+  bottom: 0;
+  left: 0;
+}
+
+footer > a {
+  font-size: 1rem;
+  text-decoration: none;
+  float: right;
+  padding: 0.2rem;
+  color: @sub-textcolor;
+}
+
+div.shares > footer > a {
+  float: left;
+}
+
+div.shares > footer > a >img {
+  height: 1rem;
+  width: auto;
+}
+
+@keyframes colorTrans {
+    from {border-bottom: 1px solid #ddd;}
+    to {border-bottom: 1px solid @focus-color;}
+}

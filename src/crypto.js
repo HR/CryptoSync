@@ -1,3 +1,4 @@
+'use strict';
 let ssscrypto = require('secrets.js'),
     crypto = require('crypto');
 
@@ -14,7 +15,7 @@ let defaults = {
 /*  Crypto
  *
  *  TO DO:
- *  - Implement custom encryption as outlined in the requirement spec
+ *  - Implement bitcoin blockchain as source of randomness (in iv generation)
  */
 
 exports.encrypt = function (ptext, password, iterations, keyLength) {
@@ -28,10 +29,11 @@ exports.encrypt = function (ptext, password, iterations, keyLength) {
     if (err){
       throw err;
     }
-
+    console.log("Pbkdf2 generated key"+key.toString()+" using iv, salt: "+iv.toString()+", "+salt.toString());
     let cipher = crypto.createCipheriv(defaults.algorithm, key, iv),
         crypted = cipher.update(ptext,'utf8','hex');
     crypted += cipher.final('hex');
+    console.log("Encrypted file");
     return [crypted, key, iv];
   });
 };

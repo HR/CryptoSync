@@ -1,19 +1,20 @@
+'use strict';
 let levelup = require('levelup'),
     fs = require('fs-plus'),
     crypto = require('./crypto');
 
-function Db(file) {
-  if (fs.isFileSync(file)) {
+function Db(path) {
+  if (fs.isFileSync(path)) {
     // prompt user for master password and store temporarily (while running)
-    fs.readFileSync(file, 'hex', function (err, data) {
+    fs.readFileSync(path, 'hex', function (err, data) {
       if (err) throw err;
       // decrypt Db before opening
-      Db.decrypt(file, pass);
+      Db.decrypt(path, pass);
     });
-    return levelup(file);
+    return levelup(path);
   } else {
     // Invoke SetMasterPass routine
-    return levelup(file);
+    return levelup(path);
   }
 }
 
@@ -24,25 +25,32 @@ function Db(file) {
  *  - Implement treatment accordingly
  */
 
-Db.prototype.decrypt = function (file, pass) {
+Db.prototype.decrypt = function (path, pass) {
   // decrypt Db
   // TO DO;
-  let mpass = (Array.isArray(pass)) ? crypto.shares2pass(pass) : pass;
-  crypto.decrypt(mpass);
+  crypto.decrypt(path, mpass);
 };
 
-Db.prototype.encrypt = function (file, pass) {
+Db.prototype.encrypt = function (path, pass) {
   // encrypt Db
   let mpass = (Array.isArray(pass)) ? crypto.shares2pass(pass) : pass;
-  crypto.encrypt(mpass);
+  let encrypted = fs.readFileSync(path, 'utf8', function (err, data) {
+    if (err) throw err;
+    console.log("Opened "+path);
+    return crypto.encrypt(data, mpass, 5000, 256);
+  });
+  fs.writeFileSync(path, encrypted, 'hex', function (err) {
+    if (err) throw err;
+    console.log("Written "+path);
+  });
 };
 
-Db.prototype.close = function (file) {
+Db.prototype.close = function (path) {
   // encrypt Db after closing using the temporarily store MasterPass
   levelup.close();
-  fs.readFileSync(file, 'utf8', function (err, data) {
+  fs.readFileSync(path, 'utf8', function (err, data) {
     if (err) throw err;
-    Db.encrypt(file, pass);
+    Db.encrypt(path, pass);
   });
 };
 

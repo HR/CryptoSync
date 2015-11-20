@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1024 1024"
+	 enable-background="new 0 0 1024 1024" xml:space="preserve">
+<title>CryptoSync</title>
+<desc>Created with Sketch.</desc>
+<g>
+	<circle display="none" fill="#DDDDDD" cx="226.4" cy="796.1" r="37.5"/>
+	<g>
+		<circle fill="none" cx="226.4" cy="796.1" r="37.5"/>
+		<circle fill="none" cx="511.3" cy="910.1" r="37.5"/>
+		<circle fill="none" cx="112.4" cy="511.3" r="37.5"/>
+		<circle fill="none" cx="511.3" cy="112.4" r="37.5"/>
+		<circle fill="none" cx="226.4" cy="226.4" r="37.5"/>
+		<circle fill="none" cx="910.1" cy="511.3" r="37.5"/>
+		<circle fill="none" cx="796.1" cy="226.4" r="37.5"/>
+		<circle fill="none" cx="796.1" cy="796.1" r="37.5"/>
+		<path fill="#DDDDDD" d="M512,0C229.2,0,0,229.2,0,512s229.2,512,512,512s512-229.2,512-512S794.8,0,512,0z M112.4,548.7
+			C91.7,548.7,75,532,75,511.3s16.8-37.5,37.5-37.5c20.7,0,37.5,16.8,37.5,37.5S133.1,548.7,112.4,548.7z M226.4,833.6
+			c-20.7,0-37.5-16.8-37.5-37.5s16.8-37.5,37.5-37.5s37.5,16.8,37.5,37.5S247.1,833.6,226.4,833.6z M226.4,263.9
+			c-20.7,0-37.5-16.8-37.5-37.5s16.8-37.5,37.5-37.5s37.5,16.8,37.5,37.5S247.1,263.9,226.4,263.9z M511.3,947.5
+			c-20.7,0-37.5-16.8-37.5-37.5c0-20.7,16.8-37.5,37.5-37.5s37.5,16.8,37.5,37.5C548.7,930.8,532,947.5,511.3,947.5z M511.3,149.9
+			c-20.7,0-37.5-16.8-37.5-37.5S490.5,75,511.3,75s37.5,16.8,37.5,37.5S532,149.9,511.3,149.9z M796.1,833.6
+			c-20.7,0-37.5-16.8-37.5-37.5s16.8-37.5,37.5-37.5s37.5,16.8,37.5,37.5S816.8,833.6,796.1,833.6z M796.1,263.9
+			c-20.7,0-37.5-16.8-37.5-37.5s16.8-37.5,37.5-37.5s37.5,16.8,37.5,37.5S816.8,263.9,796.1,263.9z M910.1,548.7
+			c-20.7,0-37.5-16.8-37.5-37.5s16.8-37.5,37.5-37.5c20.7,0,37.5,16.8,37.5,37.5S930.8,548.7,910.1,548.7z"/>
+	</g>
+	<circle display="none" fill="#DDDDDD" cx="112.4" cy="511.3" r="37.5"/>
+	<circle display="none" fill="#DDDDDD" cx="511.3" cy="910.1" r="37.5"/>
+	<circle display="none" fill="#DDDDDD" cx="226.4" cy="226.4" r="37.5"/>
+	<circle display="none" fill="#DDDDDD" cx="511.3" cy="112.4" r="37.5"/>
+	<circle display="none" fill="#DDDDDD" cx="910.1" cy="511.3" r="37.5"/>
+	<circle display="none" fill="#DDDDDD" cx="796.1" cy="226.4" r="37.5"/>
+	<circle display="none" fill="#DDDDDD" cx="796.1" cy="796.1" r="37.5"/>
+</g>
+<path id="Path" sketch:type="MSShapeGroup" fill="#9D9D9D" d="M814.1,526.2c0-167.3-135.6-302.9-302.9-302.9S208.4,359,208.4,526.2
+	S344,829.1,511.3,829.1S814.1,693.5,814.1,526.2L814.1,526.2z"/>
+<path id="Path_1_" sketch:type="MSShapeGroup" fill="#333333" d="M564.7,552.4c20-15.7,32.9-40.1,32.9-67.5
+	c0-47.4-38.7-85.9-86.4-85.9s-86.4,38.5-86.4,85.9c0,27.4,12.9,51.7,32.9,67.5l-32.9,101h172.7L564.7,552.4L564.7,552.4z"/>
+</svg>

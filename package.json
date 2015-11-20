@@ -41,6 +41,7 @@
     "fstream": "^1.0.8",
     "googleapis": "^2.1.5",
     "gulp-shell": "^0.5.0",
+    "less": "^2.5.3",
     "less-cache": "^0.22.0",
     "level-js": "^2.2.2",
     "leveldown": "^1.4.2",

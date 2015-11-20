@@ -1,3 +1,4 @@
+'use strict';
 var passport = require('passport');
 // Environment variables
 // Google: process.env.CS_GAPI_CID, process.env.CS_GAPI_S
