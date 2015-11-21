@@ -23,6 +23,6 @@
     "tests"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.1.0"
+    "normalize-css": "normalize.css#~3.0.3"
   }
 }
