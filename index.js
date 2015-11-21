@@ -26,6 +26,7 @@ ipc.on('online-status-changed', function(event, status) {
 function onClosed() {
 	// dereference the window
 	// for multiple windows store them in an array
+  // TO DO: encryot the db
   console.log("win.closed event emitted;\n Calling on onClosed");
 	mainWindow = null;
 }
@@ -64,8 +65,36 @@ function createMainWindow() {
 	return win;
 }
 
+function createMasterPassPrompt() {
+	const win = new BrowserWindow({
+		width: 250,
+		height: 400
+	});
+
+	win.loadUrl(`file://${__dirname}/static/masterpassprompt.html`);
+  win.webContents.on('did-finish-load', function() {
+    // Set a cookie with the given cookie data;
+    // may overwrite equivalent cookies if they exist.
+    win.webContents.session.cookies.set(
+      { url : "http://crypto.sync", name : "MasterPass", value : "aPrettyGoodPassword", session : true},
+      function(error, cookies) {
+        if (error) throw error;
+
+        // Query all cookies.
+        win.webContents.session.cookies.get({}, function(error, cookies) {
+          if (error) throw error;
+          console.log(cookies);
+        });
+    });
+
+  });
+	win.on('closed', onClosed);
+
+	return win;
+}
+
 function init() {
-  // Decrypt db (the Vault) and gey ready for use
+  // Decrypt db (the Vault) and get ready for use
   global.db = new Db(paths.mdb, MasterPass);
 }
 
@@ -99,13 +128,14 @@ app.on('ready', () => {
   } else {
     // Run User through Setup/First Install UI
     // start menubar
-    init()
+    let masterPassPrompt = createMasterPassPrompt();
+    //init();
     // Prompt for MasterPass OR retrieve temporarily stored MasterPass
     // (if user has select the store MasterPass tenporarily)
     // > look into persistent cookies/sessions to temporarily store MasterPass
     // sessions are shared between open windows
     // so cookies set in either main window/menubar accessible in either
-    mainWindow = createMainWindow();
+    //mainWindow = createMainWindow();
     // MasterPassPromptWindow = createMPassPromptWindow();
   }
   // var appIcon = new Tray('static/images/mb/trayic_light.png');
