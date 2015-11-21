@@ -1,0 +1,132 @@
+/*
+   Accounts settings styles
+   ==========================================================================
+*/
+
+@import (less) "mixins.less";
+@import (less) "settings.less";
+
+/* Variable declarations*/
+@ic-size: 20px;
+@side-margin: 0.8rem;
+@name-fsize: 1rem;
+@header-fsize: 1rem;
+@spacing04: 0.4rem;
+@spacing-ic-txt: @side-margin - 0.4rem;
+@lastMod-fsize: 0.8rem;
+@ic-size: 1.4rem;
+@win-height: 100%;
+
+/* Section styles */
+section.accounts {
+
+}
+
+section.accounts {
+  width: 70%;
+  margin: auto;
+  margin-top: 1rem;
+}
+
+section.accounts > header {
+  border-bottom: 1px solid @light;
+}
+
+section.accounts > header > img {
+  height: 4rem !important;
+  width: auto;
+}
+
+.item.right {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  margin-left: auto !important;
+}
+
+/* Move to mixins */
+.button {
+  background-color: @white;
+  border: 1px solid @light;
+  outline: none;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.button:active, .button:hover {
+  background-color: @light;
+  border: 1px solid @light;
+  outline: none;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+img.icon {
+  width: @ic-size;
+  height: @ic-size;
+  -webkit-mask-image: -webkit-linear-gradient(top, rgba(0, 0, 0, .6), rgba(0, 0, 0, .6));
+}
+
+div.list {
+  height: @win-height - 60px;
+  width: 100%;
+  overflow: scroll;
+  margin-bottom: 3rem;
+}
+
+div.item {
+  display: flex;
+  align-items:  center;
+  border-bottom: 1px solid @light;
+  padding: @spacing04 0rem @spacing04 0rem;
+  text-align: left;
+}
+
+div.content,
+div.type {
+  display: inline-block;
+  position: relative;
+}
+
+div.content {
+  vertical-align: 100%;
+  margin-left: @spacing-ic-txt;
+}
+
+div.name {
+  font-weight: normal;
+}
+
+div.lastMod {
+  font-size: @lastMod-fsize;
+}
+
+div.qouta {
+  font-size: 0.6rem;
+}
+
+img.remove{
+  padding-left: 46%;
+}
+
+div.cloudType {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+}
+
+div.cloudType > img {
+  height: 1.4rem;
+  width: auto;
+}
+
+div.profile {
+  width:60px;
+  height:60px;
+  margin: 0px;
+  border-radius: 50%; /*don't forget prefixes*/
+  background-position: center center;
+  background-image: url("http://www.cgarena.com/gallery/3d/details/fullimages/characters/image_50b878cf581ab.jpg");
+  background-size: cover;
+}
