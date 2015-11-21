@@ -1,5 +1,6 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
+var ipc = require('ipc');
 // var Routes = RRouter.Routes;
 // var Route = RRouter.Route;
 /** @jsx React.DOM */
@@ -36,7 +37,10 @@ var MPform = React.createClass({
   handleSubmit: function(e) {
     e.preventDefault();
     var masterpass = this.state.masterpass;
-    var check = this.state.check;
+    var rememberPass = this.state.check;
+    var sendMasterPass = function() {
+			ipc.send('masterpass-submitted', masterpass, rememberPass);
+		};
     if (!text || !author) {
       return;
     }
