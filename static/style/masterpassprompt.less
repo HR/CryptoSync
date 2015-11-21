@@ -8,106 +8,28 @@
 
 @import (less) "mixins.css";
 
+/* Variable declarations*/
 @theme-color: #e3e3e3;
 @focus-color: #333;
 @invalid-color: #9F3A38;
 @sub-textcolor: #222;
 
+
+/* Animations */
+@keyframes colorTrans {
+  from {border-bottom: 1px solid #ddd;}
+  to {border-bottom: 1px solid @focus-color;}
+}
+
+/* Main styling */
+
 section#masterpassprompt {
-  min-height: 100%;
+  height: 100%;
+  width: 100%;
   position: relative;
   background-color: #fff;
   border-radius: 6px;
   border: 1px solid @theme-color;
-}
-
-div.main {
-  width: 70%;
-  margin: auto;
-  text-align: center;
-  padding: 3rem;
-}
-
-div.none {
-  display:none;
-}
-
-img.info {
-  float: right;
-  height: 0.9rem;
-}
-
-p.info {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s, padding 0.3s;
-  background-color:#efefef;
-  font-size: 0.8rem;
-}
-
-img.info:hover + p.info {
-  max-height: 5rem;
-  padding: 0.5rem 0rem;
-}
-
-div.mpfield > input {
-  width: 98%;
-}
-
-div.checkbox {
-  width: 100%;
-  font-size: 0.8rem;
-  margin-top: 0.5rem;
-  text-align: left;
-}
-
-div.checkbox > label {
-  color: @sub-textcolor;
-}
-
-input[type=password] {
-  margin-top: 1rem;
-  border: none;
-  border-bottom: 1px solid #ddd;
-  outline: none;
-}
-
-input[type=password]:focus {
-  animation-name: colorTrans;
-  animation-duration: 2s;
-  border-bottom: 1px solid @focus-color;
-}
-
-input[type=submit] {
-  margin-top: 1rem;
-  height: 2rem;
-  background-color: #ddd;
-  border: 1px solid #ddd;
-  width: 100%;
-  outline: none;
-}
-
-input[type=submit]:focus {
-  border: 1px solid @focus-color;
-}
-
-div.submit {
-  text-align: right;
-  background-color: #fff;
-  width: 100%;
-}
-
-div.mpfield > label {
-  display: none;
-  font-size: 0.8rem;
-  color: @invalid-color;
-}
-
-.invalid {
-  border-color: @invalid-color !important;
 }
 
 header {
@@ -130,6 +52,81 @@ p {
 div.main >img {
   width: 7rem;
   height: auto;
+}
+
+div.main {
+  width: 70%;
+  margin: auto;
+  text-align: center;
+  padding: 3rem;
+}
+
+p.info {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  background-color:#efefef;
+  font-size: 0.8rem;
+}
+
+img.info {
+  float: right;
+  height: 0.9rem;
+}
+
+img.info:hover + p.info {
+  max-height: 5rem;
+  padding: 0.5rem 0rem;
+}
+
+div.masterpass > input {
+  width: 98%;
+}
+
+input[type=password] {
+  margin-top: 1rem;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  outline: none;
+}
+
+input[type=password]:focus {
+  animation-name: colorTrans;
+  animation-duration: 2s;
+  border-bottom: 1px solid @focus-color;
+}
+
+div.checkbox {
+  width: 100%;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  text-align: left;
+}
+
+div.checkbox > label {
+  color: @sub-textcolor;
+}
+
+input[type=submit] {
+  margin-top: 1rem;
+  height: 2rem;
+  background-color: #ddd;
+  border: 1px solid #ddd;
+  width: 100%;
+  outline: none;
+}
+
+input[type=submit]:focus {
+  border: 1px solid @focus-color;
+}
+
+div.submit {
+  text-align: right;
+  background-color: #fff;
+  width: 100%;
 }
 
 footer {
@@ -160,7 +157,14 @@ div.shares > footer > a >img {
   width: auto;
 }
 
-@keyframes colorTrans {
-    from {border-bottom: 1px solid #ddd;}
-    to {border-bottom: 1px solid @focus-color;}
+/* INVALID STYLING */
+
+div.masterpass > label {
+  display: none;
+  font-size: 0.8rem;
+  color: @invalid-color;
+}
+
+.invalid {
+  border-color: @invalid-color !important;
 }
