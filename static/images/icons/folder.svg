@@ -1,4 +1,11 @@
-<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg width="50" height="50" viewBox="0 0 50 50" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs xmlns="http://www.w3.org/1999/xhtml"><style type="text/css"><![CDATA[
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 50 50" enable-background="new 0 0 50 50" xml:space="preserve">
+<defs  xmlns="http://www.w3.org/1999/xhtml">
+	<style  type="text/css">
+		<![CDATA[
 [ng:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide:not(.ng-hide-animate) { display: none !important; }
 ng:form { display: block; }
 .ng-animate-shim { visibility: hidden; }
@@ -286,6 +293,10 @@ body #intercom-container .intercom-sheet-header-close-button .intercom-sheet-hea
 #elevio-widget-container #elevio-main .article-content a, #elevio-widget-container #elevio-similar li a:hover, #elevio-widget-container .articles-menu li a:hover, #elevio-widget-container .tickets-list li a:hover, #elevio-widget-container .rss-menu li a, #elevio-base-menu .expanded .active, #elevio-base-menu .expanded .active .el-fa { color: rgb(50, 194, 77) !important; }
 #elevio-widget-container #habla_wcsend_input, #elevio-inline { border-color: rgb(50, 194, 77) !important; }
 #elevio-widget-container .elevio-loader-inner, #elevio-inline .elevio-loader-inner { border-bottom-color: rgb(50, 194, 77) !important; }
-#elevio-widget-container .elevio-body { bottom: 30px; }]]></style></defs>
-    <path d="M 3 3 C 1.346 3 0 4.346 0 6 L 0 16 C 0 14.346 1.346 13 3 13 L 47 13 C 48.654 13 50 14.346 50 16 L 50 10 C 50 8.346 48.654 7 47 7 L 18.03125 7 C 17.75225 6.899 17.185 5.994 16.875 5.5 C 16.106 4.275 15.317 3 14 3 L 3 3 z M 3 15 C 0.004 15 0 18 0 18 L 0 44 C 0 45.654 1.346 47 3 47 L 47 47 C 48.654 47 50 45.654 50 44 L 50 18 C 50 18 49.957 15 47 15 L 3 15 z"/>
+#elevio-widget-container .elevio-body { bottom: 30px; }
+			]]>
+	</style>
+</defs>
+<path fill="#333333" d="M3,3C1.3,3,0,4.3,0,6v10c0-1.7,1.3-3,3-3h44c1.7,0,3,1.3,3,3v-6c0-1.7-1.3-3-3-3H18c-0.3-0.1-0.8-1-1.2-1.5
+	C16.1,4.3,15.3,3,14,3H3z M3,15c-3,0-3,3-3,3v26c0,1.7,1.3,3,3,3h44c1.7,0,3-1.3,3-3V18c0,0,0-3-3-3H3z"/>
 </svg>

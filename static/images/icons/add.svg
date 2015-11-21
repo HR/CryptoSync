@@ -1,4 +1,11 @@
-<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg width="50" height="50" viewBox="0 0 50 50" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs xmlns="http://www.w3.org/1999/xhtml"><style type="text/css"><![CDATA[
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 50 50" enable-background="new 0 0 50 50" xml:space="preserve">
+<defs  xmlns="http://www.w3.org/1999/xhtml">
+	<style  type="text/css">
+		<![CDATA[
 [ng:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide:not(.ng-hide-animate) { display: none !important; }
 ng:form { display: block; }
 .ng-animate-shim { visibility: hidden; }
@@ -191,6 +198,9 @@ body #intercom-container .intercom-sheet-header-close-button .intercom-sheet-hea
 #elevio-widget-container #elevio-main .article-content a, #elevio-widget-container #elevio-similar li a:hover, #elevio-widget-container .articles-menu li a:hover, #elevio-widget-container .tickets-list li a:hover, #elevio-widget-container .rss-menu li a, #elevio-base-menu .expanded .active, #elevio-base-menu .expanded .active .el-fa { color: rgb(50, 194, 77) !important; }
 #elevio-widget-container #habla_wcsend_input, #elevio-inline { border-color: rgb(50, 194, 77) !important; }
 #elevio-widget-container .elevio-loader-inner, #elevio-inline .elevio-loader-inner { border-bottom-color: rgb(50, 194, 77) !important; }
-#elevio-widget-container .elevio-body { bottom: 30px; }]]></style></defs>
-    <path style="text-indent:0;text-align:start;line-height:normal;text-transform:none;block-progression:tb;-inkscape-font-specification:Bitstream Vera Sans" d="M 23 9 L 23 23 L 9 23 L 9 27 L 23 27 L 23 41 L 27 41 L 27 27 L 41 27 L 41 23 L 27 23 L 27 9 L 23 9 z" color="#000" overflow="visible" enable-background="accumulate" font-family="Bitstream Vera Sans"/>
+#elevio-widget-container .elevio-body { bottom: 30px; }
+			]]>
+	</style>
+</defs>
+<path fill="#333333" d="M23,9v14H9v4h14v14h4V27h14v-4H27V9H23z"/>
 </svg>

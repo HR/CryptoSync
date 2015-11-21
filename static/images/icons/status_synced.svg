@@ -1,4 +1,11 @@
-<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg viewBox="0 0 24 24" enable-background="new 0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs xmlns="http://www.w3.org/1999/xhtml"><style type="text/css"><![CDATA[
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 500 500" enable-background="new 0 0 500 500" xml:space="preserve">
+<defs  xmlns="http://www.w3.org/1999/xhtml">
+	<style  type="text/css">
+		<![CDATA[
 [ng:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide:not(.ng-hide-animate) { display: none !important; }
 ng:form { display: block; }
 .ng-animate-shim { visibility: hidden; }
@@ -194,6 +201,10 @@ body #intercom-container .intercom-sheet-header-close-button .intercom-sheet-hea
 #elevio-widget-container #elevio-main .article-content a, #elevio-widget-container #elevio-similar li a:hover, #elevio-widget-container .articles-menu li a:hover, #elevio-widget-container .tickets-list li a:hover, #elevio-widget-container .rss-menu li a, #elevio-base-menu .expanded .active, #elevio-base-menu .expanded .active .el-fa { color: rgb(50, 194, 77) !important; }
 #elevio-widget-container #habla_wcsend_input, #elevio-inline { border-color: rgb(50, 194, 77) !important; }
 #elevio-widget-container .elevio-loader-inner, #elevio-inline .elevio-loader-inner { border-bottom-color: rgb(50, 194, 77) !important; }
-#elevio-widget-container .elevio-body { bottom: 30px; }]]></style></defs>
-    <path d="M12,0C5.373,0,0,5.373,0,12c0,6.627,5.373,12,12,12s12-5.373,12-12C24,5.373,18.627,0,12,0z M11,17.414l-4.707-4.707 l1.414-1.414L11,14.586l7.293-7.293l1.414,1.414L11,17.414z"/>
+#elevio-widget-container .elevio-body { bottom: 30px; }
+			]]>
+	</style>
+</defs>
+<path fill="#333333" d="M250,0C111.9,0,0,111.9,0,250s111.9,250,250,250s250-111.9,250-250S388.1,0,250,0z M229.2,362.8l-98.1-98.1
+	l29.5-29.5l68.6,68.6l151.9-151.9l29.5,29.5L229.2,362.8z"/>
 </svg>
