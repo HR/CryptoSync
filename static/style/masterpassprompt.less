@@ -9,16 +9,13 @@
 @import (less) "mixins.less";
 
 /* Variable declarations*/
-@theme-color: #e3e3e3;
-@focus-color: #333;
 @invalid-color: #9F3A38;
-@sub-textcolor: #222;
 
 
 /* Animations */
 @keyframes colorTrans {
-  from {border-bottom: 1px solid #ddd;}
-  to {border-bottom: 1px solid @focus-color;}
+  from {border-bottom: 1px solid @light}
+  to {border-bottom: 1px solid @black;}
 }
 
 /* Main styling */
@@ -27,9 +24,9 @@ section#masterpassprompt {
   height: 100%;
   width: 100%;
   position: relative;
-  background-color: #fff;
+  background-color: @white;
   border-radius: 6px;
-  border: 1px solid @theme-color;
+  border: 1px solid @light;
 }
 
 header {
@@ -37,7 +34,7 @@ header {
 }
 
 header > p {
-  color: @sub-textcolor;
+  color: @blacker;
 }
 
 h1 {
@@ -68,7 +65,7 @@ p.info {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s, padding 0.3s;
-  background-color:#efefef;
+  background-color: #efefef;
   font-size: 0.8rem;
 }
 
@@ -89,14 +86,14 @@ div.masterpass > input {
 input[type=password] {
   margin-top: 1rem;
   border: none;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid @light;
   outline: none;
 }
 
 input[type=password]:focus {
   animation-name: colorTrans;
   animation-duration: 2s;
-  border-bottom: 1px solid @focus-color;
+  border-bottom: 1px solid @black;
 }
 
 div.checkbox {
@@ -107,25 +104,26 @@ div.checkbox {
 }
 
 div.checkbox > label {
-  color: @sub-textcolor;
+  color: @blacker;
 }
 
 input[type=submit] {
   margin-top: 1rem;
   height: 2rem;
-  background-color: #ddd;
-  border: 1px solid #ddd;
+  font-weight: normal;
+  background-color: @light;
+  border: 1px solid @light;
   width: 100%;
   outline: none;
 }
 
 input[type=submit]:focus {
-  border: 1px solid @focus-color;
+  border: 1px solid @black;
 }
 
 div.submit {
   text-align: right;
-  background-color: #fff;
+  background-color: @white;
   width: 100%;
 }
 
@@ -135,17 +133,17 @@ footer {
   width: 100%;
   position: absolute;
   padding-bottom: 0px;
-  background-color: #fff;
+  background-color: @white;
   bottom: 0;
   left: 0;
 }
 
 footer > a {
-  font-size: 1rem;
+  font-size: 0.8rem;
   text-decoration: none;
   float: right;
   padding: 0.2rem;
-  color: @sub-textcolor;
+  color: @blacker;
 }
 
 div.shares > footer > a {
