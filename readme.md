@@ -1,4 +1,4 @@
-# cryptosync
+# Crypto.Sync
 
 > A cross-platform end-to-end encryption cloud sync client
 
