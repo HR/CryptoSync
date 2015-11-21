@@ -1,20 +1,20 @@
 {
-  "__note":"need to open atom project from Terminal in OSX >$ atom CryptoSync",
-  "parser": "babel-eslint",
-  "rules": {
-    "strict": 0
-  },
-  "ecmaFeatures": {
-    "blockBindings": true,
-    "forOf": true,
-    "jsx": true
-  },
-  "rules": {
-    "semi": 2
-  },
-  "env": {
-    "browser": true,
-    "node": true,
-    "es6": true
-  }
+	"__note":"need to open atom project from Terminal in OSX >$ atom CryptoSync",
+	"parser": "babel-eslint",
+	"rules": {
+		"strict": 0
+	},
+	"ecmaFeatures": {
+		"blockBindings": true,
+		"forOf": true,
+		"jsx": true
+	},
+	"rules": {
+		"semi": 2
+	},
+	"env": {
+		"browser": true,
+		"node": true,
+		"es6": true
+	}
 }

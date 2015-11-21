@@ -1,6 +1,6 @@
 /*
-   Settings (shared) styles
-   ==========================================================================
+	 Settings (shared) styles
+	 ==========================================================================
 */
 
 @import (less) "mixins.less";
@@ -10,89 +10,89 @@
 
 /* Section styles */
 section#settings {
-  min-height: 100%;
-  position: relative;
-  background-color: @white;
-  border: 1px solid @light;
+	min-height: 100%;
+	position: relative;
+	background-color: @white;
+	border: 1px solid @light;
 }
 
 h3 {
-  margin: 0.5rem 0rem;
-  font-weight: normal;
+	margin: 0.5rem 0rem;
+	font-weight: normal;
 }
 
 p {
-  margin:0;
+	margin:0;
 }
 
 /* Menu styles */
 
 .menu {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  margin-left: 0em;
-  margin-right: 0em;
-  border-bottom: @border-width solid rgba(0, 0, 0, 0.15);
-  -webkit-align-self: flex-end;
-          align-self: flex-end;
-  -webkit-transition: color 0.1s ease;
-          transition: color 0.1s ease;
+	display: -webkit-box;
+	display: -webkit-flex;
+	display: flex;
+	margin-left: 0em;
+	margin-right: 0em;
+	border-bottom: @border-width solid rgba(0, 0, 0, 0.15);
+	-webkit-align-self: flex-end;
+					align-self: flex-end;
+	-webkit-transition: color 0.1s ease;
+					transition: color 0.1s ease;
 }
 
 .menu:after {
-  content: '';
-  display: block;
-  height: 0px;
-  clear: both;
-  visibility: hidden;
+	content: '';
+	display: block;
+	height: 0px;
+	clear: both;
+	visibility: hidden;
 }
 
 .menu .item:after {
-  display: none;
+	display: none;
 }
 
 .menu .item {
-  position: relative;
-  vertical-align: middle;
-  line-height: 1;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-box-flex: 0;
-  -webkit-flex: 0 0 auto;
-          flex: 0 0 auto;
-  -webkit-user-select: none;
-          user-select: none;
-  padding: 1rem 1.15rem;
-  padding-bottom: 0.8rem;
-  text-transform: none;
-  color: rgba(0, 0, 0, 0.87);
-  -webkit-transition: background 0.1s ease, box-shadow 0.1s ease, color 0.1s ease;
-          transition: background 0.1s ease, box-shadow 0.1s ease, color 0.1s ease;
+	position: relative;
+	vertical-align: middle;
+	line-height: 1;
+	text-decoration: none;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-box-flex: 0;
+	-webkit-flex: 0 0 auto;
+					flex: 0 0 auto;
+	-webkit-user-select: none;
+					user-select: none;
+	padding: 1rem 1.15rem;
+	padding-bottom: 0.8rem;
+	text-transform: none;
+	color: rgba(0, 0, 0, 0.87);
+	-webkit-transition: background 0.1s ease, box-shadow 0.1s ease, color 0.1s ease;
+					transition: background 0.1s ease, box-shadow 0.1s ease, color 0.1s ease;
 }
 
 a.item:active {
-  border-bottom: @border-width solid rgba(0, 0, 0, 0.1);
-  margin-bottom: -@border-width;
+	border-bottom: @border-width solid rgba(0, 0, 0, 0.1);
+	margin-bottom: -@border-width;
 }
 .active.item {
-  background-color: transparent;
-  box-shadow: none;
-  border-color: @black;
-  font-weight: 700;
-  margin-bottom: -@border-width;
-  color: rgba(0,0,0,.95);
+	background-color: transparent;
+	box-shadow: none;
+	border-color: @black;
+	font-weight: 700;
+	margin-bottom: -@border-width;
+	color: rgba(0,0,0,.95);
 }
 
 .menu .active.item {
-  border-bottom: @border-width solid rgba(0, 0, 0, 0.5);
-  color: rgba(0, 0, 0, 0.95);
-  font-weight: normal;
-  box-shadow: none;
+	border-bottom: @border-width solid rgba(0, 0, 0, 0.5);
+	color: rgba(0, 0, 0, 0.95);
+	font-weight: normal;
+	box-shadow: none;
 }
 
 div.main {
-  width: 100%;
-  margin: auto;
-  text-align: center;
+	width: 100%;
+	margin: auto;
+	text-align: center;
 }

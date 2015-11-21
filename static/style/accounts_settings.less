@@ -7,7 +7,6 @@
 @import (less) "settings.less";
 
 /* Variable declarations*/
-@ic-size: 20px;
 @side-margin: 0.8rem;
 @name-fsize: 1rem;
 @header-fsize: 1rem;
@@ -37,15 +36,7 @@ section.accounts > header > img {
   width: auto;
 }
 
-.item.right {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  margin-left: auto !important;
-}
-
-/* Move to mixins */
+/* Move to mixins & generalize */
 .button {
   background-color: @white;
   border: 1px solid @light;
@@ -60,6 +51,11 @@ section.accounts > header > img {
   outline: none;
   width: 100%;
   margin-top: 1rem;
+}
+
+.item.right {
+  display: flex;
+  margin-left: auto !important;
 }
 
 img.icon {
@@ -104,10 +100,6 @@ div.lastMod {
 
 div.qouta {
   font-size: 0.6rem;
-}
-
-img.remove{
-  padding-left: 46%;
 }
 
 div.cloudType {

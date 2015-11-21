@@ -1,16 +1,129 @@
-html,
-body {
-	padding: 0;
-	margin: 0;
+/*
+	 Menubar styles
+	 ==========================================================================
+*/
+@import (less) "mixins.less";
+
+/* Variable declarations*/
+@side-margin: 0.8rem;
+@name-fsize: 1rem;
+@header-fsize: 1rem;
+@spacing04: 0.4rem;
+@spacing-ic-txt: @side-margin - 0.4rem;
+@lastMod-fsize: 0.8rem;
+@ic-size: 1.4rem;
+
+/* Section styles */
+section#menubar {
+	min-height: 100%;
+	position: relative;
+	background-color: @white;
+	border-radius: 6px;
+	border: 1px solid @light;
 }
 
-body {
-	font-family: -apple-system, 'Helvetica Neue', Helvetica, sans-serif;
+header {
+	clear: both;
+	padding: @spacing04 0rem @spacing04 @side-margin;
+	margin: 0px;
+	font-size: @header-fsize;
+	border-top: 1px solid @light;
+	border-bottom: 1px solid @light;
 }
 
-header h1 {
-	font-size: 60px;
-	font-weight: 100;
-	margin: 0;
-	padding: 0;
+div.fileList {
+	height: 250px;
+	width: 100%;
+	overflow: scroll;
+	margin-bottom: 3rem;
+}
+
+div.content,
+div.type {
+	display: inline-block;
+	position: relative;
+}
+
+div.content {
+	vertical-align: top;
+	margin-left: @spacing-ic-txt;
+}
+
+div.name {
+	font-size: @name-fsize;
+}
+
+div.lastMod {
+	font-size: @lastMod-fsize;
+}
+
+div.cloudType {
+	position: absolute;
+	bottom: -3px;
+	right: -3px;
+}
+
+div.cloudType > img {
+	height: 0.9rem;
+	width: auto;
+	-webkit-mask-image: -webkit-linear-gradient(top, rgba(0, 0, 0, .4), rgba(0, 0, 0, .4));
+}
+
+img.fileType {
+	width: 28px;
+	padding-left: @side-margin;
+	margin: 0px;
+}
+
+div.item {
+	border-top: 1px solid @light;
+	padding: @spacing04 0rem @spacing04 0rem;
+}
+
+div.status {
+	display: flex;
+	display: -webkit-flex;
+	align-items:	center;
+	left: 0;
+	bottom: 0;
+}
+
+
+div.status > span {
+	font-size: 0.9rem;
+}
+
+div.head {
+	display: flex;
+	display: -webkit-flex;
+	align-items:	center;
+}
+
+div.status > img {
+	margin-right: @spacing-ic-txt !important;
+}
+
+footer {
+	display: flex;
+	display: -webkit-flex;
+	clear:both;
+	border-top: 1px solid @light;
+	width: 100%;
+	position: absolute;
+	padding-bottom: 0px;
+	background-color: @white;
+	bottom: 0;
+	left: 0;
+}
+
+img.icon {
+	width: @ic-size;
+	height: auto;
+	display: inline;
+	margin: @side-margin;
+	-webkit-mask-image: -webkit-linear-gradient(top, rgba(0, 0, 0, .6), rgba(0, 0, 0, .6));
+}
+
+div.item:first-child {
+	border-top: none !important;
 }

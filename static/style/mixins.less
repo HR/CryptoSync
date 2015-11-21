@@ -9,50 +9,59 @@
 
 /* Animations */
 @keyframes colorTrans {
-  from {border-bottom: 1px solid @light}
-  to {border-bottom: 1px solid @black;}
+	from {border-bottom: 1px solid @light}
+	to {border-bottom: 1px solid @black;}
 }
 
 /* General (shared) styles */
 
 body {
-  font-family: "Roboto", "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, "Lucida Grande", sans-serif;
-  font-weight: 300;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
+	font-family: "Roboto", "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, "Lucida Grande", sans-serif;
+	font-weight: 300;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
 }
 
 div.none {
-  display:none;
+	display:none;
+}
+
+.left {
+	 -webkit-align-self: flex-start;
+	 align-self: flex-start !important;
+}
+
+.right {
+	 margin-left: auto !important;
 }
 
 /* Page transitions */
 
 .moveUp-enter {
-  transition-duration: .3s;
-  transition-property: transform, opacity;
-  transition-timing-function: ease-out;
-  transform: translate3d(0,100%,0);
-  z-index: 10000;
+	transition-duration: .3s;
+	transition-property: transform, opacity;
+	transition-timing-function: ease-out;
+	transform: translate3d(0,100%,0);
+	z-index: 10000;
 }
 
 .moveUp-enter.moveUp-enter-active {
-  transform: translate3d(0,0,0);
+	transform: translate3d(0,0,0);
 }
 
 .moveUp-leave {
-  transition-duration: .3s;
-  transition-property: transform, opacity;
-  transition-timing-function: ease-out;
-  transform: translate3d(0,0,0);
-  opacity: 1;
+	transition-duration: .3s;
+	transition-property: transform, opacity;
+	transition-timing-function: ease-out;
+	transform: translate3d(0,0,0);
+	opacity: 1;
 }
 
 .moveUp-leave.moveUp-leave-active {
-  transform: translate3d(0,-15%,0);
-  opacity: 0.3;
+	transform: translate3d(0,-15%,0);
+	opacity: 0.3;
 }
 
 /* font declarations */
