@@ -1,5 +1,4 @@
 var React = require('react');
-var ReactDOM = require('react-dom');
 var ipc = require('ipc');
 // var Routes = RRouter.Routes;
 // var Route = RRouter.Route;
@@ -40,9 +39,6 @@ var MPform = React.createClass({
 		var sendMasterPass = function() {
 			ipc.send('masterpass-submitted', masterpass);
 		};
-		if (!text || !author) {
-			return;
-		}
 		// TODO: call decrypt db function
 	},
 	render: function() {
@@ -57,7 +53,7 @@ var MPform = React.createClass({
 			</div>
 
 			<div class="forgotMP">
-				<a>Forgot MasterPass?</a>
+				<a onclick={this.handleForgotMP} onChange={this.handleForgotMP}>Forgot MasterPass?</a>
 			</div>
 
 			<div class="submit">
@@ -106,11 +102,6 @@ var MPsharesform = React.createClass({
 					<label for="password">INCORRECT SECRET SHARES(S)</label>
 				</div>
 
-				<div class="checkbox">
-					<input type="checkbox" name="checkbox" />
-					<label for="checkbox">Remember temporarily</label>
-				</div>
-
 				<div class="submit">
 					<input type="submit" value="Unlock" />
 				</div>
@@ -141,8 +132,3 @@ var MPsharesfooter = React.createClass({
 		);
 	}
 });
-
-ReactDOM.render(
-	<MPprompt />,
-	document.getElementById('masterpassprompt').getElementsByName('div')[0]
-);

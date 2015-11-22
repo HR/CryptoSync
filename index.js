@@ -37,7 +37,7 @@ function createMainWindow() {
 		height: 400
 	});
 
-	win.loadUrl(`file://${__dirname}/static/index.html`);
+	win.loadURL(`file://${__dirname}/static/index.html`);
 	win.webContents.on('did-finish-load', function() {
 		// Query all cookies.
 		win.webContents.session.cookies.get({}, function(error, cookies) {
@@ -67,27 +67,32 @@ function createMainWindow() {
 
 function createMasterPassPrompt() {
 	const win = new BrowserWindow({
-		width: 250,
-		height: 400
+		width: 400,
+		height: 460,
+		resizable: false,
+		center: true
 	});
-
-	win.loadUrl(`file://${__dirname}/static/masterpassprompt.html`);
+	win.loadURL(`file://${__dirname}/static/masterpassprompt.html`);
 	win.webContents.on('did-finish-load', function() {
 		// Set a cookie with the given cookie data;
 		// may overwrite equivalent cookies if they exist.
-		win.webContents.session.cookies.set(
-			{ url : "http://crypto.sync", name : "MasterPass", value : "aPrettyGoodPassword", session : true},
-			function(error, cookies) {
-				if (error) throw error;
+		// win.webContents.session.cookies.set(
+		// 	{ url : "http://crypto.sync", name : "MasterPass", value : "aPrettyGoodPassword", session : true},
+		// 	function(error, cookies) {
+		// 		if (error) throw error;
 
+		console.log("win.getContentSize(): "+win.getContentSize());
 				// Query all cookies.
-				win.webContents.session.cookies.get({}, function(error, cookies) {
-					if (error) throw error;
-					console.log(cookies);
-				});
+		win.webContents.session.cookies.get({}, function(error, cookies) {
+			if (error) throw error;
+			console.log(cookies);
 		});
-
 	});
+
+	ipc.on('masterpass-submitted', function(event, masterpass) {
+		console.log("masterpass-submitted event emitted"+masterpass);
+	});
+
 	win.on('closed', onClosed);
 
 	return win;
@@ -129,6 +134,7 @@ app.on('ready', () => {
 		// Run User through Setup/First Install UI
 		// start menubar
 		let masterPassPrompt = createMasterPassPrompt();
+		console.log("masterPassPrompt = "+masterPassPrompt);
 		//init();
 		// Prompt for MasterPass OR retrieve temporarily stored MasterPass
 		// (if user has select the store MasterPass tenporarily)
