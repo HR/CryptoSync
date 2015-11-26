@@ -9,146 +9,163 @@
 @invalid-color: #9F3A38;
 
 /* Section styles */
-section#masterpassprompt {
-	height: 100%;
-	width: 100%;
-	position: relative;
-	background-color: @white;
-	border-radius: 6px;
-	border: 1px solid @light;
-}
-
 header {
-	margin: 0px;
+  margin: 0px;
 }
 
 header > p {
-	color: @blacker;
+  color: @blacker;
 }
 
 h1 {
-	font-size: 1.4rem;
-	margin-bottom: 0.1rem;
+  font-size: 1.4rem;
+  margin-bottom: 0.1rem;
 }
 
 p {
-	margin:0;
+  margin: 0;
 }
 
 a {
-	color: @blacker;
-	text-decoration: none;
-	outline: none;
+  font-size: 0.8rem;
+  color: @blacker;
+  text-decoration: none;
+  outline: none;
 }
 
-div.main >img {
-	width: 7rem;
-	height: auto;
+#masterpassprompt {
+  height: 100%;
+  min-height: 20rem;
+  width: 100%;
+  background-color: @white;
+  text-align: center;
+  overflow: hidden;
 }
 
-div.main {
-	width: 70%;
-	margin: auto;
-	text-align: center;
-	padding: 3rem;
+#vault {
+  width: 7rem;
+  height: auto;
+  margin: 2rem auto 0;
+}
+
+.panel-container {
+  position: relative;
+}
+
+.panel-container > div {
+  display: block;
+  position: absolute;
+  text-align: center;
+  padding: 0 3rem 3rem;
+  transform: translateX(-100%);
+  transition: transform 0.3s;
+}
+
+.panel-container > div.current ~ div {
+  transform: translateX(100%);
+}
+
+.panel-container > div.current {
+  transform: none;
+  position: relative;
 }
 
 p.info {
-	display: block;
-	width: 100%;
-	box-sizing: border-box;
-	max-height: 0;
-	overflow: hidden;
-	transition: max-height 0.3s, padding 0.3s;
-	background-color: #efefef;
-	font-size: 0.8rem;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 0.5rem;
+  transition: max-height 0.3s, padding 0.3s;
+  background-color: #efefef;
+  font-size: 0.8rem;
 }
 
 img.info {
-	float: right;
-	height: 0.9rem;
+  float: right;
+  height: 0.9rem;
 }
 
 img.info:hover + p.info {
-	max-height: 5rem;
-	padding: 0.5rem 0rem;
+  max-height: 10rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 div.masterpass > input {
-	width: 98%;
+  width: 98%;
 }
 
 input[type=password] {
-	margin-top: 1rem;
-	border: none;
-	border-bottom: 1px solid @light;
-	outline: none;
+  margin-top: 1rem;
+  border: none;
+  border-bottom: 1px solid @light;
+  outline: none;
+
+	&:invalid {
+		border-color: @invalid-color !important;
+	}
+
+	&:focus {
+	  animation-name: colorTrans;
+	  animation-duration: 2s;
+	  border-bottom: 1px solid @black;
+	}
 }
 
-input[type=password]:focus {
-	animation-name: colorTrans;
-	animation-duration: 2s;
-	border-bottom: 1px solid @black;
+a.back {
+  float: left;
+}
+
+a.back >img {
+  height: 1rem;
+  width: auto;
 }
 
 div.forgotMP {
-	padding: 0.2rem 0.2rem 0rem 0rem;
-	text-align: right;
+  padding: 0.2rem 0.2rem 0rem 0rem;
+  text-align: right;
 }
 
 input[type=submit] {
-	margin-top: 1rem;
-	height: 2rem;
-	font-weight: normal;
-	background-color: @light;
-	border: 1px solid @light;
-	width: 100%;
-	outline: none;
-}
+  margin-top: 1rem;
+  height: 2rem;
+  font-weight: normal;
+  background-color: @light;
+  border: 1px solid @light;
+  width: 100%;
+  outline: none;
 
-input[type=submit]:focus {
-	border: 1px solid @black;
+	&:focus {
+	  border: 1px solid @black;
+	}
 }
 
 div.submit {
-	text-align: right;
-	background-color: @white;
-	width: 100%;
+  text-align: right;
+  background-color: @white;
+  width: 100%;
 }
 
 footer {
-	clear:both;
-	border-top: 1px solid @light;
-	width: 100%;
-	position: absolute;
-	padding-bottom: 0px;
-	background-color: @white;
-	bottom: 0;
-	left: 0;
+  border-top: 1px solid @light;
+  width: 100%;
+  padding-bottom: 0px;
+  background-color: @white;
+  bottom: 0;
+  left: 0;
 }
 
 footer > a {
-	float: right;
-	padding: 0.2rem;
-}
-
-div.shares > footer > a {
-	float: left;
-}
-
-div.shares > footer > a >img {
-	height: 1rem;
-	width: auto;
+  float: right;
+  padding: 0.2rem;
 }
 
 /* INVALID STYLING */
 
 div.masterpass > label {
-	display: none;
-	font-size: 0.8rem;
-	color: @invalid-color;
-}
-
-.invalid {
-	border-color: @invalid-color !important;
+  display: none;
+  font-size: 0.8rem;
+  color: @invalid-color;
 }

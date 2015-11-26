@@ -1,9 +1,13 @@
 'use strict';
-const app = require('app');
-const BrowserWindow = require('browser-window');
-const ipc = require('ipc');
+const app = require('electron').app;
+const BrowserWindow = require('electron').BrowserWindow;
+const ipc = require('electron').ipcMain;
 const fs = require('fs-plus');
 let Db = require('./src/Db');
+
+// enable remote debugging
+// app.commandLine.appendSwitch('remote-debugging-port', '8315');
+// app.commandLine.appendSwitch('host-rules', 'MAP * 127.0.0.1');
 
 // report crashes to the Electron project
 require('crash-reporter').start();
@@ -66,13 +70,16 @@ function createMainWindow() {
 }
 
 function createMasterPassPrompt() {
+	// var BrowserWindow = require('electron').remote.BrowserWindow;
+	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	const win = new BrowserWindow({
 		width: 400,
-		height: 460,
-		resizable: false,
-		center: true
+		height: 460
+		// resizable: false,
+		// center: true
 	});
 	win.loadURL(`file://${__dirname}/static/masterpassprompt.html`);
+	win.openDevTools();
 	win.webContents.on('did-finish-load', function() {
 		// Set a cookie with the given cookie data;
 		// may overwrite equivalent cookies if they exist.
@@ -81,16 +88,20 @@ function createMasterPassPrompt() {
 		// 	function(error, cookies) {
 		// 		if (error) throw error;
 
-		console.log("win.getContentSize(): "+win.getContentSize());
-				// Query all cookies.
-		win.webContents.session.cookies.get({}, function(error, cookies) {
-			if (error) throw error;
-			console.log(cookies);
-		});
+		// console.log("win.getContentSize(): "+win.getContentSize());
+		// 		// Query all cookies.
+		// win.webContents.session.cookies.get({}, function(error, cookies) {
+		// 	if (error) throw error;
+		// 	console.log("GET cookies: "+cookies);
+		// });
 	});
 
 	ipc.on('masterpass-submitted', function(event, masterpass) {
 		console.log("masterpass-submitted event emitted"+masterpass);
+	});
+
+	ipc.on("echoDOM", function(event, dom) {
+		console.log(dom);
 	});
 
 	win.on('closed', onClosed);
@@ -134,7 +145,6 @@ app.on('ready', () => {
 		// Run User through Setup/First Install UI
 		// start menubar
 		let masterPassPrompt = createMasterPassPrompt();
-		console.log("masterPassPrompt = "+masterPassPrompt);
 		//init();
 		// Prompt for MasterPass OR retrieve temporarily stored MasterPass
 		// (if user has select the store MasterPass tenporarily)

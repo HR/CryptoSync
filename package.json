@@ -32,7 +32,7 @@
   "dependencies": {
     "async": "*",
     "babel-core": "^6.2.1",
-		"babel-preset-react": "^6.1.18",
+    "babel-preset-react": "^6.1.18",
     "bluebird": "^3.0.5",
     "electron-debug": "^0.5.1",
     "electron-prebuilt": "^0.35.1",
@@ -55,6 +55,7 @@
     "promise-queue": "*",
     "q": "^2.0.3",
     "react": "^0.14.3",
+    "react-dom": "^0.14.3",
     "request": "^2.67.0",
     "request-progress": "*",
     "secrets.js": "*",

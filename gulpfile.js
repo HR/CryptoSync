@@ -4,6 +4,7 @@ var gulp = require('gulp'),
 gulp.task('default', shell.task([
 	// Absolute path '/usr/local/lib/node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
 	// Run electron
+	// TO DO: add compile less bash command > "for i in static/style/*.less; do lessc $i ${i:0:${#i} - 5}.css; done"
 	'node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
 ]));
 
@@ -26,5 +27,3 @@ gulp.task('lint', function(){
 		'eslint src/*.js src/*/*.js *.js'
 	]));
 });
-
-gulp.task('default', ['watch', 'run']);
