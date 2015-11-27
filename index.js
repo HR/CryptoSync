@@ -35,48 +35,50 @@ function onClosed() {
 	mainWindow = null;
 }
 
-function createMainWindow() {
-	const win = new BrowserWindow({
-		width: 600,
-		height: 400
-	});
-
-	win.loadURL(`file://${__dirname}/static/index.html`);
-	win.webContents.on('did-finish-load', function() {
-		// Query all cookies.
-		win.webContents.session.cookies.get({}, function(error, cookies) {
-			if (error) throw error;
-
-		});
-
-		// Set a cookie with the given cookie data;
-		// may overwrite equivalent cookies if they exist.
-		win.webContents.session.cookies.set(
-			{ url : "http://crypto.sync", name : "MasterPass", value : "aPrettyGoodPassword", session : true},
-			function(error, cookies) {
-				if (error) throw error;
-
-				// Query all cookies.
-				win.webContents.session.cookies.get({}, function(error, cookies) {
-					if (error) throw error;
-					console.log(cookies);
-				});
-		});
-
-	});
-	win.on('closed', onClosed);
-
-	return win;
-}
+// function createMainWindow() {
+// 	const win = new BrowserWindow({
+// 		width: 600,
+// 		height: 400
+// 	});
+//
+// 	win.loadURL(`file://${__dirname}/static/index.html`);
+// 	win.webContents.on('did-finish-load', function() {
+// 		// Query all cookies.
+// 		win.webContents.session.cookies.get({}, function(error, cookies) {
+// 			if (error) throw error;
+//
+// 		});
+//
+// 		// Set a cookie with the given cookie data;
+// 		// may overwrite equivalent cookies if they exist.
+// 		win.webContents.session.cookies.set(
+// 			{ url : "http://crypto.sync", name : "MasterPass", value : "aPrettyGoodPassword", session : true},
+// 			function(error, cookies) {
+// 				if (error) throw error;
+//
+// 				// Query all cookies.
+// 				win.webContents.session.cookies.get({}, function(error, cookies) {
+// 					if (error) throw error;
+// 					console.log(cookies);
+// 				});
+// 		});
+//
+// 	});
+// 	win.on('closed', onClosed);
+//
+// 	return win;
+// }
 
 function createMasterPassPrompt() {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	const win = new BrowserWindow({
-		width: 400,
-		height: 460
+		width: 800,
+		height: 480,
+		center: true
+		// width: 400,
+		// height: 460
 		// resizable: false,
-		// center: true
 	});
 	win.loadURL(`file://${__dirname}/static/masterpassprompt.html`);
 	win.openDevTools();
@@ -96,12 +98,13 @@ function createMasterPassPrompt() {
 		// });
 	});
 
-	ipc.on('masterpass-submitted', function(event, masterpass) {
-		console.log("masterpass-submitted event emitted"+masterpass);
-	});
-
-	ipc.on("echoDOM", function(event, dom) {
-		console.log(dom);
+	ipc.on('masterpass-submission', function(event, masterpass, intype) {
+		if (intype === "default") {
+			console.log("Decrypting DB using masspass...");
+			Db.decrypt(paths.mdb, masspass, function(succ, err) {
+				// body...
+			});
+		}
 	});
 
 	win.on('closed', onClosed);
@@ -130,8 +133,8 @@ app.on('window-all-closed', () => {
 	}
 });
 
-app.on('activate-with-no-open-windows', () => {
-	console.log("activate-with-no-open-windows event emitted");
+app.on('activate', () => {
+	console.log("activate event emitted");
 	if (!mainWindow) {
 		mainWindow = createMainWindow();
 	}

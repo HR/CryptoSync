@@ -3,111 +3,125 @@
 	<meta charset="utf-8">
 	<title>Unlock the Vault</title>
 	<link rel="stylesheet" href="style/masterpassprompt.css" charset="utf-8">
+	<!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
 </head>
 <body>
 	<!-- CS Menubar v1f -->
 	<section id="masterpassprompt">
-	  <img src="images/icons/CryptoSyncvault.svg" alt="some" id="vault" />
-	  <div class="panel-container">
-	    <div id="panel-default">
-	      <header>
-	        <h1>Unlock the Vault</h1>
-	        <p>Please enter your Master Password to unlock the vault
-	        </p>
-	        <img class="info" src="images/icons/info.svg" alt="" />
-	        <p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass</p>
-	      </header>
-	      <form onsubmit="handleSubmit(); return false;">
-	        <div class="masterpass">
-	          <input type="password" name="masterpass" id="masterpass" placeholder="********" required/>
-	          <label for="password">INCORRECT MASTER PASSWORD</label>
-	        </div>
+		<img src="images/icons/CryptoSyncvault.svg" alt="some" id="vault" />
+		<div class="panel-container">
+			<div id="default">
+				<header>
+					<h1>Unlock the Vault</h1>
+					<p>Please enter your Master Password to unlock the vault
+					</p>
+					<img class="info" src="images/icons/info.svg" alt="" />
+					<p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass</p>
+				</header>
+				<form onsubmit="return false;">
+					<div class="masterpass">
+						<input type="password" name="masterpass" id="masterpass" placeholder="********"/>
+						<label for="password">INCORRECT MASTER PASSWORD</label>
+					</div>
 
-	        <div class="forgotMP">
-	          <a class="navigationLink" data-target="reset">Forgot MasterPass?</a>
-	        </div>
+					<div class="forgotMP">
+						<a class="navigationLink" data-target="reset">Forgot MasterPass?</a>
+					</div>
 
-	        <div class="submit">
-	          <input type="submit" value="Unlock"/>
-	        </div>
-	      </form>
-	      <footer>
-	        <a class="navigationLink" data-target="shares">Got shares?</a>
-	      </footer>
-	    </div>
-	    <div id="panel-shares">
-	      <header>
-	        <h1>Unlock the Vault</h1>
-	        <p>Please enter your Secret Shares to unlock the vault
-	        </p>
-	        <img class="info" src="images/icons/info.svg" alt="" />
-	        <p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass - constructed using your secret shares</p>
-	      </header>
-	      <form onsubmit="handleShareSubmit(); return false;">
-	        <div class="masterpass">
-	          <input type="password" name="name" id="name" class="" placeholder="********" required/>
-	          <input type="password" name="name" id="name" class="" placeholder="********" required/>
-	          <input type="password" name="name" id="name" class="" placeholder="********" required/>
-	          <input type="password" name="name" id="name" class="" placeholder="********" required/>
-	          <label for="password">INCORRECT SECRET SHARES(S)</label>
-	        </div>
-	        <div class="submit">
-	          <input type="submit" value="Unlock" />
-	        </div>
-	      </form>
-	      <footer>
-	        <a href="#" class="back navigationLink" data-target="default"><img src=" images/icons/back.svg" alt=" " /></a>
-	      </footer>
-	    </div>
-	    <div id="panel-reset">
-	      <header>
-	        <h1>Reset the MasterPass</h1>
-	        <p>Please enter a new secure MasterPass
-	        </p>
-	        <img class="info" src="images/icons/info.svg" alt=" " />
-	        <p class="info ">The MasterPass is used to encrypt the Vault. Thus, the strength of the Vault relies on the strength of your password. Resetting your password will prompt the re-encryption of all the data and discard the former encrypted</p>
-	      </header>
-	      <form onsubmit="handleReset(); return false;">
-	        <div class="masterpass">
-	          <input type="password" name="name" id="name" placeholder="********" required/>
-	        </div>
+					<div class="submit">
+						<input type="submit" value="Unlock" onClick="handleSubmit(); return false;"/>
+					</div>
+				</form>
+				<footer>
+					<a class="navigationLink" data-target="shares">Got shares?</a>
+				</footer>
+			</div>
+			<div id="shares">
+				<header>
+					<h1>Unlock the Vault</h1>
+					<p>Please enter your Secret Shares to unlock the vault
+					</p>
+					<img class="info" src="images/icons/info.svg" alt="" />
+					<p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass - constructed using your secret shares</p>
+				</header>
+				<form onsubmit="return handleShareSubmit()">
+					<div class="masterpass">
+						<input type="password" name="share" class="" placeholder="********" required/>
+						<input type="password" name="share" class="" placeholder="********" required/>
+						<input type="password" name="share" class="" placeholder="********" required/>
+						<input type="password" name="share" class="" placeholder="********" required/>
+						<label for="password">INCORRECT SECRET SHARES(S)</label>
+					</div>
+					<div class="submit">
+						<input type="submit" value="Unlock" />
+					</div>
+				</form>
+				<footer>
+					<a class="back navigationLink" data-target="default"><img src=" images/icons/back.svg" alt=" " /></a>
+				</footer>
+			</div>
+			<div id="reset">
+				<header>
+					<h1>Reset the MasterPass</h1>
+					<p>Please enter a new secure MasterPass
+					</p>
+					<img class="info" src="images/icons/info.svg" alt=" " />
+					<p class="info ">The MasterPass is used to encrypt the Vault. Thus, the strength of the Vault relies on the strength of your password. Resetting your password will prompt the re-encryption of all the data and discard the former encrypted</p>
+				</header>
+				<form onsubmit="handleReset(); return false;">
+					<div class="masterpass">
+						<input type="password" name="name" id="name" placeholder="********" required/>
+					</div>
 
-	        <div class="submit">
-	          <input type="submit" value="Reset" />
-	        </div>
-	      </form>
-	      <footer>
-	        <a href="#" class="back navigationLink" data-target="default"><img src="images/icons/back.svg" alt="" /></a>
-	      </footer>
-	    </div>
-	  </div>
+					<div class="submit">
+						<input type="submit" value="Reset" />
+					</div>
+				</form>
+				<footer>
+					<a href="#" class="back navigationLink" data-target="default"><img src="images/icons/back.svg" alt="" /></a>
+				</footer>
+			</div>
+		</div>
 	</section>
 	<script type="text/javascript">
-		const ipcRenderer = require('electron').ipcRenderer;
-
-		function handleSubmit() {
-			var MasterPass = document.getElementById("masterpass");
-			if(!MasterPass) {
-
-			}
-		}
+		window.$ = window.jQuery = require('jquery');
+		var ipcRenderer = require('electron').ipcRenderer;
 
 		navigate("default");
-
 		navigationLinks = document.getElementsByClassName('navigationLink');
 		for (var i = 0; i < navigationLinks.length; i++) {
-		  navigationLinks[i].addEventListener('click',function(e){
-		    navigate(this.getAttribute("data-target"));
-		  });
+			navigationLinks[i].addEventListener('click',function(e){
+				navigate(this.getAttribute("data-target"));
+			});
 		}
 
 		function navigate(panelID) {
-		  var oldSelection = document.querySelector('.panel-container > div.current');
-		  if (oldSelection) oldSelection.classList.remove("current");
+			var oldSelection = document.querySelector('.panel-container > div.current');
+			if (oldSelection) oldSelection.classList.remove("current");
 
-		  (document.getElementById("panel-"+panelID)).classList.add("current");
+			(document.getElementById(panelID)).classList.add("current");
 		}
-		// ipcRenderer.sendSync("echoDOM",document.getElementById("masterpassprompt").innerHTML);
+
+		var current = $("div.current");
+		console.log(current.attr('id'));
+		function handleSubmit() {
+			var MasterPass = current.find("#masterpass"),
+					label = current.find("div.masterpass > label");
+			console.log("MasterPass: "+MasterPass.val());
+			if(!(MasterPass.val())) {
+				MasterPass.addClass("invalid");
+				label.html("EMPTY MASTERPASS");
+				label.css("display", "block");
+				label.css("color", "#9F3A38");
+			} else {
+				// TO DO: Send another arg to distinguish input type
+				// (i.e. masterpass, shares, reset)
+				ipcRenderer.sendSync('masterpass-submission', MasterPass.val(), current.attr('id'));
+				label.html("INCORRECT MASTERPASS");
+				MasterPass.removeClass("invalid")
+				current.find("div.masterpass > label").css("display", "none");
+			}
+		}
 	</script>
 </body>
 </html>

@@ -103,15 +103,17 @@ input[type=password] {
   border-bottom: 1px solid @light;
   outline: none;
 
-	&:invalid {
-		border-color: @invalid-color !important;
-	}
-
 	&:focus {
 	  animation-name: colorTrans;
 	  animation-duration: 2s;
 	  border-bottom: 1px solid @black;
 	}
+}
+
+
+
+.invalid {	
+	border-color: @invalid-color !important;
 }
 
 a.back {
@@ -167,5 +169,4 @@ footer > a {
 div.masterpass > label {
   display: none;
   font-size: 0.8rem;
-  color: @invalid-color;
 }

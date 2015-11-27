@@ -41,6 +41,7 @@
     "fstream": "*",
     "googleapis": "*",
     "gulp-shell": "*",
+    "jquery": "^2.1.4",
     "less": "*",
     "level-js": "*",
     "leveldown": "*",

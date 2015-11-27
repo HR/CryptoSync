@@ -25,13 +25,19 @@ function Db(path) {
  *	- Implement treatment accordingly
  */
 
-Db.prototype.decrypt = function (path, pass) {
+Db.prototype.decrypt = function (path, pass, callback) {
 	// decrypt Db
 	// TO DO;
-	crypto.decrypt(path, mpass);
+	crypto.decrypt(path, mpass, true, null, null, function(decrypted, err) {
+		if (err) {
+			callback(null, err);
+		} else {
+			callback(decrypted);
+		}
+	});
 };
 
-Db.prototype.encrypt = function (path, pass) {
+Db.prototype.encrypt = function (path, pass, callback) {
 	// encrypt Db
 	let mpass = (Array.isArray(pass)) ? crypto.shares2pass(pass) : pass;
 	let encrypted = fs.readFileSync(path, 'utf8', function (err, data) {

@@ -18,24 +18,33 @@ let defaults = {
  *	- Implement bitcoin blockchain as source of randomness (in iv generation)
  */
 
-exports.encrypt = function (ptext, password, iterations, keyLength) {
+exports.encrypt = function (ptext, password, mp, iterations, keyLength, callback) {
 	// decrypts any arbitrary data passed with the pass
 	let i = iterations || defaults.iterations,
 			kL = keyLength || defaults.keyLength,
 			pass = (Array.isArray(password)) ? shares2pass(password) : password;
+			mp = mp || false;
 	const salt = crypto.randomBytes(kL); // generate pseudorandom salt
 	const iv = crypto.randomBytes(kL); // generate pseudorandom iv
-	return crypto.pbkdf2Sync(pass, salt, i, kL, defaults.digest, function(err, key) {
-		if (err){
-			throw err;
-		}
-		console.log("Pbkdf2 generated key"+key.toString()+" using iv, salt: "+iv.toString()+", "+salt.toString());
+	if (mp) {
 		let cipher = crypto.createCipheriv(defaults.algorithm, key, iv),
 				crypted = cipher.update(ptext,'utf8','hex');
 		crypted += cipher.final('hex');
-		console.log("Encrypted file");
+		console.log("Encrypted file using mp");
 		return [crypted, key, iv];
-	});
+	} else {
+		return crypto.pbkdf2Sync(pass, salt, i, kL, defaults.digest, function(err, key) {
+			if (err){
+				throw err;
+			}
+			console.log("Pbkdf2 generated key"+key.toString()+" using iv, salt: "+iv.toString()+", "+salt.toString());
+			let cipher = crypto.createCipheriv(defaults.algorithm, key, iv),
+					crypted = cipher.update(ptext,'utf8','hex');
+			crypted += cipher.final('hex');
+			console.log("Encrypted file");
+			return [crypted, key, iv];
+		});
+	}
 };
 
 exports.decrypt = function (ctext, key, iv) {

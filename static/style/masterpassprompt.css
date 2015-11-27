@@ -220,13 +220,13 @@ input[type=password] {
   border-bottom: 1px solid #DDDDDD;
   outline: none;
 }
-input[type=password]:invalid {
-  border-color: #9F3A38 !important;
-}
 input[type=password]:focus {
   animation-name: colorTrans;
   animation-duration: 2s;
   border-bottom: 1px solid #333333;
+}
+.invalid {
+  border-color: #9F3A38 !important;
 }
 a.back {
   float: left;
