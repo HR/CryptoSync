@@ -3,15 +3,20 @@ let levelup = require('levelup'),
 		fs = require('fs-plus'),
 		crypto = require('./crypto');
 
-function Db(path) {
+function Db(path, password) {
+	pass = password || false;
 	if (fs.isFileSync(path)) {
 		// prompt user for master password and store temporarily (while running)
-		fs.readFileSync(path, 'hex', function (err, data) {
-			if (err) throw err;
-			// decrypt Db before opening
-			Db.decrypt(path, pass);
-		});
-		return levelup(path);
+		if (pass) {
+			fs.readFileSync(path, 'hex', function (err, data) {
+				if (err) throw err;
+				// decrypt Db before opening
+				Db.decrypt(path, pass);
+			});
+			return levelup(path);
+		} else {
+			return levelup(path);
+		}
 	} else {
 		// Invoke SetMasterPass routine
 		return levelup(path);
@@ -28,7 +33,7 @@ function Db(path) {
 Db.prototype.decrypt = function (path, pass, callback) {
 	// decrypt Db
 	// TO DO;
-	crypto.decrypt(path, mpass, true, null, null, function(decrypted, err) {
+	crypto.decrypt(path, mpass, true, function(decrypted, err) {
 		if (err) {
 			callback(null, err);
 		} else {

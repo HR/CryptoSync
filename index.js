@@ -19,7 +19,8 @@ require('electron-debug')();
 let mainWindow;
 global.paths = {
 	home: fs.getHomeDirectory()+"/CryptoSync",
-	mdb: fs.getHomeDirectory()+"/CryptoSync/csmdb",
+	mdb: app.getPath("appData")+"/mdb",
+	vault: fs.getHomeDirectory()+"/CryptoSync/Vault"
 };
 
 // Check for connection status
@@ -82,26 +83,37 @@ function createMasterPassPrompt() {
 	});
 	win.loadURL(`file://${__dirname}/static/masterpassprompt.html`);
 	win.openDevTools();
-	win.webContents.on('did-finish-load', function() {
-		// Set a cookie with the given cookie data;
-		// may overwrite equivalent cookies if they exist.
-		// win.webContents.session.cookies.set(
-		// 	{ url : "http://crypto.sync", name : "MasterPass", value : "aPrettyGoodPassword", session : true},
-		// 	function(error, cookies) {
-		// 		if (error) throw error;
-
-		// console.log("win.getContentSize(): "+win.getContentSize());
-		// 		// Query all cookies.
-		// win.webContents.session.cookies.get({}, function(error, cookies) {
-		// 	if (error) throw error;
-		// 	console.log("GET cookies: "+cookies);
-		// });
-	});
-
 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
 		if (intype === "default") {
 			console.log("Decrypting DB using masspass...");
-			Db.decrypt(paths.mdb, masspass, function(succ, err) {
+			Db.decrypt(paths.vault, masspass, function(succ, err) {
+				// body...
+			});
+		}
+	});
+
+	win.on('closed', onClosed);
+
+	return win;
+}
+
+function createSetup() {
+	// var BrowserWindow = require('electron').remote.BrowserWindow;
+	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
+	const win = new BrowserWindow({
+		width: 800,
+		height: 480,
+		center: true
+		// width: 400,
+		// height: 460
+		// resizable: false,
+	});
+	win.loadURL(`file://${__dirname}/static/masterpassprompt.html`);
+	win.openDevTools();
+	ipc.on('masterpass-submission', function(event, masterpass, intype) {
+		if (intype === "default") {
+			console.log("Decrypting DB using masspass...");
+			Db.decrypt(paths.vault, masspass, function(succ, err) {
 				// body...
 			});
 		}
@@ -114,13 +126,20 @@ function createMasterPassPrompt() {
 
 function init() {
 	// Decrypt db (the Vault) and get ready for use
-	global.db = new Db(paths.mdb, MasterPass);
+	global.vault = new Db(paths.vault, MasterPass);
+}
+
+function init() {
+	// Decrypt db (the Vault) and get ready for use
+	global.vault = new Db(paths.vault, MasterPass);
 }
 
 function Setup() {
 	// Guide user through setting up a MasterPass and connecting to cloud services
 	fs.makeTreeSync(paths.home);
-
+	global.mdb = new Db(paths.mdb);
+	// Setup routine
+	let setupWindow = createSetup();
 }
 
 app.on('window-all-closed', () => {
@@ -128,7 +147,7 @@ app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') {
 		// Cease any db OPs; encrypt database before quitting the app
 		console.log("Calling db.close()");
-		db.close();
+		global.vault.close();
 		app.quit();
 	}
 });
