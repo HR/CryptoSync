@@ -1,9 +1,14 @@
 'use strict';
 let levelup = require('levelup'),
 		fs = require('fs-plus'),
-		crypto = require('./crypto');
+		crypto = require('./crypto'),
+		util = require("util");
+
 
 function Db(path, password) {
+	 // Initialize necessary methods/properties from levelup in this instance
+	levelup.call(this);
+
 	pass = password || false;
 	if (fs.isFileSync(path)) {
 		// prompt user for master password and store temporarily (while running)
@@ -22,6 +27,9 @@ function Db(path, password) {
 		return levelup(path);
 	}
 }
+
+// Inherit functions from levelup's prototype
+util.inherits(Db, levelup);
 
 /*	Crypto
  *
@@ -53,6 +61,7 @@ Db.prototype.encrypt = function (path, pass, callback) {
 	fs.writeFileSync(path, encrypted, 'hex', function (err) {
 		if (err) throw err;
 		console.log("Written "+path);
+		callback();
 	});
 };
 

@@ -108,11 +108,11 @@ function createSetup() {
 		// height: 460
 		// resizable: false,
 	});
-	win.loadURL(`file://${__dirname}/static/masterpassprompt.html`);
+	win.loadURL(`file://${__dirname}/static/setup.html`);
 	win.openDevTools();
 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
 		if (intype === "default") {
-			console.log("Decrypting DB using masspass...");
+			console.log("Masterpass set...");
 			Db.decrypt(paths.vault, masspass, function(succ, err) {
 				// body...
 			});
