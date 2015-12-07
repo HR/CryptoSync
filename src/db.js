@@ -7,7 +7,7 @@ let levelup = require('levelup'),
 
 function Db(path, password) {
 	 // Initialize necessary methods/properties from levelup in this instance
-	levelup.call(this);
+	// levelup.call(this);
 
 	pass = password || false;
 	if (fs.isFileSync(path)) {
@@ -29,7 +29,7 @@ function Db(path, password) {
 }
 
 // Inherit functions from levelup's prototype
-util.inherits(Db, levelup);
+// util.inherits(Db, levelup);
 
 /*	Crypto
  *

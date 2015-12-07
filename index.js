@@ -23,19 +23,6 @@ global.paths = {
 	vault: fs.getHomeDirectory()+"/CryptoSync/Vault"
 };
 
-// Check for connection status
-ipc.on('online-status-changed', function(event, status) {
-	console.log(status);
-});
-
-function onClosed() {
-	// dereference the window
-	// for multiple windows store them in an array
-	// TO DO: encryot the db
-	console.log("win.closed event emitted;\n Calling on onClosed");
-	mainWindow = null;
-}
-
 // function createMainWindow() {
 // 	const win = new BrowserWindow({
 // 		width: 600,
@@ -69,6 +56,10 @@ function onClosed() {
 //
 // 	return win;
 // }
+
+/**
+ * Window constructors
+ **/
 
 function createMasterPassPrompt() {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
@@ -124,23 +115,42 @@ function createSetup() {
 	return win;
 }
 
-function init() {
-	// Decrypt db (the Vault) and get ready for use
-	global.vault = new Db(paths.vault, MasterPass);
-}
-
-function init() {
-	// Decrypt db (the Vault) and get ready for use
-	global.vault = new Db(paths.vault, MasterPass);
-}
+/**
+ * Functions
+ **/
 
 function Setup() {
 	// Guide user through setting up a MasterPass and connecting to cloud services
+	// TO DO: transform into Async using a Promise
 	fs.makeTreeSync(paths.home);
+	fs.makeTreeSync(paths.vault);
 	global.mdb = new Db(paths.mdb);
 	// Setup routine
 	let setupWindow = createSetup();
 }
+
+
+function init() {
+	// Decrypt db (the Vault) and get ready for use
+	global.vault = new Db(paths.vault, MasterPass);
+}
+
+/**
+ * Event handlers
+ **/
+
+function onClosed() {
+	// dereference the window
+	// for multiple windows store them in an array
+	// TO DO: encryot the db
+	console.log("win.closed event emitted;\n Calling on onClosed");
+	mainWindow = null;
+}
+
+// Check for connection status
+ipc.on('online-status-changed', function(event, status) {
+	console.log(status);
+});
 
 app.on('window-all-closed', () => {
 	console.log("window-all-closed event emitted");
@@ -162,10 +172,12 @@ app.on('activate', () => {
 app.on('ready', () => {
 	let firstRun = (!fs.isDirectorySync(paths.home)) && (!fs.isFileSync(paths.mdb));
 	if (firstRun) {
+		console.log("First run. Creating Setup wizard...");
 		Setup();
 	} else {
 		// Run User through Setup/First Install UI
 		// start menubar
+		console.log("Normal run. Creating MasterPass prompt...");
 		let masterPassPrompt = createMasterPassPrompt();
 		//init();
 		// Prompt for MasterPass OR retrieve temporarily stored MasterPass
