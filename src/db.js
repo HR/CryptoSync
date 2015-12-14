@@ -1,9 +1,20 @@
 'use strict';
+/**
+ * Custom DB (levelup) API implementation
+ **/
 let levelup = require('levelup'),
 		fs = require('fs-plus'),
 		crypto = require('./crypto'),
 		util = require("util");
 
+function readFile(filename, enc) {
+	return new Promise(function (fulfill, reject){
+		fs.readFile(filename, enc, function (err, res){
+			if (err) reject(err);
+			else fulfill(res);
+		});
+	});
+}
 
 function Db(path, password) {
 	 // Initialize necessary methods/properties from levelup in this instance
@@ -13,12 +24,17 @@ function Db(path, password) {
 	if (fs.isFileSync(path)) {
 		// prompt user for master password and store temporarily (while running)
 		if (pass) {
-			fs.readFileSync(path, 'hex', function (err, data) {
-				if (err) throw err;
-				// decrypt Db before opening
-				Db.decrypt(path, pass);
-			});
-			return levelup(path);
+			return  readFile(path, 'hex')
+							.then(Db.decrypt(path, pass)) // decrypt Db before opening
+							.then(function(value) {
+								 // on fulfillment
+								return levelup(path);
+								}, function(reason) {
+								// rejection
+							})
+							.catch(function(reason) {
+								console.log('Handle rejected promise ('+reason+') here.');
+							});
 		} else {
 			return levelup(path);
 		}

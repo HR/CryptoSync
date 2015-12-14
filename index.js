@@ -1,9 +1,12 @@
 'use strict';
-const app = require('electron').app;
-const BrowserWindow = require('electron').BrowserWindow;
-const ipc = require('electron').ipcMain;
+const electron = require('electron');
+const app = electron.app;
+const BrowserWindow = electron.BrowserWindow;
+const ipc = electron.ipcMain;
+const Menu = electron.Menu;
+const Tray = electron.Tray;
 const fs = require('fs-plus');
-let Db = require('./src/Db');
+const Db = require('./src/Db');
 
 // enable remote debugging
 // app.commandLine.appendSwitch('remote-debugging-port', '8315');
@@ -24,37 +27,37 @@ global.paths = {
 };
 
 // function createMainWindow() {
-// 	const win = new BrowserWindow({
-// 		width: 600,
-// 		height: 400
-// 	});
+//	 const win = new BrowserWindow({
+//		 width: 600,
+//		 height: 400
+//	 });
 //
-// 	win.loadURL(`file://${__dirname}/static/index.html`);
-// 	win.webContents.on('did-finish-load', function() {
-// 		// Query all cookies.
-// 		win.webContents.session.cookies.get({}, function(error, cookies) {
-// 			if (error) throw error;
+//	 win.loadURL(`file://${__dirname}/static/index.html`);
+//	 win.webContents.on('did-finish-load', function() {
+//		 // Query all cookies.
+//		 win.webContents.session.cookies.get({}, function(error, cookies) {
+//			 if (error) throw error;
 //
-// 		});
+//		 });
 //
-// 		// Set a cookie with the given cookie data;
-// 		// may overwrite equivalent cookies if they exist.
-// 		win.webContents.session.cookies.set(
-// 			{ url : "http://crypto.sync", name : "MasterPass", value : "aPrettyGoodPassword", session : true},
-// 			function(error, cookies) {
-// 				if (error) throw error;
+//		 // Set a cookie with the given cookie data;
+//		 // may overwrite equivalent cookies if they exist.
+//		 win.webContents.session.cookies.set(
+//			 { url : "http://crypto.sync", name : "MasterPass", value : "aPrettyGoodPassword", session : true},
+//			 function(error, cookies) {
+//				 if (error) throw error;
 //
-// 				// Query all cookies.
-// 				win.webContents.session.cookies.get({}, function(error, cookies) {
-// 					if (error) throw error;
-// 					console.log(cookies);
-// 				});
-// 		});
+//				 // Query all cookies.
+//				 win.webContents.session.cookies.get({}, function(error, cookies) {
+//					 if (error) throw error;
+//					 console.log(cookies);
+//				 });
+//		 });
 //
-// 	});
-// 	win.on('closed', onClosed);
+//	 });
+//	 win.on('closed', onClosed);
 //
-// 	return win;
+//	 return win;
 // }
 
 /**
@@ -62,7 +65,7 @@ global.paths = {
  **/
 
 function createMasterPassPrompt() {
-	// var BrowserWindow = require('electron').remote.BrowserWindow;
+	// var BrowserWindow = electron.remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	const win = new BrowserWindow({
 		width: 800,
@@ -76,10 +79,10 @@ function createMasterPassPrompt() {
 	win.openDevTools();
 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
 		if (intype === "default") {
-			console.log("Decrypting DB using masspass...");
-			Db.decrypt(paths.vault, masspass, function(succ, err) {
-				// body...
-			});
+			console.log("Decrypting DB using masspass... using masterpass:"+masterpass);
+			// Db.decrypt(paths.vault, masspass, function(succ, err) {
+			//	 // body...
+			// });
 		}
 	});
 
@@ -113,6 +116,10 @@ function createSetup() {
 	win.on('closed', onClosed);
 
 	return win;
+}
+
+function createMenubar() {
+	// Implement menubar
 }
 
 /**
