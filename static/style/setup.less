@@ -1,0 +1,318 @@
+// out: ./setup.css, compress: true
+/* Setup styles
+   ==========================================================================
+*/
+@import (less) "mixins.less";
+/* Variable declarations*/
+@invalid-color: #9F3A38;
+@orange: #EEA849;
+@orange_d: #F46B45;
+@white: #FFFFFF;
+@light: #DDDDDD;
+@dark: #9D9D9D;
+@black: #333333;
+@blacker: #222222;
+@border-width: 2px;
+@side-margin: 0.8rem;
+@name-fsize: 1rem;
+@header-fsize: 1rem;
+@spacing04: 0.4rem;
+@spacing-ic-txt: @side-margin - 0.4rem;
+@lastMod-fsize: 0.8rem;
+@ic-size: 1.4rem;
+@win-height: 100%;
+ /* TO DO: ADD MARGIN RELATIVELY/CONTEXTUALLY TO CORE ELEMENTS I.E. for a button, use panel-container > button*/
+
+/* Animations */
+@keyframes colorTrans {
+  from {
+    background-color: @white;
+  }
+  to {
+    background-color: @light;
+  }
+}
+@-webkit-keyframes OrangeAnimGrad {
+  0% {
+    background-position: 0 51%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 51%;
+  }
+}
+@keyframes OrangeAnimGrad {
+  0% {
+    background-position: 0 51%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 51%;
+  }
+}
+
+/* General styles */
+#setup {
+  height: 100%;
+  width: 100%;
+  text-align: center;
+  overflow: hidden;
+}
+header {
+  margin: 0;
+}
+header > p {
+  color: @blacker;
+}
+header.minimal {
+  width: 100%;
+  border-bottom: 1px solid @light;
+  h3 {
+  font-size: 0.8rem;
+  font-weight: 300;
+  }
+}
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 0.4rem;
+  font-weight: 400;
+}
+p {
+  margin: 0;
+}
+p.note {
+  font-size: 0.8rem;
+}
+.panel-container {
+  position: relative;
+}
+.panel-container > div {
+  position: absolute;
+  text-align: center;
+  transform: translateX(-110%);
+  transition: transform 0.5s;
+}
+.panel-container > div.current ~ div {
+  transform: translateX(100%);
+}
+.panel-container > div.current {
+  display: block;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+  transform: none;
+  position: relative;
+}
+.panel-container > div > button {
+  margin-top: 1rem;
+}
+
+button {
+  background-color: @white;
+  border: 1px solid @light;
+  width: 100%;
+  padding: 0.3rem;
+  font-weight: 400;
+  outline: none;
+  &:active,
+  &:hover {
+    opacity: 0.8;
+  }
+}
+button.fancy {
+  margin-top: 0.2rem;
+  border: none;
+  color: @white;
+  width: 30%;
+  background: linear-gradient(to right, @orange, @orange_d);
+  background-size: 200% 200%;
+  animation: OrangeAnimGrad 3s ease infinite;
+}
+.right {
+  margin-left: auto !important;
+}
+img.icon {
+  width: @ic-size;
+  height: @ic-size;
+}
+h3 {
+  margin: 0.5rem 0;
+  font-weight: normal;
+}
+a {
+  font-size: 0.8rem;
+  color: @blacker;
+  text-decoration: none;
+  outline: none;
+}
+footer.credit {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  justify-content: center;
+  img {
+    height: 1rem !important;
+  }
+}
+footer {
+  clear: both;
+  position: absolute;
+  border-top: 1px solid @light;
+  width: 100%;
+  padding-bottom: 0;
+  background-color: @white;
+  bottom: 0;
+  left: 0;
+}
+footer > a {
+  float: right;
+  padding: 0.2rem;
+}
+
+a.back {
+  float: left;
+}
+a.back >img {
+  height: 1rem;
+  width: auto;
+}
+.himg {
+  width: 9rem;
+  height: auto;
+  z-index: 1000;
+}
+div.list {
+  width: 100%;
+  overflow: auto;
+}
+div.item > a {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid @light;
+  padding: @spacing04 0;
+  text-align: left;
+}
+div.name {
+  font-size: 1.2rem;
+  margin-left: @spacing-ic-txt;
+  font-weight: 300;
+}
+p.info {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 0.5rem;
+  transition: max-height 0.3s, padding 0.3s;
+  background-color: #efefef;
+  font-size: 0.8rem;
+}
+img.info {
+  float: right;
+  height: 0.9rem;
+}
+img.info:hover + p.info {
+  max-height: 10rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+input {
+  width: 98%;
+}
+input[type=password] {
+  margin-top: 1rem;
+  border: none;
+  border-bottom: 1px solid @light;
+  outline: none;
+  &:focus {
+    border-bottom: 1px solid @black;
+  }
+}
+input[type=submit] {
+  margin-top: 1rem;
+  height: 2rem;
+  font-weight: normal;
+  background-color: @light;
+  border: 1px solid @light;
+  width: 100%;
+  outline: none;
+  &:focus {
+    border: 1px solid @black;
+  }
+}
+div.submit {
+  text-align: right;
+  background-color: @white;
+  width: 100%;
+}
+
+/* Weclome Panel styles
+* =================
+*/
+div.banner {
+  margin: 1rem auto 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.backtext {
+  display: flex;
+	flex: 1 !important;
+  align-items: center;
+  max-width: 50%;
+  white-space:nowrap;
+  justify-content: center;
+  color: @light;
+}
+
+/* Accounts Panel styles
+* =================
+*/
+section.accounts {
+
+}
+section.accounts {
+  width: 70%;
+  margin: auto;
+}
+section.accounts > header {
+  border-bottom: 1px solid @light;
+}
+
+/* MasterPass Panel styles
+* =================
+*/
+#masterpassprompt {
+  height: 100%;
+  min-height: 20rem;
+  width: 70%;
+  margin: auto;
+}
+#masterpassprompt > button {
+  margin: 0.5rem 0;
+  font-weight: normal;
+  width: 100%;
+}
+div.forgotMP {
+  padding: 0.2rem 0.2rem 0 0;
+  text-align: right;
+}
+
+/* INVALID STYLING */
+div.masterpass > label {
+  display: none;
+  font-size: 0.8rem;
+  color: @invalid-color;
+}
+.invalid {
+  border-color: @invalid-color !important;
+}

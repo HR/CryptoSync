@@ -95,8 +95,8 @@ function createSetup() {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	const win = new BrowserWindow({
-		width: 800,
-		height: 480,
+		width: 600,
+		height: 400,
 		center: true
 		// width: 400,
 		// height: 460
@@ -184,8 +184,10 @@ app.on('ready', () => {
 	} else {
 		// Run User through Setup/First Install UI
 		// start menubar
-		console.log("Normal run. Creating MasterPass prompt...");
-		let masterPassPrompt = createMasterPassPrompt();
+		// console.log("Normal run. Creating MasterPass prompt...");
+		// let masterPassPrompt = createMasterPassPrompt();
+		console.log("Normal run. Creating Setup...");
+		let setupWindow = createSetup();
 		//init();
 		// Prompt for MasterPass OR retrieve temporarily stored MasterPass
 		// (if user has select the store MasterPass tenporarily)

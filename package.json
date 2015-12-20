@@ -1,82 +1,81 @@
 {
-  "name": "CryptoSync",
-  "productName": "cryptosync",
-  "version": "0.1.0",
-  "description": "A cross-platform end-to-end encryption cloud sync client",
-  "license": "MIT",
-  "repository": "HR/CryptoSync",
-  "author": {
-    "name": "Habib Rehman",
-    "email": "Habib.R@outlook.com",
-    "url": "git.io/HR"
-  },
-  "engines": {
-    "node": ">=4"
-  },
-  "electronVersion": "0.33.3",
-  "scripts": {
-    "test": "xo",
-    "start": "electron .",
-    "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
-  },
-  "keywords": [
-    "cloud",
-    "sync",
-    "encryption",
-    "crypto",
-    "end-to-end",
-    "client",
-    "drive",
-    "dropbox"
-  ],
-  "dependencies": {
-    "async": "*",
-    "babel-core": "^6.2.1",
-    "babel-preset-react": "^6.1.18",
-    "bluebird": "^3.0.5",
-    "electron-debug": "^0.5.1",
-    "electron-prebuilt": "^0.35.1",
-    "event-kit": "^1.4.1",
-    "fs-plus": "*",
-    "fstream": "*",
-    "googleapis": "*",
-    "gulp-shell": "*",
-    "jquery": "^2.1.4",
-    "less": "*",
-    "level-js": "*",
-    "leveldown": "*",
-    "levelup": "^1.3.0",
-    "lodash": "*",
-    "menubar": "^3.0.0",
-    "moment": "*",
-    "nslog": "*",
-    "passport": "^0.3.2",
-    "passport-dropbox": "*",
-    "passport-google-oauth": "*",
-    "pathwatcher": "*",
-    "promise-queue": "*",
-    "q": "^2.0.3",
-    "react": "^0.14.3",
-    "react-dom": "^0.14.3",
-    "request": "^2.67.0",
-    "request-progress": "*",
-    "secrets.js": "*",
-    "trianglify": "^0.4.0",
-    "xo": "^0.11.2"
-  },
-  "devDependencies": {
-    "electron-packager": "*",
-    "electron-prebuilt": "*",
-    "electron-rebuild": "*",
-    "gulp": "*",
-    "gulp-shell": "*",
-    "xo": "*"
-  },
-  "xo": {
-    "esnext": true,
-    "envs": [
-      "node",
-      "browser"
-    ]
-  }
+	"name": "Crypto.Sync",
+	"productName": "cryptosync",
+	"version": "0.1.0",
+	"description": "A cross-platform end-to-end encryption cloud sync client",
+	"license": "MIT",
+	"repository": "HR/CryptoSync",
+	"author": {
+		"name": "Habib Rehman",
+		"email": "Habib.R@outlook.com",
+		"url": "git.io/HR"
+	},
+	"engines": {
+		"node": ">=4"
+	},
+	"electronVersion": "0.33.3",
+	"scripts": {
+		"test": "xo",
+		"start": "electron .",
+		"build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
+	},
+	"keywords": [
+		"cloud",
+		"sync",
+		"encryption",
+		"crypto",
+		"end-to-end",
+		"client",
+		"drive",
+		"dropbox"
+	],
+	"dependencies": {
+		"async": "*",
+		"babel-core": "^6.2.1",
+		"babel-preset-react": "^6.1.18",
+		"bluebird": "^3.0.5",
+		"electron-debug": "^0.5.1",
+		"electron-prebuilt": "^0.35.1",
+		"event-kit": "^1.4.1",
+		"fs-plus": "*",
+		"fstream": "*",
+		"googleapis": "*",
+		"gulp-shell": "*",
+		"jquery": "^2.1.4",
+		"less": "*",
+		"level-js": "*",
+		"leveldown": "*",
+		"levelup": "^1.3.0",
+		"lodash": "*",
+		"moment": "*",
+		"nslog": "*",
+		"passport": "^0.3.2",
+		"passport-dropbox": "*",
+		"passport-google-oauth": "*",
+		"pathwatcher": "*",
+		"promise-queue": "*",
+		"q": "^2.0.3",
+		"react": "^0.14.3",
+		"react-dom": "^0.14.3",
+		"request": "^2.67.0",
+		"request-progress": "*",
+		"secrets.js": "*",
+		"trianglify": "^0.4.0",
+		"xo": "^0.11.2"
+	},
+	"devDependencies": {
+		"electron-packager": "*",
+		"electron-prebuilt": "*",
+		"electron-rebuild": "*",
+		"gulp": "*",
+		"gulp-shell": "*",
+		"xo": "*"
+	},
+	"xo": {
+		"esnext": true,
+		"envs": [
+			"node",
+			"browser"
+		]
+	}
 }

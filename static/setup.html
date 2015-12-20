@@ -1,0 +1,154 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Unlock the Vault</title>
+	<link rel="stylesheet" href="style/setup.css" charset="utf-8">
+	<!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
+</head>
+<body>
+	<!-- CS Setup UI v1f -->
+<section id="setup">
+  <div class="panel-container">
+    <div id="panel-default">
+      <header>
+        <div class="banner">
+          <div class="backtext" id="encrypted">It is a long established fact that a reader w
+            <br/>ill be distracted by the readable content of
+            <br/>a page when looking at its layout. The point
+            <br/>of using Lorem Ipsum is that it has a more-or
+            <br/>-less normal distribution of letters, as oppo</div>
+          <img src="images/icons/CryptoSync.svg" alt="some" class="himg" />
+          <div class="backtext" id="decrypted">KlZ7wkieedArq7w9YsHe++D1ZAnNdL91OvBbV1LnX8f19
+            <br/>YjrsCojOnycYERhd56hl8v4lAquhLYfk71Vf2tZd7JbNR
+            <br/>C8pLOJQxAFbCP+HZPAt6Kz5hO0Ir3SWJNxxAAN/GS7Pbx
+            <br/>coOJAHLO4b+vHBOS0XniqSXpOcyQPTgFEJmjcHhvtjfLT
+            <br/>VxzOxu6EN40pjvK8oAf7041D+cWR+PDH6LnlCik2hnmFK</div>
+        </div>
+        <h1>Welcome to Crypto.Sync</h1>
+        <p>Crypto.Sync an end-to-end encryption cloud synchronisation client that simply manages the encryption of your cloud data for you.
+        </p>
+      </header>
+      <button class="fancy" class="navigationLink" onclick="navigate(this.getAttribute('data-target'))" data-target="accounts">GET STARTED</button>
+    </div>
+    <div id="panel-accounts">
+      <section class="accounts">
+        <header>
+          <div class="banner">
+            <img class="himg" src="images/icons/csp_accounts.svg" alt="" />
+          </div>
+          <h1>Add a Cloud Service Account</h1>
+        </header>
+        <div class="list">
+          <div class="item">
+            <a class="navigationLink" data-target="auth" data-auth="gdrive"><img src="images/icons/gdrive.svg" />
+            <div class="name">Google Drive</div>
+            <img src="images/icons/foward.svg" alt="" class="icon right" /></a>
+          </div>
+          <div class="item">
+            <a class="navigationLink" data-target="auth" data-auth="dropbox"><img src="images/icons/dropbox.svg" />
+            <div class="name">Dropbox</div>
+            <img src="images/icons/foward.svg" alt="" class="icon right" />
+            </a>
+          </div>
+        </div>
+      </section>
+      <footer>
+        <a href="#" class="back navigationLink" data-target="default"><img src="images/icons/back.svg" alt="" /></a>
+      </footer>
+    </div>
+    <div id="panel-auth">
+      <header class="minimal">
+          <h3></h3>
+      </header>
+      <section class="auth">
+      </section>
+      <footer>
+        <a href="#" class="back navigationLink" data-target="accounts"><img src="images/icons/back.svg" alt="" /></a>
+      </footer>
+    </div>
+    <div id="panel-masterpass">
+      <section id="masterpassprompt">
+        <header>
+          <div class="banner">
+            <img class="himg" src="images/icons/CryptoSyncVault.svg" alt="" />
+          </div>
+          <h1>Set a MasterPass</h1>
+          <img class="info" src="images/icons/info.svg" alt="" />
+          <p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass</p>
+        </header>
+        <form action="#">
+          <div class="masterpass">
+            <input type="password" name="name" id="name" class="" placeholder="********" />
+            <label for="password">INCORRECT MASTER PASSWORD</label>
+          </div>
+
+        </form>
+        <button class="fancy">SET</button>
+        <p class="note">DO NOT lose your MasterPass! Please Store it safely.
+          <br/>If lost, all previously synced data will be unrecoverable!</p>
+      </section>
+      <footer>
+        <a href="#" class="back navigationLink" data-target="accounts"><img src="images/icons/back.svg" alt="" /></a>
+      </footer>
+    </div>
+    <div id="panel-done">
+      <header>
+        <div class="banner">
+          <img src="images/icons/done.svg" alt="some" class="himg" />
+        </div>
+        <h1>All done!</h1>
+        <p>You have successfully setup Crypto.Sync. It will shortly start doing its magic and protecting your privacy.</p>
+      </header>
+      <button class="fancy" class="done navigationLink">FINISH</button>
+      <footer class="credit">
+        <img src="images/icons/code.svg" alt="" class="icon" /> with <img src="images/icons/heart.svg" alt="" class="icon" /> by <a href="https://git.io/HR">Habib Rehman</a>
+      </footer>
+    </div>
+  </div>
+</section>
+	<script type="text/javascript">
+		window.$ = window.jQuery = require('jquery');
+		navigate("default");
+		navigationLinks = $('.navigationLink');
+		navigationLinks.each( function(index) {
+		    $(this).click(function() {
+					if(this.hasAttribute("data-auth")) navigate(this.getAttribute("data-target"), this.getAttribute("data-auth"));
+		      navigate(this.getAttribute("data-target"));
+		    });
+		});
+
+		function navigate(panelID, authType) {
+			var oldSel = $('.panel-container > div.current');
+			var currSel = $("#panel-"+panelID);
+		  if (authType){
+		    console.log("AuthType: "+authType);
+		    var title = (authType === "gdrive") ? "Google Drive authentication" : "Dropbox authentication";
+		    currSel.find('header > h3').text(title);
+		  }
+			if (oldSel) oldSel.removeClass("current");
+			$("#panel-"+panelID).addClass("current");
+		}
+		// var ipcRenderer = require('electron').ipcRenderer;
+		// var current = $("div.current");
+		//
+		// function handleSubmit() {
+		// 	var MasterPass = current.find("#masterpass"),
+		// 			label = current.find("div.masterpass > label");
+		// 	console.log("MasterPass: "+MasterPass.val());
+		// 	if(!(MasterPass.val())) {
+		// 		MasterPass.addClass("invalid");
+		// 		label.html("EMPTY MASTERPASS");
+		// 		label.css("display", "block");
+		// 		label.css("color", "#9F3A38");
+		// 	} else {
+		// 		// TO DO: Send another arg to distinguish input type
+		// 		// (i.e. masterpass, shares, reset)
+		// 		ipcRenderer.sendSync('masterpass-submission', MasterPass.val(), current.attr('id'));
+		// 		label.html("INCORRECT MASTERPASS");
+		// 		MasterPass.removeClass("invalid")
+		// 		current.find("div.masterpass > label").css("display", "none");
+		// 	}
+		// }
+	</script>
+</body>
+</html>

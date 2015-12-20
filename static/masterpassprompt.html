@@ -10,7 +10,7 @@
 	<section id="masterpassprompt">
 		<img src="images/icons/CryptoSyncvault.svg" alt="some" id="vault" />
 		<div class="panel-container">
-			<div id="default">
+			<div id="panel-default">
 				<header>
 					<h1>Unlock the Vault</h1>
 					<p>Please enter your Master Password to unlock the vault
@@ -36,7 +36,7 @@
 					<a class="navigationLink" data-target="shares">Got shares?</a>
 				</footer>
 			</div>
-			<div id="shares">
+			<div id="panel-shares">
 				<header>
 					<h1>Unlock the Vault</h1>
 					<p>Please enter your Secret Shares to unlock the vault
@@ -60,7 +60,7 @@
 					<a class="back navigationLink" data-target="default"><img src=" images/icons/back.svg" alt=" " /></a>
 				</footer>
 			</div>
-			<div id="reset">
+			<div id="panel-reset">
 				<header>
 					<h1>Reset the MasterPass</h1>
 					<p>Please enter a new secure MasterPass
@@ -84,26 +84,24 @@
 		</div>
 	</section>
 	<script type="text/javascript">
-		window.$ = window.jQuery = require('jquery');
 		var ipcRenderer = require('electron').ipcRenderer;
+		window.$ = window.jQuery = require('jquery');
 
 		navigate("default");
-		navigationLinks = document.getElementsByClassName('navigationLink');
-		for (var i = 0; i < navigationLinks.length; i++) {
-			navigationLinks[i].addEventListener('click',function(e){
-				navigate(this.getAttribute("data-target"));
-			});
-		}
+		navigationLinks = $('.navigationLink');
+		navigationLinks.each( function(index) {
+		    $(this).click(function() {
+		      navigate(this.getAttribute("data-target"));
+		    });
+		});
 
 		function navigate(panelID) {
-			var oldSelection = document.querySelector('.panel-container > div.current');
-			if (oldSelection) oldSelection.classList.remove("current");
-
-			(document.getElementById(panelID)).classList.add("current");
+			var oldSelection = $('.panel-container > div.current');
+			if (oldSelection) oldSelection.removeClass("current");
+			$("#panel-"+panelID).addClass("current");
 		}
 
 		var current = $("div.current");
-		console.log(current.attr('id'));
 		function handleSubmit() {
 			var MasterPass = current.find("#masterpass"),
 					label = current.find("div.masterpass > label");
