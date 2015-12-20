@@ -61,7 +61,6 @@
           <h3></h3>
       </header>
       <section class="auth">
-				<button type="button" name="button" class="navigationLink" data-target="done"></button>
       </section>
       <footer>
         <a href="#" class="back navigationLink" data-target="accounts"><img src="images/icons/back.svg" alt="" /></a>
@@ -95,7 +94,7 @@
     <div id="panel-done">
       <header>
         <div class="banner">
-          <img src="images/icons/done.svg" alt="some" class="himg" />
+          <img src="images/icons/done.svg" class="himg" />
         </div>
         <h1>All done!</h1>
         <p>You have successfully setup Crypto.Sync. It will shortly start doing its magic and protecting your privacy.</p>
@@ -123,8 +122,8 @@
 			var currSel = $("#panel-"+panelID);
 		  if (authType){
 		    console.log("AuthType: "+authType);
-		    var title = (authType === "gdrive") ? "Google Drive authentication" : "Dropbox authentication";
-		    currSel.find('header > h3').text(title);
+		    var title = (authType === "gdrive") ? "Google Drive" : "Dropbox";
+		    currSel.find('header > h3').text(title+" authentication");
 		  }
 			if (oldSel) oldSel.removeClass("current");
 			$("#panel-"+panelID).addClass("current");
