@@ -11,12 +11,12 @@ const google = require('googleapis');
 const googleAuth = require('google-auth-library');
 
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
-const TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH ||
-    process.env.USERPROFILE) + '/.credentials/';
+const TOKEN_DIR = global.paths.appData + '/.credentials/';
 const TOKEN_PATH = TOKEN_DIR + 'drive-nodejs-quickstart.json';
 
+console.log("appData dir: "+global.paths.appData);
 // Load client secrets from a local file.
-fs.readFile('client_secret.json', function processClientSecrets(err, content) {
+fs.readFile(global.paths.appData+'/client_secret.json', function processClientSecrets(err, content) {
   if (err) {
     console.log('Error loading client secret file: ' + err);
     return;
@@ -33,7 +33,7 @@ fs.readFile('client_secret.json', function processClientSecrets(err, content) {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-function authorize(credentials, callback) {
+exports.authorize = function(credentials, callback) {
   var clientSecret = credentials.installed.client_secret;
   var clientId = credentials.installed.client_id;
   var redirectUrl = credentials.installed.redirect_uris[0];
@@ -49,7 +49,7 @@ function authorize(credentials, callback) {
       callback(oauth2Client);
     }
   });
-}
+};
 
 /**
  * Get and store new token after prompting for user authorization, and then
@@ -64,22 +64,15 @@ function getNewToken(oauth2Client, callback) {
     access_type: 'offline',
     scope: SCOPES
   });
-  console.log('Authorize this app by visiting this url: ', authUrl);
-  var rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  rl.question('Enter the code from that page here: ', function(code) {
-    rl.close();
-    oauth2Client.getToken(code, function(err, token) {
-      if (err) {
-        console.log('Error while trying to retrieve access token', err);
-        return;
-      }
-      oauth2Client.credentials = token;
-      storeToken(token);
-      callback(oauth2Client);
-    });
+	// GO TO URL "authUrl" in BrowserWindow to auth user
+  oauth2Client.getToken(code, function(err, token) {
+    if (err) {
+      console.log('Error while trying to retrieve access token', err);
+      return;
+    }
+    oauth2Client.credentials = token;
+    storeToken(token);
+    callback(oauth2Client);
   });
 }
 

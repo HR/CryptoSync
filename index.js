@@ -23,6 +23,7 @@ let mainWindow;
 global.paths = {
 	home: fs.getHomeDirectory()+"/CryptoSync",
 	mdb: app.getPath("appData")+"/mdb",
+	appData: app.getPath("appData"),
 	vault: fs.getHomeDirectory()+"/CryptoSync/Vault"
 };
 
