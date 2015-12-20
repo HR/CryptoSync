@@ -96,8 +96,17 @@ p.note {
   transform: translateX(-110%);
   transition: transform 0.5s;
 }
+
+// .panel-container > div > footer {
+// 	transform: translateX(-110%);
+// }
+//
+// .panel-container > div.current > footer {
+// 	transform: translateX(100%);
+// }
+
 .panel-container > div.current ~ div {
-  transform: translateX(100%);
+  transform: translateX(110%);
 }
 .panel-container > div.current {
   display: block;
@@ -160,6 +169,7 @@ footer.credit {
   }
 }
 footer {
+	display: flex;
   clear: both;
   position: absolute;
   border-top: 1px solid @light;

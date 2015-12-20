@@ -2,7 +2,7 @@
 <!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 612 792" enable-background="new 0 0 612 792" xml:space="preserve">
+	 viewBox="0 90 612 611.9" enable-background="new 0 90 612 611.9" xml:space="preserve">
 <defs  xmlns="http://www.w3.org/1999/xhtml">
 	<style  type="text/css">
 		<![CDATA[
@@ -200,10 +200,11 @@ body #intercom-container .intercom-sheet-header-close-button .intercom-sheet-hea
 #elevio-widget-container .elevio-loader-inner, #elevio-inline .elevio-loader-inner { border-bottom-color: rgb(50, 194, 77) !important; }
 #elevio-widget-container .elevio-body { bottom: 30px; }
 			
+			
 			]]>
 	</style>
 </defs>
-<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="306" y1="702" x2="306" y2="90">
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="306" y1="90" x2="306" y2="702" gradientTransform="matrix(1 0 0 -1 0 792)">
 	<stop  offset="0" style="stop-color:#F46B45"/>
 	<stop  offset="1" style="stop-color:#EEA849"/>
 </linearGradient>
