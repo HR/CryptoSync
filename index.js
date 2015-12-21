@@ -7,18 +7,27 @@ const ipc = electron.ipcMain;
 // const Tray = electron.Tray;
 const fs = require('fs-plus');
 const Db = require('./src/Db');
-exports.paths = global.paths = {
+global.paths = {
 	home: fs.getHomeDirectory()+"/CryptoSync",
 	mdb: app.getPath("userData")+"/mdb",
 	userData: app.getPath("userData"),
 	vault: fs.getHomeDirectory()+"/CryptoSync/Vault"
 };
+
+// logProp(global.paths);
+// logProp(app);
+
 // enable remote debugging
 // app.commandLine.appendSwitch('remote-debugging-port', '8315');
 // app.commandLine.appendSwitch('host-rules', 'MAP * 127.0.0.1');
 
 // report crashes to the Electron project
-require('crash-reporter').start();
+// require('crash-reporter').start({
+//	 productName: 'CryptoSync',
+//	 companyName: 'CryptoSync',
+//	 submitURL: 'https://git.io/HR',
+//	 autoSubmit: false
+// });
 
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')();
@@ -95,21 +104,24 @@ function createSetup() {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	const win = new BrowserWindow({
-		width: 600,
+		width: 700,
 		height: 400,
 		center: true
 		// width: 400,
 		// height: 460
 		// resizable: false,
 	});
-	win.loadURL(`file://${__dirname}/static/setup.html`);
+	win.loadURL(`file://${__dirname}/static/setup.html`, {
+		paths: {l:"lol"},
+	});
 	win.openDevTools();
+
 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
 		if (intype === "default") {
-			console.log("Masterpass set...");
-			Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-				// body...
-			});
+			console.log("Masterpass setting...");
+			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+			// 	// body...
+			// });
 		}
 	});
 

@@ -5,12 +5,12 @@
 /* TO DO:
 * - Add auth
 */
+const electron = require('electron');
+const app = electron.app;
 const fs = require('fs');
 const readline = require('readline');
 const google = require('googleapis');
 const googleAuth = require('google-auth-library');
-const paths  = require('../index.js').paths;
-let secretPath = paths.userData+'/client_secret.json';
 
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // const TOKEN_DIR = global.paths.appData + '/.credentials/';
@@ -24,7 +24,7 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-exports.authorize = function(callback) {
+exports.authorize = function(secretPath, mdb, callback) {
 	fs.readFile(secretPath, function processClientSecrets(err, content) {
 	  if (err) {
 	    console.log('Error loading client secret file: ' + err);
@@ -32,6 +32,7 @@ exports.authorize = function(callback) {
 	  }
 	  // Authorize a client with the loaded credentials, then call the
 	  // Drive API.
+		console.log("Got credentials file content ");
 	  var credentials = JSON.parse(content);
 		var clientSecret = credentials.installed.client_secret;
 	  var clientId = credentials.installed.client_id;
@@ -47,16 +48,18 @@ exports.authorize = function(callback) {
   // })
 
   // Check if we have previously stored a token.
-	global.mdb.get('gdrive-token', function (err, token) {
+	mdb.get('gdrive-token', function (err, token) {
 	  if (err) {
 		    if (err.notFound) {
 		      // handle a 'NotFoundError' here
+					console.log("TOKEN DOENS'T EXIT, Calling getNewToken...");
 					getNewToken(oauth2Client, callback);
 		      return;
 		    }
 		    // I/O or other error, pass it up the callback chain
 		    throw err;
 		  }
+			console.log("TOKEN FOUND: "+token);
 			oauth2Client.credentials = JSON.parse(token);
       callback(oauth2Client);
 	});
@@ -106,7 +109,7 @@ function getNewToken(oauth2Client, callback) {
  * @param {Object} token The token to store to disk.
  */
 function storeToken(token) {
-	db.put('gdrive-token', JSON.stringify(token), function (err) {
+	global.mdb.put('gdrive-token', JSON.stringify(token), function (err) {
 	  if (err) throw err; // some kind of I/O error
 		console.log('Token stored in mdb');
 	});
