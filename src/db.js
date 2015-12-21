@@ -20,7 +20,7 @@ function Db(path, password) {
 	 // Initialize necessary methods/properties from levelup in this instance
 	// levelup.call(this);
 
-	pass = password || false;
+	var pass = password || false;
 	if (fs.isFileSync(path)) {
 		// prompt user for master password and store temporarily (while running)
 		if (pass) {
@@ -45,7 +45,7 @@ function Db(path, password) {
 }
 
 // Inherit functions from levelup's prototype
-// util.inherits(Db, levelup);
+util.inherits(Db, levelup);
 
 /*	Crypto
  *
@@ -81,7 +81,7 @@ Db.prototype.encrypt = function (path, pass, callback) {
 	});
 };
 
-Db.prototype.close = function (path) {
+Db.prototype.closeW = function (path) {
 	// encrypt Db after closing using the temporarily store MasterPass
 	levelup.close();
 	fs.readFileSync(path, 'utf8', function (err, data) {

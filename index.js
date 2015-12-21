@@ -7,7 +7,12 @@ const Menu = electron.Menu;
 const Tray = electron.Tray;
 const fs = require('fs-plus');
 const Db = require('./src/Db');
-
+global.paths = {
+	home: fs.getHomeDirectory()+"/CryptoSync",
+	mdb: app.getPath("userData")+"/mdb",
+	userData: app.getPath("userData"),
+	vault: fs.getHomeDirectory()+"/CryptoSync/Vault"
+};
 // enable remote debugging
 // app.commandLine.appendSwitch('remote-debugging-port', '8315');
 // app.commandLine.appendSwitch('host-rules', 'MAP * 127.0.0.1');
@@ -20,12 +25,6 @@ require('electron-debug')();
 
 // prevent window being garbage collected
 let mainWindow;
-global.paths = {
-	home: fs.getHomeDirectory()+"/CryptoSync",
-	mdb: app.getPath("appData")+"/mdb",
-	appData: app.getPath("appData"),
-	vault: fs.getHomeDirectory()+"/CryptoSync/Vault"
-};
 
 // function createMainWindow() {
 //	 const win = new BrowserWindow({
@@ -81,7 +80,7 @@ function createMasterPassPrompt() {
 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
 		if (intype === "default") {
 			console.log("Decrypting DB using masspass... using masterpass:"+masterpass);
-			// Db.decrypt(paths.vault, masspass, function(succ, err) {
+			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
 			//	 // body...
 			// });
 		}
@@ -108,7 +107,7 @@ function createSetup() {
 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
 		if (intype === "default") {
 			console.log("Masterpass set...");
-			Db.decrypt(paths.vault, masspass, function(succ, err) {
+			Db.decrypt(global.paths.vault, masspass, function(succ, err) {
 				// body...
 			});
 		}
@@ -130,9 +129,9 @@ function createMenubar() {
 function Setup() {
 	// Guide user through setting up a MasterPass and connecting to cloud services
 	// TO DO: transform into Async using a Promise
-	fs.makeTreeSync(paths.home);
-	fs.makeTreeSync(paths.vault);
-	global.mdb = new Db(paths.mdb);
+	fs.makeTreeSync(global.paths.home);
+	fs.makeTreeSync(global.paths.vault);
+	global.mdb = new Db(global.paths.mdb);
 	// Setup routine
 	let setupWindow = createSetup();
 }
@@ -140,7 +139,8 @@ function Setup() {
 
 function init() {
 	// Decrypt db (the Vault) and get ready for use
-	global.vault = new Db(paths.vault, MasterPass);
+	// create mdb
+	global.vault = new Db(global.paths.vault, MasterPass);
 }
 
 /**
@@ -152,6 +152,7 @@ function onClosed() {
 	// for multiple windows store them in an array
 	// TO DO: encryot the db
 	console.log("win.closed event emitted;\n Calling on onClosed");
+	global.mdb.close();
 	mainWindow = null;
 }
 
@@ -178,7 +179,7 @@ app.on('activate', () => {
 });
 
 app.on('ready', () => {
-	let firstRun = (!fs.isDirectorySync(paths.home)) && (!fs.isFileSync(paths.mdb));
+	let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
 	if (firstRun) {
 		console.log("First run. Creating Setup wizard...");
 		Setup();
@@ -187,8 +188,11 @@ app.on('ready', () => {
 		// start menubar
 		// console.log("Normal run. Creating MasterPass prompt...");
 		// let masterPassPrompt = createMasterPassPrompt();
+		console.log(global.paths.userData);
+		global.mdb = new Db(global.paths.mdb);
+
 		console.log("Normal run. Creating Setup...");
-		let setupWindow = createSetup();
+		mainWindow = createSetup();
 		//init();
 		// Prompt for MasterPass OR retrieve temporarily stored MasterPass
 		// (if user has select the store MasterPass tenporarily)

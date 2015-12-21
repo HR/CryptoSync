@@ -61,6 +61,8 @@
           <h3></h3>
       </header>
       <section class="auth">
+				<iframe id="frame" src="" width="100%" height="100%" frameborder="0">
+				</iframe>
       </section>
       <footer>
         <a href="#" class="back navigationLink" data-target="accounts"><img src="images/icons/back.svg" alt="" /></a>
@@ -108,7 +110,10 @@
 </section>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
-		navigate("default");
+		var OAuth = require('../src/auth.js');
+		const remote = require('electron').remote;
+		const remoteWin = remote.getCurrentWindow();
+
 		navigationLinks = $('.navigationLink');
 		navigationLinks.each( function(index) {
 		    $(this).click(function() {
@@ -117,16 +122,37 @@
 		    });
 		});
 
+		navigate("default");
+		
 		function navigate(panelID, authType) {
 			var oldSel = $('.panel-container > div.current');
 			var currSel = $("#panel-"+panelID);
 		  if (authType){
-		    console.log("AuthType: "+authType);
+		    console.log("authType: "+authType);
 		    var title = (authType === "gdrive") ? "Google Drive" : "Dropbox";
+				initAuth(authType);
 		    currSel.find('header > h3').text(title+" authentication");
 		  }
 			if (oldSel) oldSel.removeClass("current");
 			$("#panel-"+panelID).addClass("current");
+		}
+
+		function initAuth(authType) {
+			if (authType === "gdrive") {
+				OAuth.authorize(function (authUrl, callback) {
+					console.log("Loading authUrl... "+authUrl);
+					$("#frame").attr("src", authUrl);
+					$('#frame').load(function(){
+					  var nURL = this.contentWindow.location.href;
+						if (nURL.match) {
+
+						}
+					});
+					remoteWin.show();
+					// callback(err, token);
+				})
+			}
+
 		}
 		// var ipcRenderer = require('electron').ipcRenderer;
 		// var current = $("div.current");
