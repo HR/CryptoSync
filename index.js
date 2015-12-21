@@ -11,7 +11,13 @@ global.paths = {
 	home: fs.getHomeDirectory()+"/CryptoSync",
 	mdb: app.getPath("userData")+"/mdb",
 	userData: app.getPath("userData"),
-	vault: fs.getHomeDirectory()+"/CryptoSync/Vault"
+	vault: fs.getHomeDirectory()+"/CryptoSync/Vault",
+};
+
+global.views = {
+	main: "file://${__dirname}/static/index.html",
+	masterpassprompt: "file://${__dirname}/static/masterpassprompt.html",
+	setup: "file://${__dirname}/static/setup.html"
 };
 
 // logProp(global.paths);
@@ -41,7 +47,7 @@ let mainWindow;
 //		 height: 400
 //	 });
 //
-//	 win.loadURL(`file://${__dirname}/static/index.html`);
+//	 win.loadURL(global.views.main);
 //	 win.webContents.on('did-finish-load', function() {
 //		 // Query all cookies.
 //		 win.webContents.session.cookies.get({}, function(error, cookies) {
@@ -84,7 +90,7 @@ function createMasterPassPrompt() {
 		// height: 460
 		// resizable: false,
 	});
-	win.loadURL(`file://${__dirname}/static/masterpassprompt.html`);
+	win.loadURL(global.views.masterpassprompt);
 	win.openDevTools();
 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
 		if (intype === "default") {
@@ -104,16 +110,14 @@ function createSetup() {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	const win = new BrowserWindow({
-		width: 700,
+		width: 800,
 		height: 400,
 		center: true
 		// width: 400,
 		// height: 460
 		// resizable: false,
 	});
-	win.loadURL(`file://${__dirname}/static/setup.html`, {
-		paths: {l:"lol"},
-	});
+	win.loadURL(global.views.setup);
 	win.openDevTools();
 
 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
