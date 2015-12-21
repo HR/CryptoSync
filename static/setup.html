@@ -177,12 +177,7 @@
 					// callback(err, token);
 				})
 			}
-
 		}
-
-		require('electron').ipcRenderer.on("test", function(event, val) {
-			rconsole.log("IPCRENDER test emitted,\n val: " + val + "\n");
-		});
 
 		ipcRenderer.on("auth-result", function(event, url) {
 			rconsole.log("IPCRENDER auth-result emitted,\n URL: " + url + "\n");

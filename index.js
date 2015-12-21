@@ -125,7 +125,7 @@ function createSetup() {
 		console.log("IPCMAIN will-navigate emitted,\n URL: " + url + "\n");
 		var regex = /http:\/\/localhost/g;
 		if (regex.test(url)) {
-			win.loadURL(global.views.setup);
+			// win.loadURL(global.views.setup);
 			event.preventDefault();
 			console.log("MAIN: url matched, sending to RENDER...");
 			webContents.send("auth-result", url);
