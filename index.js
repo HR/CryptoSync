@@ -3,11 +3,11 @@ const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 const ipc = electron.ipcMain;
-const Menu = electron.Menu;
-const Tray = electron.Tray;
+// const Menu = electron.Menu;
+// const Tray = electron.Tray;
 const fs = require('fs-plus');
 const Db = require('./src/Db');
-global.paths = {
+exports.paths = global.paths = {
 	home: fs.getHomeDirectory()+"/CryptoSync",
 	mdb: app.getPath("userData")+"/mdb",
 	userData: app.getPath("userData"),
@@ -188,7 +188,6 @@ app.on('ready', () => {
 		// start menubar
 		// console.log("Normal run. Creating MasterPass prompt...");
 		// let masterPassPrompt = createMasterPassPrompt();
-		console.log(global.paths.userData);
 		global.mdb = new Db(global.paths.mdb);
 
 		console.log("Normal run. Creating Setup...");

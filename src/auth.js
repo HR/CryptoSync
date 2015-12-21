@@ -8,9 +8,9 @@
 const fs = require('fs');
 const readline = require('readline');
 const google = require('googleapis');
-const index = require('../index.js');
 const googleAuth = require('google-auth-library');
-// const paths  = require('./paths.js');
+const paths  = require('../index.js').paths;
+let secretPath = paths.userData+'/client_secret.json';
 
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // const TOKEN_DIR = global.paths.appData + '/.credentials/';
@@ -25,7 +25,7 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
  * @param {function} callback The callback to call with the authorized client.
  */
 exports.authorize = function(callback) {
-	fs.readFile(global.paths.userData+'/client_secret.json', function processClientSecrets(err, content) {
+	fs.readFile(secretPath, function processClientSecrets(err, content) {
 	  if (err) {
 	    console.log('Error loading client secret file: ' + err);
 	    return;
