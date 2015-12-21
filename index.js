@@ -8,16 +8,16 @@ const ipc = electron.ipcMain;
 const fs = require('fs-plus');
 const Db = require('./src/Db');
 global.paths = {
-	home: fs.getHomeDirectory()+"/CryptoSync",
-	mdb: app.getPath("userData")+"/mdb",
-	userData: app.getPath("userData"),
-	vault: fs.getHomeDirectory()+"/CryptoSync/Vault",
+  home: fs.getHomeDirectory() + "/CryptoSync",
+  mdb: app.getPath("userData") + "/mdb",
+  userData: app.getPath("userData"),
+  vault: fs.getHomeDirectory() + "/CryptoSync/Vault",
 };
 
 global.views = {
-	main: "file://${__dirname}/static/index.html",
-	masterpassprompt: "file://${__dirname}/static/masterpassprompt.html",
-	setup: "file://${__dirname}/static/setup.html"
+  main: `file://${__dirname}/static/index.html`,
+  masterpassprompt: `file://${__dirname}/static/masterpassprompt.html`,
+  setup: `file://${__dirname}/static/setup.html`
 };
 
 // logProp(global.paths);
@@ -80,62 +80,74 @@ let mainWindow;
  **/
 
 function createMasterPassPrompt() {
-	// var BrowserWindow = electron.remote.BrowserWindow;
-	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
-	const win = new BrowserWindow({
-		width: 800,
-		height: 480,
-		center: true
-		// width: 400,
-		// height: 460
-		// resizable: false,
-	});
-	win.loadURL(global.views.masterpassprompt);
-	win.openDevTools();
-	ipc.on('masterpass-submission', function(event, masterpass, intype) {
-		if (intype === "default") {
-			console.log("Decrypting DB using masspass... using masterpass:"+masterpass);
-			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-			//	 // body...
-			// });
-		}
-	});
+  // var BrowserWindow = electron.remote.BrowserWindow;
+  // BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
+  const win = new BrowserWindow({
+    width: 800,
+    height: 480,
+    center: true
+      // width: 400,
+      // height: 460
+      // resizable: false,
+  });
+  win.loadURL(global.views.masterpassprompt);
+  win.openDevTools();
+  ipc.on('masterpass-submission', function(event, masterpass, intype) {
+    if (intype === "default") {
+      console.log("Decrypting DB using masspass... using masterpass:" + masterpass);
+      // Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+      //	 // body...
+      // });
+    }
+  });
 
-	win.on('closed', onClosed);
+  win.on('closed', onClosed);
 
-	return win;
+  return win;
 }
 
 function createSetup() {
-	// var BrowserWindow = require('electron').remote.BrowserWindow;
-	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
-	const win = new BrowserWindow({
-		width: 800,
-		height: 400,
-		center: true
-		// width: 400,
-		// height: 460
-		// resizable: false,
-	});
-	win.loadURL(global.views.setup);
-	win.openDevTools();
-
-	ipc.on('masterpass-submission', function(event, masterpass, intype) {
-		if (intype === "default") {
-			console.log("Masterpass setting...");
-			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-			// 	// body...
-			// });
+  // var BrowserWindow = require('electron').remote.BrowserWindow;
+  // BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
+  const win = new BrowserWindow({
+    width: 800,
+    height: 400,
+    center: true
+      // width: 400,
+      // height: 460
+      // resizable: false,
+  });
+  win.loadURL(global.views.setup);
+  win.openDevTools();
+  var webContents = win.webContents;
+  webContents.on("will-navigate", function(event, url) {
+		webContents.send("test", "lol");
+		console.log("IPCMAIN will-navigate emitted,\n URL: " + url + "\n");
+		var regex = /http:\/\/localhost/g;
+		if (regex.test(url)) {
+			win.loadURL(global.views.setup);
+			event.preventDefault();
+			console.log("MAIN: url matched, sending to RENDER...");
+			webContents.send("auth-result", url);
 		}
-	});
+  });
 
-	win.on('closed', onClosed);
+  ipc.on('masterpass-submission', function(event, masterpass, intype) {
+    if (intype === "default") {
+      console.log("Masterpass setting...");
+      // Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+      // 	// body...
+      // });
+    }
+  });
 
-	return win;
+  win.on('closed', onClosed);
+
+  return win;
 }
 
 function createMenubar() {
-	// Implement menubar
+  // Implement menubar
 }
 
 /**
@@ -143,20 +155,20 @@ function createMenubar() {
  **/
 
 function Setup() {
-	// Guide user through setting up a MasterPass and connecting to cloud services
-	// TO DO: transform into Async using a Promise
-	fs.makeTreeSync(global.paths.home);
-	fs.makeTreeSync(global.paths.vault);
-	global.mdb = new Db(global.paths.mdb);
-	// Setup routine
-	let setupWindow = createSetup();
+  // Guide user through setting up a MasterPass and connecting to cloud services
+  // TO DO: transform into Async using a Promise
+  fs.makeTreeSync(global.paths.home);
+  fs.makeTreeSync(global.paths.vault);
+  global.mdb = new Db(global.paths.mdb);
+  // Setup routine
+  let setupWindow = createSetup();
 }
 
 
 function init() {
-	// Decrypt db (the Vault) and get ready for use
-	// create mdb
-	global.vault = new Db(global.paths.vault, MasterPass);
+  // Decrypt db (the Vault) and get ready for use
+  // create mdb
+  global.vault = new Db(global.paths.vault, MasterPass);
 }
 
 /**
@@ -164,58 +176,58 @@ function init() {
  **/
 
 function onClosed() {
-	// dereference the window
-	// for multiple windows store them in an array
-	// TO DO: encryot the db
-	console.log("win.closed event emitted;\n Calling on onClosed");
-	global.mdb.close();
-	mainWindow = null;
+  // dereference the window
+  // for multiple windows store them in an array
+  // TO DO: encryot the db
+  console.log("win.closed event emitted;\n Calling on onClosed");
+  global.mdb.close();
+  mainWindow = null;
 }
 
 // Check for connection status
 ipc.on('online-status-changed', function(event, status) {
-	console.log(status);
+  console.log(status);
 });
 
 app.on('window-all-closed', () => {
-	console.log("window-all-closed event emitted");
-	if (process.platform !== 'darwin') {
-		// Cease any db OPs; encrypt database before quitting the app
-		console.log("Calling db.close()");
-		global.vault.close();
-		app.quit();
-	}
+  console.log("window-all-closed event emitted");
+  if (process.platform !== 'darwin') {
+    // Cease any db OPs; encrypt database before quitting the app
+    console.log("Calling db.close()");
+    global.vault.close();
+    app.quit();
+  }
 });
 
 app.on('activate', () => {
-	console.log("activate event emitted");
-	if (!mainWindow) {
-		mainWindow = createMainWindow();
-	}
+  console.log("activate event emitted");
+  if (!mainWindow) {
+    mainWindow = createMainWindow();
+  }
 });
 
 app.on('ready', () => {
-	let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
-	if (firstRun) {
-		console.log("First run. Creating Setup wizard...");
-		Setup();
-	} else {
-		// Run User through Setup/First Install UI
-		// start menubar
-		// console.log("Normal run. Creating MasterPass prompt...");
-		// let masterPassPrompt = createMasterPassPrompt();
-		global.mdb = new Db(global.paths.mdb);
+  let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
+  if (firstRun) {
+    console.log("First run. Creating Setup wizard...");
+    Setup();
+  } else {
+    // Run User through Setup/First Install UI
+    // start menubar
+    // console.log("Normal run. Creating MasterPass prompt...");
+    // let masterPassPrompt = createMasterPassPrompt();
+    global.mdb = new Db(global.paths.mdb);
 
-		console.log("Normal run. Creating Setup...");
-		mainWindow = createSetup();
-		//init();
-		// Prompt for MasterPass OR retrieve temporarily stored MasterPass
-		// (if user has select the store MasterPass tenporarily)
-		// > look into persistent cookies/sessions to temporarily store MasterPass
-		// sessions are shared between open windows
-		// so cookies set in either main window/menubar accessible in either
-		//mainWindow = createMainWindow();
-		// MasterPassPromptWindow = createMPassPromptWindow();
-	}
-	// var appIcon = new Tray('static/images/mb/trayic_light.png');
+    console.log("Normal run. Creating Setup...");
+    mainWindow = createSetup();
+    //init();
+    // Prompt for MasterPass OR retrieve temporarily stored MasterPass
+    // (if user has select the store MasterPass tenporarily)
+    // > look into persistent cookies/sessions to temporarily store MasterPass
+    // sessions are shared between open windows
+    // so cookies set in either main window/menubar accessible in either
+    //mainWindow = createMainWindow();
+    // MasterPassPromptWindow = createMPassPromptWindow();
+  }
+  // var appIcon = new Tray('static/images/mb/trayic_light.png');
 });

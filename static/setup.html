@@ -55,6 +55,9 @@
 								<img src="images/icons/foward.svg" alt="" class="icon right" />
 							</a>
 						</div>
+						<div class="item err">
+							<div class="name"></div>
+						</div>
 					</div>
 				</section>
 				<footer>
@@ -70,14 +73,14 @@
 						<svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
 							<circle class="path" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
 						</svg>
-						<div>Authorising...</div>
 					</div>
+					<h1>Authorising...</h1>
 				</header>
-				<footer>
+				<!-- <footer>
 					<a href="#" class="back navigationLink" data-target="accounts">
 						<img src="images/icons/back.svg" alt="" />
 					</a>
-				</footer>
+				</footer> -->
 			</div>
 			<!-- END: INJECT INTO BROWSER CONTENT -->
 			<div id="panel-masterpass">
@@ -127,10 +130,14 @@
 		window.$ = window.jQuery = require('jquery');
 		var OAuth = require('../src/auth.js');
 		const remote = require('electron').remote;
+		const ipcRenderer = require('electron').ipcRenderer;
 		const remoteWin = remote.getCurrentWindow();
 		const paths = remote.getGlobal("paths");
 		const views = remote.getGlobal("views");
 		const mdb = remote.getGlobal("mdb");
+		const rconsole = remote.getGlobal("console");
+		const webContents = remoteWin.webContents;
+		var authErr = $("div.item.err");
 
 		navigationLinks = $('.navigationLink');
 		navigationLinks.each(function(index) {
@@ -147,39 +154,68 @@
 			var currSel = $("#panel-" + panelID);
 			if (authType) {
 				console.log("authType: " + authType);
-				var title = (authType === "gdrive") ? "Google Drive" : "Dropbox";
+				authErr.hide();
 				initAuth(authType);
-				currSel.find('header > h3').text(title + " authentication");
 			}
 			if (oldSel) oldSel.removeClass("current");
 			$("#panel-" + panelID).addClass("current");
 		}
 
+		function getParam(name, url) {
+			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+				results = regex.exec(url);
+			return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		}
+
 		function initAuth(authType) {
 			if (authType === "gdrive") {
 				OAuth.authorize(paths.userData + "/client_secret.json", mdb, function(authUrl, callback) {
-					var regex = "/http:\/\/localhost/gi";
-					console.log("Loading authUrl... " + authUrl);
+					rconsole.log("Loading authUrl... " + authUrl);
 					remoteWin.loadURL(authUrl);
-					$(window).on('hashchange', function() {
-						console.log("URL changed to: " + window.document.URL);
-						if (regex.test(window.document.URL)) {
-							// code to get AUTH CODE
-
-							// if (success) {
-							// 	navigate("done");
-							// }
-							remoteWin.loadURL(views.setup);
-							navigate("auth");
-						}
-					});
-					remoteWin.show();
+					// IPCWAIT
 					// callback(err, token);
 				})
 			}
 
 		}
-		// var ipcRenderer = require('electron').ipcRenderer;
+
+		require('electron').ipcRenderer.on("test", function(event, val) {
+			rconsole.log("IPCRENDER test emitted,\n val: " + val + "\n");
+		});
+
+		ipcRenderer.on("auth-result", function(event, url) {
+			rconsole.log("IPCRENDER auth-result emitted,\n URL: " + url + "\n");
+			// // code to get AUTH CODE
+			// var err = getParam("error", url);
+			// rconsole.log("\nIPCRENDER err: " + err);
+			// // if error then callback URL is http://localhost/?error=access_denied#
+			// // if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
+			// if (!err) {
+			// 	var code = getParam("code", url);
+			// 	rconsole.log("Got the AUTH CODE: " + code);
+			// 	rconsole.log("Calling callback with the code...");
+			// 	// Send code to call back and redirect
+			// 	// callback(code, function(err, authed) {
+			// 	// 	// body...
+			// 	// });
+			// 	remoteWin.loadURL(views.setup);
+			// 	navigate("auth");
+			// } else if (err === "access_denied") {
+			// 	// if err === access_denied check
+			// 	rconsole.log("ERR: access_denied");
+			// 	authErr.first().text("Access to your account was denied. Please try again.");
+			// 	authErr.show();
+			// 	remoteWin.loadURL(views.setup);
+			// 	navigate("accounts");
+			// } else {
+			// 	rconsole.log("ERR: unknown, " + err);
+			// 	authErr.first().text("Unknown error: " + err);
+			// 	authErr.show();
+			// 	remoteWin.loadURL(views.setup);
+			// 	navigate("accounts");
+			// }
+		});
 		// var current = $("div.current");
 		//
 		// function handleSubmit() {

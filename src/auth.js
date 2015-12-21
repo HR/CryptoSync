@@ -11,6 +11,7 @@ const fs = require('fs');
 const readline = require('readline');
 const google = require('googleapis');
 const googleAuth = require('google-auth-library');
+const rconsole = require('electron').remote.getGlobal("console");
 
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // const TOKEN_DIR = global.paths.appData + '/.credentials/';
@@ -27,19 +28,13 @@ const SCOPES = ['https://www.googleapis.com/auth/drive'];
 exports.authorize = function(secretPath, mdb, callback) {
 	fs.readFile(secretPath, function processClientSecrets(err, content) {
 		if (err) {
-			console.log('Error loading client secret file: ' + err);
+			rconsole.log('Error loading client secret file: ' + err);
 			return;
 		}
 		// Authorize a client with the loaded credentials, then call the
 		// Drive API.
-		console.log("Got credentials file content: \n");
+		rconsole.log("Got credentials file content: \n");
 		var credentials = JSON.parse(content).installed;
-		for (var key in credentials) {
-			if (credentials.hasOwnProperty(key)) {
-				console.log(key + " -> " + credentials[key]);
-			}
-		}
-		console.log("\n");
 		var clientSecret = credentials.client_secret;
 		var clientId = credentials.client_id;
 		var redirectUrl = credentials.redirect_uris[1];
@@ -48,25 +43,25 @@ exports.authorize = function(secretPath, mdb, callback) {
 
 		mdb.get('gdrive-token', function (err, token) {
 			if (err) {
-				console.log(err);
+				rconsole.log(err);
 				// if (err.notFound) {
 					// handle a 'NotFoundError' here
-					console.log("TOKEN DOENS'T EXSIT, Calling getNewToken...");
+					rconsole.log("TOKEN DOENS'T EXSIT, Calling getNewToken...");
 					getNewToken(oauth2Client, callback);
 					return;
 				// }
 				// I/O or other error, pass it up the callback
 			}
-				console.log("TOKEN FOUND: "+token);
+				rconsole.log("TOKEN FOUND: "+token);
 				oauth2Client.credentials = JSON.parse(token);
 				callback(oauth2Client);
 		});
 
 		// global.mdb.get('credentials', function (err, value) {
-		//	 if (err) return console.log('Ooops!', err) // likely the key was not found
+		//	 if (err) return rconsole.log('Ooops!', err) // likely the key was not found
 		//
 		//
-		//	 console.log('name=' + value)
+		//	 rconsole.log('name=' + value)
 		// })
 
 		// Check if we have previously stored a token.
@@ -101,7 +96,7 @@ function getNewToken(oauth2Client, callback) {
 		// function(callback) {
 		// oauth2Client.getToken(code, function(err, token) {
 		//	 if (err) {
-		//		 console.log('Error while trying to retrieve access token', err);
+		//		 rconsole.log('Error while trying to retrieve access token', err);
 		//		 return;
 		//	 }
 		//	 oauth2Client.credentials = token;
@@ -120,7 +115,7 @@ function getNewToken(oauth2Client, callback) {
 function storeToken(token) {
 	global.mdb.put('gdrive-token', JSON.stringify(token), function (err) {
 		if (err) throw err; // some kind of I/O error
-		console.log('Token stored in mdb');
+		rconsole.log('Token stored in mdb');
 	});
 
 }
@@ -138,17 +133,17 @@ function listFiles(auth) {
 		fields: "nextPageToken, files(id, name)"
 	}, function(err, response) {
 		if (err) {
-			console.log('The API returned an error: ' + err);
+			rconsole.log('The API returned an error: ' + err);
 			return;
 		}
 		var files = response.files;
 		if (files.length == 0) {
-			console.log('No files found.');
+			rconsole.log('No files found.');
 		} else {
-			console.log('Files:');
+			rconsole.log('Files:');
 			for (var i = 0; i < files.length; i++) {
 				var file = files[i];
-				console.log('%s (%s)', file.name, file.id);
+				rconsole.log('%s (%s)', file.name, file.id);
 			}
 		}
 	});
