@@ -20,6 +20,7 @@ global.views = {
   setup: `file://${__dirname}/static/setup.html`
 };
 
+
 // logProp(global.paths);
 // logProp(app);
 
@@ -84,7 +85,7 @@ function createMasterPassPrompt() {
   // BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
   const win = new BrowserWindow({
     width: 800,
-    height: 480,
+    height: 500,
     center: true
       // width: 400,
       // height: 460
@@ -121,15 +122,18 @@ function createSetup() {
   win.openDevTools();
   var webContents = win.webContents;
   webContents.on("will-navigate", function(event, url) {
-		webContents.send("test", "lol");
-		console.log("IPCMAIN will-navigate emitted,\n URL: " + url + "\n");
-		var regex = /http:\/\/localhost/g;
-		if (regex.test(url)) {
-			// win.loadURL(global.views.setup);
-			event.preventDefault();
-			console.log("MAIN: url matched, sending to RENDER...");
-			webContents.send("auth-result", url);
-		}
+    console.log("IPCMAIN will-navigate emitted,\n URL: " + url + "\n");
+    var regex = /http:\/\/localhost/g;
+    if (regex.test(url)) {
+      // win.loadURL(global.views.setup);
+      event.preventDefault();
+      win.loadURL(global.views.setup + "?nav_to=auth");
+      console.log("MAIN: url matched, sending to RENDER...");
+      webContents.on('did-finish-load', function() {
+        webContents.send("auth-result", url);
+      });
+
+    }
   });
 
   ipc.on('masterpass-submission', function(event, masterpass, intype) {

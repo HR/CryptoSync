@@ -128,16 +128,17 @@
 	</section>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
-		var OAuth = require('../src/auth.js');
-		const remote = require('electron').remote;
-		const ipcRenderer = require('electron').ipcRenderer;
-		const remoteWin = remote.getCurrentWindow();
-		const paths = remote.getGlobal("paths");
-		const views = remote.getGlobal("views");
-		const mdb = remote.getGlobal("mdb");
-		const rconsole = remote.getGlobal("console");
-		const webContents = remoteWin.webContents;
-		var authErr = $("div.item.err");
+		var OAuth = require('../src/auth.js'),
+				remote = require('electron').remote,
+				ipcRenderer = require('electron').ipcRenderer,
+				remoteWin = remote.getCurrentWindow(),
+				paths = remote.getGlobal("paths"),
+				views = remote.getGlobal("views"),
+				mdb = remote.getGlobal("mdb"),
+				rconsole = remote.getGlobal("console"),
+				webContents = remoteWin.webContents,
+				authErr = $("div.item.err > div.name").first(),
+				panel = (getParam("nav_to", window.document.URL)) ? getParam("nav_to", window.document.URL) : "default";
 
 		navigationLinks = $('.navigationLink');
 		navigationLinks.each(function(index) {
@@ -147,7 +148,7 @@
 			});
 		});
 
-		navigate("default");
+		navigate(panel);
 
 		function navigate(panelID, authType) {
 			var oldSel = $('.panel-container > div.current');
@@ -181,35 +182,31 @@
 
 		ipcRenderer.on("auth-result", function(event, url) {
 			rconsole.log("IPCRENDER auth-result emitted,\n URL: " + url + "\n");
-			// // code to get AUTH CODE
-			// var err = getParam("error", url);
-			// rconsole.log("\nIPCRENDER err: " + err);
-			// // if error then callback URL is http://localhost/?error=access_denied#
-			// // if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
-			// if (!err) {
-			// 	var code = getParam("code", url);
-			// 	rconsole.log("Got the AUTH CODE: " + code);
-			// 	rconsole.log("Calling callback with the code...");
-			// 	// Send code to call back and redirect
-			// 	// callback(code, function(err, authed) {
-			// 	// 	// body...
-			// 	// });
-			// 	remoteWin.loadURL(views.setup);
-			// 	navigate("auth");
-			// } else if (err === "access_denied") {
-			// 	// if err === access_denied check
-			// 	rconsole.log("ERR: access_denied");
-			// 	authErr.first().text("Access to your account was denied. Please try again.");
-			// 	authErr.show();
-			// 	remoteWin.loadURL(views.setup);
-			// 	navigate("accounts");
-			// } else {
-			// 	rconsole.log("ERR: unknown, " + err);
-			// 	authErr.first().text("Unknown error: " + err);
-			// 	authErr.show();
-			// 	remoteWin.loadURL(views.setup);
-			// 	navigate("accounts");
-			// }
+			// code to get AUTH CODE
+			var err = getParam("error", url);
+			// if error then callback URL is http://localhost/?error=access_denied#
+			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
+			if (!err) {
+				var code = getParam("code", url);
+				rconsole.log("Got the AUTH CODE: " + code);
+				rconsole.log("Calling callback with the code...");
+				// Send code to call back and redirect
+				// callback(code, function(err, authed) {
+				// 	// body...
+				// });
+				navigate("auth");
+			} else if (err === "access_denied") {
+				// if err === access_denied check
+				rconsole.log("ERR: access_denied");
+				authErr.text("Access to your account was denied. Please try again.");
+				authErr.show();
+				navigate("accounts");
+			} else {
+				rconsole.log("ERR: unknown, " + err);
+				authErr.text("Unknown error: " + err);
+				authErr.show();
+				navigate("accounts");
+			}
 		});
 		// var current = $("div.current");
 		//
