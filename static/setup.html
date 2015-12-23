@@ -111,9 +111,9 @@
 						<div class="banner">
 							<img class="himg" src="images/icons/CryptoSyncVault.svg" alt="" />
 						</div>
-						<h1>Set a MasterPass</h1>
+						<h1>Set a MasterPass for the Vault</h1>
 						<img class="info" src="images/icons/info.svg" alt="" />
-						<p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass</p>
+						<p class="info">The Vault contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass</p>
 					</header>
 					<form action="#">
 						<div class="masterpass">
@@ -152,7 +152,7 @@
 		window.$ = window.jQuery = require('jquery');
 		// load core modules first
 		var remote = require('electron').remote,
-			gAuth = remote.getGlobal("gAuth"),
+			gAuth = remote.getGlobal('gAuth'),
 			ipcRenderer = require('electron').ipcRenderer,
 			remoteWin = remote.getCurrentWindow();
 

@@ -83,13 +83,13 @@ function getNewToken(callback) {
 }
 
 OAuth.prototype.getToken = function(auth_code, callback) {
-	this.oauth2Client.getToken(auth_code, function(err, token) {
+	OAuth.oauth2Client.getToken(auth_code, function(err, token) {
 		if (err) {
 			console.log('Error while trying to retrieve access token' + err);
 			return;
 		}
 		console.log('\nGot the ACCESS_TOKEN: ' + token);
-		this.oauth2Client.credentials = token;
+		OAuth.oauth2Client.credentials = token;
 		callback(token);
 	});
 };
