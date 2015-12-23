@@ -15,36 +15,36 @@
 				<header>
 					<div class="banner banner-left">
 						<div class="marquee marquee-1">
-							It is a long established fact that a reader w
+							Information is the resolution of uncertainty.&nbsp;
 						</div>
 						<div class="marquee marquee-1">
-							ill be distracted by the readable content of
+							Rather be without a state than without a voice.&nbsp;
 						</div>
 						<div class="marquee marquee-1">
-							a page when looking at its layout. The point
+							Freedom is never voluntarily given by oppressors.&nbsp;
 						</div>
 						<div class="marquee marquee-1">
-							of using Lorem Ipsum is that it has a more-or
+							Everyone has secrets to conceal; Privacy to protect.&nbsp;
 						</div>
 						<div class="marquee marquee-1">
-							-less normal distribution of letters, as oppo
+							Crypto is the ultimate form of non-violent direct action.&nbsp;
 						</div>
 					</div>
 					<div class="banner banner-right">
 						<div class="marquee marquee-2">
-							KlZ7wkieedArq7w9YsHe++D1ZAnNdL91OvBbV1LnX8f19
+							aNdtYE1jkAF8i8e6LgqAHNvS5J3Jc9H6XcUlM6YUIDi8rj3a0DLl
 						</div>
 						<div class="marquee marquee-2">
-							YjrsCojOnycYERhd56hl8v4lAquhLYfk71Vf2tZd7JbNR
+							zLAgN6Umn61buZC8I6D6+mjZQW2Ap0eXJYDmAi/uGKUQ5ezHI0GI
 						</div>
 						<div class="marquee marquee-2">
-							C8pLOJQxAFbCP+HZPAt6Kz5hO0Ir3SWJNxxAAN/GS7Pbx
+							3j6Nh1XO7WTRFa+1F3i38+TKvdhLt8kS8NAJkS5U670gElWDSffT
 						</div>
 						<div class="marquee marquee-2">
-							coOJAHLO4b+vHBOS0XniqSXpOcyQPTgFEJmjcHhvtjfLT
+							yUuJBEfzkIv6t4dcGXSoX4nOh4KFjhrdIymLpnpOlw+7VGLxqWHl
 						</div>
 						<div class="marquee marquee-2">
-							VxzOxu6EN40pjvK8oAf7041D+cWR+PDH6LnlCik2hnmFK
+							fG2w7C7LKU9eoB4hKjvWJ7EhXPBbzY/+/14VqjCG/O4Kqqr2sWGb
 						</div>
 					</div>
 					<img src="images/icons/CryptoSync.svg" alt="some" class="himg" />
@@ -150,38 +150,43 @@
 	</section>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
+		// load core modules first
 		var remote = require('electron').remote,
+			gAuth = remote.getGlobal("gAuth"),
 			ipcRenderer = require('electron').ipcRenderer,
-			remoteWin = remote.getCurrentWindow(),
-			paths = remote.getGlobal("paths"),
+			remoteWin = remote.getCurrentWindow();
+
+		var paths = remote.getGlobal("paths"),
 			views = remote.getGlobal("views"),
 			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console"),
 			webContents = remoteWin.webContents,
 			authErr = $("div.item.err > div.name").first(),
-			panel = (getParam("nav_to", window.document.URL)) ? getParam("nav_to", window.document.URL) : "default";
+			nav_to = getParam("nav_to", window.document.URL);
 
 		/* Encryption animation */
 		$(window).load(function() {
-			var speed = 3000;
-			$('.marquee-1').marquee({
-				direction: 'right',
-				gap: 0,
-				duplicated: true,
-				duration: speed
-			}).addClass("visible");
+			if (!nav_to) {
+				var speed = 3000;
+				$('.marquee-1').marquee({
+					direction: 'right',
+					gap: 0,
+					duplicated: true,
+					duration: speed
+				}).addClass("visible");
 
-			$('.marquee-2').marquee({
-				direction: 'right',
-				gap: 0,
-				duplicated: true,
-				duration: speed,
-				delayBeforeStart: speed
-			});
+				$('.marquee-2').marquee({
+					direction: 'right',
+					gap: 0,
+					duplicated: true,
+					duration: speed,
+					delayBeforeStart: speed
+				});
 
-			setTimeout(function() {
-				$('.marquee-2').addClass("visible");
-			}, speed);
+				setTimeout(function() {
+					$('.marquee-2').addClass("visible");
+				}, speed);
+			}
 		});
 
 		/* Navigation */
@@ -193,7 +198,7 @@
 			});
 		});
 
-		navigate(panel);
+		navigate((nav_to) ? nav_to : "default");
 
 		function navigate(panelID, authType) {
 			var oldSel = $('.panel-container > div.current');
@@ -217,13 +222,12 @@
 
 		function initAuth(authType) {
 			// sendAuth event to main
-			navigate("auth")
-			ipcRenderer.sendSync("initAuth", authType);
+			navigate("auth");
+			ipcRenderer.send("initAuth", authType);
 		}
 
 		ipcRenderer.on("auth-result", function(event, url) {
 			rconsole.log("IPCRENDER auth-result emitted,\n URL: " + url + "\n");
-			window.gAuth = remote.getGlobal("gAuth");
 			// code to get AUTH CODE
 			var err = getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#
@@ -254,6 +258,13 @@
 				navigate("accounts");
 			}
 		});
+
+		// function genCryptoHTML(text, cryption) {
+		// 	var t = text.match(/(.{1,45})/g);
+		// 	if (t.length < 6) throw "genCryptoHTML()->ERROR: the argument passed into genCryptoHTML is too short";
+		// 	var fhtml = t.slice(0, 5).join("<br/>");
+		// 	return fhtml;
+		// }
 		// var current = $("div.current");
 		//
 		// function handleSubmit() {

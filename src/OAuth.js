@@ -48,7 +48,7 @@ OAuth.prototype.authorize = function(mdb, callback) {
 				// I/O or other error, pass it up the callback
 			}
 			console.log("TOKEN FOUND: " + token);
-			this.oauth2Client.credentials = JSON.parse(token);
+			OAuth.oauth2Client.credentials = JSON.parse(token);
 			callback();
 		});
 

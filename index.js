@@ -8,6 +8,7 @@ const ipc = electron.ipcMain;
 const OAuth = require('./src/OAuth');
 const fs = require('fs-plus');
 const Db = require('./src/Db');
+global.gAuth;
 global.paths = {
 	home: fs.getHomeDirectory() + "/CryptoSync",
 	mdb: app.getPath("userData") + "/mdb",
@@ -31,10 +32,10 @@ global.views = {
 
 // report crashes to the Electron project
 // require('crash-reporter').start({
-//	 productName: 'CryptoSync',
-//	 companyName: 'CryptoSync',
-//	 submitURL: 'https://git.io/HR',
-//	 autoSubmit: false
+// 	 productName: 'CryptoSync',
+// 	 companyName: 'CryptoSync',
+// 	 submitURL: 'https://git.io/HR',
+// 	 autoSubmit: false
 // });
 
 // adds debug features like hotkeys for triggering dev tools and reload
@@ -85,8 +86,8 @@ function createMasterPassPrompt() {
 	// var BrowserWindow = electron.remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	const win = new BrowserWindow({
-		width: 800,
-		height: 500,
+		width: 800, //600
+		height: 600,
 		center: true
 			// width: 400,
 			// height: 460
@@ -111,10 +112,11 @@ function createMasterPassPrompt() {
 function createSetup() {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
-	const win = new BrowserWindow({
+	var win = new BrowserWindow({
 		width: 800,
 		height: 400,
-		center: true
+		center: true,
+		show: true
 			// width: 400,
 			// height: 460
 			// resizable: false,
@@ -123,16 +125,21 @@ function createSetup() {
 	win.loadURL(global.views.setup);
 	win.openDevTools();
 	ipc.on('initAuth', function(event, type) {
-		event.preventDefault();
 		console.log("initAuth emitted. Creating gAuth...");
 		// if (type === "gdrive") {
-			global.gAuth = new OAuth(type, paths.userData + "/client_secret.json");
+		var secretPath = paths.userData + "/client_secret.json";
+			global.gAuth = new OAuth(type, secretPath);
 			global.gAuth.authorize(global.mdb, function(authUrl) {
 				console.log("Loading authUrl... " + authUrl);
-				win.loadURL(authUrl);
+				win.loadURL(authUrl, {"extraHeaders" : "pragma: no-cache\n"});
 			});
 		// }
 	});
+
+	win.on("unresponsive", function(event) {
+		console.log("createSetup UNRESPONSIVE");
+	});
+
 
 	webContents.on("will-navigate", function(event, url) {
 		console.log("IPCMAIN will-navigate emitted,\n URL: " + url + "\n");
