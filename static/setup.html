@@ -47,7 +47,7 @@
 							VxzOxu6EN40pjvK8oAf7041D+cWR+PDH6LnlCik2hnmFK
 						</div>
 					</div>
-					<img src="https://dl.dropboxusercontent.com/s/mzismd2lmri9tzj/CryptoSyncf.svg?dl=0" alt="some" class="himg" />
+					<img src="images/icons/CryptoSync.svg" alt="some" class="himg" />
 					<h1>Welcome to Crypto.Sync</h1>
 					<p>Crypto.Sync an end-to-end encryption cloud synchronisation client that simply manages the encryption of your cloud data for you.
 					</p>
@@ -150,8 +150,7 @@
 	</section>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
-		var OAuth = require('../src/OAuth.js'),
-			remote = require('electron').remote,
+		var remote = require('electron').remote,
 			ipcRenderer = require('electron').ipcRenderer,
 			remoteWin = remote.getCurrentWindow(),
 			paths = remote.getGlobal("paths"),
@@ -164,24 +163,25 @@
 
 		/* Encryption animation */
 		$(window).load(function() {
+			var speed = 3000;
 			$('.marquee-1').marquee({
 				direction: 'right',
 				gap: 0,
 				duplicated: true,
-				duration: 5000
-			});
+				duration: speed
+			}).addClass("visible");
 
 			$('.marquee-2').marquee({
 				direction: 'right',
 				gap: 0,
 				duplicated: true,
-				duration: 5000,
-				delayBeforeStart: 5000
+				duration: speed,
+				delayBeforeStart: speed
 			});
 
 			setTimeout(function() {
 				$('.marquee-2').addClass("visible");
-			}, 5000);
+			}, speed);
 		});
 
 		/* Navigation */
@@ -199,7 +199,7 @@
 			var oldSel = $('.panel-container > div.current');
 			var currSel = $("#panel-" + panelID);
 			if (authType) {
-				console.log("authType: " + authType);
+				rconsole.log("authType: " + authType);
 				authErr.hide();
 				initAuth(authType);
 			}
@@ -216,19 +216,14 @@
 		}
 
 		function initAuth(authType) {
-			if (authType === "gdrive") {
-				window.gAuth = new OAuth(authType, paths.userData + "/client_secret.json");
-				gAuth.authorize(mdb, function(authUrl, callback) {
-					rconsole.log("Loading authUrl... " + authUrl);
-					remoteWin.loadURL(authUrl);
-					// IPCWAIT
-					// callback(err, token);
-				})
-			}
+			// sendAuth event to main
+			navigate("auth")
+			ipcRenderer.sendSync("initAuth", authType);
 		}
 
 		ipcRenderer.on("auth-result", function(event, url) {
 			rconsole.log("IPCRENDER auth-result emitted,\n URL: " + url + "\n");
+			window.gAuth = remote.getGlobal("gAuth");
 			// code to get AUTH CODE
 			var err = getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#

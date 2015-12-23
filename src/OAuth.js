@@ -10,47 +10,46 @@ const app = require('electron').app,
 	readline = require('readline'),
 	google = require('googleapis'),
 	googleAuth = require('google-auth-library'),
-	rconsole = require('electron').remote.getGlobal("console"),
 	SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'];
 
 
 function OAuth(type, secretPath) {
-	// Initialize necessary methods/properties from levelup in this instance
+	// TO DO: Check type and accordingly init oauth2
 	this.type	= type;
 	this.secretPath = secretPath;
+	this.oauth2Client;
 }
 
 OAuth.prototype.authorize = function(mdb, callback) {
 	fs.readFile(this.secretPath, function processClientSecrets(err, content) {
 		if (err) {
-			rconsole.log('Error loading client secret file: ' + err);
+			console.log('Error loading client secret file: ' + err);
 			return;
 		}
 		// Authorize a client with the loaded credentials, then call the
 		// Drive API.
-		rconsole.log("Got credentials file content: \n"+content+"\n");
+		console.log("Got credentials file content: \n"+content+"\n");
 		var credentials = JSON.parse(content).installed,
 			clientSecret = credentials.client_secret,
 			clientId = credentials.client_id,
 			redirectUrl = credentials.redirect_uris[1];
 		var auth = new googleAuth();
-		OAuth.prototype.oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
-		OAuth.prototype.auth = auth;
+		OAuth.oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
 		mdb.get('gdrive-token', function(err, token) {
 			if (err) {
-				rconsole.log(err);
+				console.log(err);
 				// if (err.notFound) {
 				// handle a 'NotFoundError' here
-				rconsole.log("TOKEN DOENS'T EXSIT, Calling getNewToken...");
-				getNewToken(this.oauth2Client, callback);
+				console.log("TOKEN DOENS'T EXSIT, Calling getNewToken...");
+				getNewToken(callback);
 				return;
 				// }
 				// I/O or other error, pass it up the callback
 			}
-			rconsole.log("TOKEN FOUND: " + token);
+			console.log("TOKEN FOUND: " + token);
 			this.oauth2Client.credentials = JSON.parse(token);
-			callback(this.oauth2Client);
+			callback();
 		});
 
 		// Check if we have previously stored a token.
@@ -75,7 +74,7 @@ OAuth.prototype.authorize = function(mdb, callback) {
  *		 client.
  */
 function getNewToken(callback) {
-	var authUrl = this.oauth2Client.generateAuthUrl({
+	var authUrl = OAuth.oauth2Client.generateAuthUrl({
 		access_type: 'offline',
 		scope: SCOPES
 	});
@@ -86,10 +85,10 @@ function getNewToken(callback) {
 OAuth.prototype.getToken = function(auth_code, callback) {
 	this.oauth2Client.getToken(auth_code, function(err, token) {
 		if (err) {
-			rconsole.log('Error while trying to retrieve access token' + err);
+			console.log('Error while trying to retrieve access token' + err);
 			return;
 		}
-		rconsole.log('\nGot the ACCESS_TOKEN: ' + token);
+		console.log('\nGot the ACCESS_TOKEN: ' + token);
 		this.oauth2Client.credentials = token;
 		callback(token);
 	});
@@ -104,7 +103,7 @@ OAuth.prototype.getToken = function(auth_code, callback) {
 OAuth.prototype.storeToken = function(token, mdb) {
 	mdb.put('gdrive-token', JSON.stringify(token), function(err) {
 		if (err) throw err; // some kind of I/O error
-		rconsole.log('Token stored in mdb');
+		console.log('Token stored in mdb');
 	});
 };
 
@@ -112,6 +111,7 @@ OAuth.prototype.storeToken = function(token, mdb) {
  * Lists the names and IDs of up to 10 files.
  *
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ * i.e. oauth2Client
  */
 function listFiles(auth) {
 	var service = google.drive('v3');
@@ -121,17 +121,17 @@ function listFiles(auth) {
 		fields: "nextPageToken, files(id, name)"
 	}, function(err, response) {
 		if (err) {
-			rconsole.log('The API returned an error: ' + err);
+			console.log('The API returned an error: ' + err);
 			return;
 		}
 		var files = response.files;
 		if (files.length == 0) {
-			rconsole.log('No files found.');
+			console.log('No files found.');
 		} else {
-			rconsole.log('Files:');
+			console.log('Files:');
 			for (var i = 0; i < files.length; i++) {
 				var file = files[i];
-				rconsole.log('%s (%s)', file.name, file.id);
+				console.log('%s (%s)', file.name, file.id);
 			}
 		}
 	});
