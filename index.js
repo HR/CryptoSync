@@ -111,7 +111,7 @@ function createSetup() {
   // var BrowserWindow = require('electron').remote.BrowserWindow;
   // BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
   const win = new BrowserWindow({
-    width: 800,
+    width: 600,
     height: 400,
     center: true
       // width: 400,
@@ -119,7 +119,7 @@ function createSetup() {
       // resizable: false,
   });
   win.loadURL(global.views.setup);
-  win.openDevTools();
+  //win.openDevTools();
   var webContents = win.webContents;
   webContents.on("will-navigate", function(event, url) {
     console.log("IPCMAIN will-navigate emitted,\n URL: " + url + "\n");

@@ -16,8 +16,7 @@
 @lastMod-fsize: 0.8rem;
 @ic-size: 1.4rem;
 @win-height: 100%;
- /* TO DO: ADD MARGIN RELATIVELY/CONTEXTUALLY TO CORE ELEMENTS I.E. for a button, use panel-container > button*/
-
+/* TO DO: ADD MARGIN RELATIVELY/CONTEXTUALLY TO CORE ELEMENTS I.E. for a button, use panel-container > button*/
 /* Animations */
 @keyframes colorTrans {
   from {
@@ -65,8 +64,8 @@ header > p {
 }
 header.minimal {
   h1 {
-  margin-top: 1rem;
-  font-weight: 300;
+    margin-top: 1rem;
+    font-weight: 300;
   }
 }
 h1 {
@@ -97,22 +96,20 @@ p.note {
 // .panel-container > div.current > footer {
 // 	transform: translateX(100%);
 // }
-
 .panel-container > div.current ~ div {
   transform: translateX(110%);
 }
 .panel-container > div.current {
   display: block;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   transform: none;
   position: relative;
 }
 .panel-container > div > button {
   margin-top: 1rem;
 }
-
 button {
   background-color: @white;
   border: 1px solid @light;
@@ -141,12 +138,15 @@ img.icon {
   width: @ic-size;
   height: @ic-size;
 }
+h1 + p {
+	margin: 0rem 1rem;
+}
 h3 {
   margin: 0.5rem 0;
   font-weight: normal;
 }
 a {
-	cursor: hand;
+  cursor: hand;
   font-size: 0.8rem;
   color: @blacker;
   text-decoration: none;
@@ -163,7 +163,7 @@ footer.credit {
   }
 }
 footer {
-	display: flex;
+  display: flex;
   clear: both;
   position: absolute;
   border-top: 1px solid @light;
@@ -177,7 +177,6 @@ footer > a {
   float: right;
   padding: 0.2rem;
 }
-
 a.back {
   float: left;
 }
@@ -255,7 +254,6 @@ div.submit {
   background-color: @white;
   width: 100%;
 }
-
 .none {
   display: none;
 }
@@ -263,7 +261,7 @@ div.submit {
 /* Welcome Panel styles
 * =================
 */
-div.banner {
+.banner {
   margin: 1rem auto 0;
   position: relative;
   display: flex;
@@ -271,27 +269,47 @@ div.banner {
   justify-content: center;
   width: 100%;
 }
+div#panel-default > header {
+  .banner {
+    margin: 2rem auto 0;
+    position: relative;
+    display: inline-block;
+    width: 50%;
+    z-index: -1;
+    color: @light;
+  }
+  .banner + .himg {
+    margin-top: -7.5rem;
+  }
 
-.backtext {
-  display: flex;
-	flex: 1 !important;
-  align-items: center;
-  max-width: 50%;
-  white-space:nowrap;
-  justify-content: center;
-  color: @light;
+	.himg {
+		z-index: 1000;
+	}
 }
-> div.item:last-child {
-	display: none;
+.banner-left {
+  margin-left: -3rem;
+  float: left;
 }
-
+.banner-right {
+  margin-right: -3rem;
+  float: right;
+}
+.marquee {
+  overflow: hidden;
+}
+.marquee-2 {
+  visibility: hidden;
+}
+.marquee.visible {
+  visibility: visible;
+}
 div.item.err > div {
-  display:none;
+  display: none;
   margin-top: 0.5rem;
-	margin-left: 0rem;
-	width: 100%;
+  margin-left: 0;
+  width: 100%;
   font-size: 0.8rem;
-  padding: 0.4rem 0rem;
+  padding: 0.4rem 0;
   background-color: @invalid-color;
   color: @white;
 }
@@ -302,7 +320,6 @@ div.item.err > div {
 section.accounts {
 
 }
-
 section.accounts {
   width: 70%;
   margin: auto;
@@ -314,42 +331,38 @@ section.accounts > header {
 /* Auth Panel styles
 * =================
 */
-
 .spinner {
   -webkit-animation: rotator 1.4s linear infinite;
-          animation: rotator 1.4s linear infinite;
+  animation: rotator 1.4s linear infinite;
 }
-
 @-webkit-keyframes rotator {
   0% {
     -webkit-transform: rotate(0deg);
-            transform: rotate(0deg);
+    transform: rotate(0deg);
   }
   100% {
     -webkit-transform: rotate(270deg);
-            transform: rotate(270deg);
+    transform: rotate(270deg);
   }
 }
-
 @keyframes rotator {
   0% {
     -webkit-transform: rotate(0deg);
-            transform: rotate(0deg);
+    transform: rotate(0deg);
   }
   100% {
     -webkit-transform: rotate(270deg);
-            transform: rotate(270deg);
+    transform: rotate(270deg);
   }
 }
 .path {
   stroke-dasharray: 187;
   stroke-dashoffset: 0;
   -webkit-transform-origin: center;
-          transform-origin: center;
+  transform-origin: center;
   -webkit-animation: dash 1.4s ease-in-out infinite, colors 5.6s ease-in-out infinite;
-          animation: dash 1.4s ease-in-out infinite, colors 5.6s ease-in-out infinite;
+  animation: dash 1.4s ease-in-out infinite, colors 5.6s ease-in-out infinite;
 }
-
 @-webkit-keyframes colors {
   0% {
     stroke: @orange;
@@ -361,7 +374,6 @@ section.accounts > header {
     stroke: @orange;
   }
 }
-
 @keyframes colors {
   0% {
     stroke: @orange;
@@ -380,12 +392,12 @@ section.accounts > header {
   50% {
     stroke-dashoffset: 46.75;
     -webkit-transform: rotate(135deg);
-            transform: rotate(135deg);
+    transform: rotate(135deg);
   }
   100% {
     stroke-dashoffset: 187;
     -webkit-transform: rotate(450deg);
-            transform: rotate(450deg);
+    transform: rotate(450deg);
   }
 }
 @keyframes dash {
@@ -395,12 +407,12 @@ section.accounts > header {
   50% {
     stroke-dashoffset: 46.75;
     -webkit-transform: rotate(135deg);
-            transform: rotate(135deg);
+    transform: rotate(135deg);
   }
   100% {
     stroke-dashoffset: 187;
     -webkit-transform: rotate(450deg);
-            transform: rotate(450deg);
+    transform: rotate(450deg);
   }
 }
 

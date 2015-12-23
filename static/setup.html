@@ -13,19 +13,41 @@
 		<div class="panel-container">
 			<div id="panel-default">
 				<header>
-					<div class="banner">
-						<div class="backtext" id="encrypted">It is a long established fact that a reader w
-							<br/>ill be distracted by the readable content of
-							<br/>a page when looking at its layout. The point
-							<br/>of using Lorem Ipsum is that it has a more-or
-							<br/>-less normal distribution of letters, as oppo</div>
-						<img src="images/icons/CryptoSync.svg" alt="some" class="himg" />
-						<div class="backtext" id="decrypted">KlZ7wkieedArq7w9YsHe++D1ZAnNdL91OvBbV1LnX8f19
-							<br/>YjrsCojOnycYERhd56hl8v4lAquhLYfk71Vf2tZd7JbNR
-							<br/>C8pLOJQxAFbCP+HZPAt6Kz5hO0Ir3SWJNxxAAN/GS7Pbx
-							<br/>coOJAHLO4b+vHBOS0XniqSXpOcyQPTgFEJmjcHhvtjfLT
-							<br/>VxzOxu6EN40pjvK8oAf7041D+cWR+PDH6LnlCik2hnmFK</div>
+					<div class="banner banner-left">
+						<div class="marquee marquee-1">
+							It is a long established fact that a reader w
+						</div>
+						<div class="marquee marquee-1">
+							ill be distracted by the readable content of
+						</div>
+						<div class="marquee marquee-1">
+							a page when looking at its layout. The point
+						</div>
+						<div class="marquee marquee-1">
+							of using Lorem Ipsum is that it has a more-or
+						</div>
+						<div class="marquee marquee-1">
+							-less normal distribution of letters, as oppo
+						</div>
 					</div>
+					<div class="banner banner-right">
+						<div class="marquee marquee-2">
+							KlZ7wkieedArq7w9YsHe++D1ZAnNdL91OvBbV1LnX8f19
+						</div>
+						<div class="marquee marquee-2">
+							YjrsCojOnycYERhd56hl8v4lAquhLYfk71Vf2tZd7JbNR
+						</div>
+						<div class="marquee marquee-2">
+							C8pLOJQxAFbCP+HZPAt6Kz5hO0Ir3SWJNxxAAN/GS7Pbx
+						</div>
+						<div class="marquee marquee-2">
+							coOJAHLO4b+vHBOS0XniqSXpOcyQPTgFEJmjcHhvtjfLT
+						</div>
+						<div class="marquee marquee-2">
+							VxzOxu6EN40pjvK8oAf7041D+cWR+PDH6LnlCik2hnmFK
+						</div>
+					</div>
+					<img src="https://dl.dropboxusercontent.com/s/mzismd2lmri9tzj/CryptoSyncf.svg?dl=0" alt="some" class="himg" />
 					<h1>Welcome to Crypto.Sync</h1>
 					<p>Crypto.Sync an end-to-end encryption cloud synchronisation client that simply manages the encryption of your cloud data for you.
 					</p>
@@ -128,18 +150,41 @@
 	</section>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
-		var OAuth = require('../src/auth.js'),
-				remote = require('electron').remote,
-				ipcRenderer = require('electron').ipcRenderer,
-				remoteWin = remote.getCurrentWindow(),
-				paths = remote.getGlobal("paths"),
-				views = remote.getGlobal("views"),
-				mdb = remote.getGlobal("mdb"),
-				rconsole = remote.getGlobal("console"),
-				webContents = remoteWin.webContents,
-				authErr = $("div.item.err > div.name").first(),
-				panel = (getParam("nav_to", window.document.URL)) ? getParam("nav_to", window.document.URL) : "default";
+		var OAuth = require('../src/OAuth.js'),
+			remote = require('electron').remote,
+			ipcRenderer = require('electron').ipcRenderer,
+			remoteWin = remote.getCurrentWindow(),
+			paths = remote.getGlobal("paths"),
+			views = remote.getGlobal("views"),
+			mdb = remote.getGlobal("mdb"),
+			rconsole = remote.getGlobal("console"),
+			webContents = remoteWin.webContents,
+			authErr = $("div.item.err > div.name").first(),
+			panel = (getParam("nav_to", window.document.URL)) ? getParam("nav_to", window.document.URL) : "default";
 
+		/* Encryption animation */
+		$(window).load(function() {
+			$('.marquee-1').marquee({
+				direction: 'right',
+				gap: 0,
+				duplicated: true,
+				duration: 5000
+			});
+
+			$('.marquee-2').marquee({
+				direction: 'right',
+				gap: 0,
+				duplicated: true,
+				duration: 5000,
+				delayBeforeStart: 5000
+			});
+
+			setTimeout(function() {
+				$('.marquee-2').addClass("visible");
+			}, 5000);
+		});
+
+		/* Navigation */
 		navigationLinks = $('.navigationLink');
 		navigationLinks.each(function(index) {
 			$(this).click(function() {
@@ -162,6 +207,7 @@
 			$("#panel-" + panelID).addClass("current");
 		}
 
+		/* Authentication code */
 		function getParam(name, url) {
 			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
 			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
@@ -171,7 +217,8 @@
 
 		function initAuth(authType) {
 			if (authType === "gdrive") {
-				OAuth.authorize(paths.userData + "/client_secret.json", mdb, function(authUrl, callback) {
+				window.gAuth = new OAuth(authType, paths.userData + "/client_secret.json");
+				gAuth.authorize(mdb, function(authUrl, callback) {
 					rconsole.log("Loading authUrl... " + authUrl);
 					remoteWin.loadURL(authUrl);
 					// IPCWAIT
@@ -187,24 +234,28 @@
 			// if error then callback URL is http://localhost/?error=access_denied#
 			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
 			if (!err) {
-				var code = getParam("code", url);
-				rconsole.log("Got the AUTH CODE: " + code);
+				navigate("auth");
+				var auth_code = getParam("code", url);
+				rconsole.log("\nGot the auth_code: " + auth_code);
 				rconsole.log("Calling callback with the code...");
 				// Send code to call back and redirect
 				// callback(code, function(err, authed) {
 				// 	// body...
 				// });
-				navigate("auth");
+				gAuth.getToken(auth_code, function(token) {
+					gAuth.storeToken(token, mdb);
+					rconsole.log("token retrieved and stored: " + token);
+					console.log("oauth2Client retrieved: " + gAuth.oauth2Client);
+					navigate("masterpass");
+				});
 			} else if (err === "access_denied") {
 				// if err === access_denied check
 				rconsole.log("ERR: access_denied");
-				authErr.text("Access to your account was denied. Please try again.");
-				authErr.show();
+				authErr.text("Access to your account was denied. Please try again.").show();
 				navigate("accounts");
 			} else {
 				rconsole.log("ERR: unknown, " + err);
-				authErr.text("Unknown error: " + err);
-				authErr.show();
+				authErr.text("Unknown error: " + err).show();
 				navigate("accounts");
 			}
 		});
@@ -229,6 +280,7 @@
 		// 	}
 		// }
 	</script>
+	<script src="js/jquery.marquee.min.js" type="text/javascript"></script>
 </body>
 
 </html>
