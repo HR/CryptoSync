@@ -5,9 +5,8 @@
 /* TO DO:
  * - Add auth
  */
-const app = require('electron').app,
-	fs = require('fs'),
-	readline = require('readline'),
+const fs = require('fs'),
+	dropbox = require("dropbox"),
 	google = require('googleapis'),
 	googleAuth = require('google-auth-library'),
 	SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'];

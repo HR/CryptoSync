@@ -154,9 +154,8 @@
 		var remote = require('electron').remote,
 			gAuth = remote.getGlobal('gAuth'),
 			ipcRenderer = require('electron').ipcRenderer,
-			remoteWin = remote.getCurrentWindow();
-
-		var paths = remote.getGlobal("paths"),
+			remoteWin = remote.getCurrentWindow(),
+			paths = remote.getGlobal("paths"),
 			views = remote.getGlobal("views"),
 			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console"),

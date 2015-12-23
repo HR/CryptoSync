@@ -127,11 +127,16 @@ function createSetup() {
 	ipc.on('initAuth', function(event, type) {
 		console.log("initAuth emitted. Creating gAuth...");
 		// if (type === "gdrive") {
-		var secretPath = paths.userData + "/client_secret.json";
+		var secretPath = paths.userData + "/client_secret_gdrive.json";
 			global.gAuth = new OAuth(type, secretPath);
 			global.gAuth.authorize(global.mdb, function(authUrl) {
-				console.log("Loading authUrl... " + authUrl);
-				win.loadURL(authUrl, {"extraHeaders" : "pragma: no-cache\n"});
+				if (authUrl) {
+					console.log("Loading authUrl... " + authUrl);
+					win.loadURL(authUrl, {"extraHeaders" : "pragma: no-cache\n"});
+				} else {
+					console.log("As already exists, loading home...");
+					win.loadURL(global.views.setup + "?nav_to=masterpass");
+				}
 			});
 		// }
 	});
