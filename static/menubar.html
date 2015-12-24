@@ -1,29 +1,121 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<title>CryptoSync</title>
-		<link rel="stylesheet" href="style/menubar.css">
-	</head>
+<head>
+	<meta charset="utf-8">
+	<title>CryptoSync</title>
+	<link rel="stylesheet" href="style/menubar.css">
+</head>
+<body>
+	<!-- CS Menubar v1f -->
+	<section id="menubar">
+		<div class="head">
+			<img class="icon left" src="images/icons/folder.svg" alt="" />
+			<img class="icon left" src="images/icons/accounts.svg" alt="" />
+			<img class="icon right" src="images/icons/CryptoSyncVaultaib.svg" alt="" />
+		</div>
+		<header>RECENTLY CHANGED</header>
+		<div class="fileList">
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/docic.png">
+					<div class="cloudType">
+						<img src="images/icons/gdrive_sl.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Planv2.doc</div>
+					<div class="lastMod">20 min ago</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/pdfic.png">
+					<div class="cloudType">
+						<img src="images/icons/dropbox_sl.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Goo.pdf</div>
+					<div class="lastMod">2 hours ago.</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/psdic.png">
+					<div class="cloudType">
+						<img src="images/icons/gdrive_sl.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Planv2.psd</div>
+					<div class="lastMod">3 days ago</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/pdfic.png">
+					<div class="cloudType">
+						<img src="images/icons/dropbox_sl.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Goo.pdf</div>
+					<div class="lastMod">2 hours ago.</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/docic.png">
+					<div class="cloudType">
+						<img src="images/icons/gdrive_sl.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Planv2.doc</div>
+					<div class="lastMod">20 min ago</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/docic.png">
+					<div class="cloudType">
+						<img src="images/icons/gdrive_sl.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Planv2.doc</div>
+					<div class="lastMod">20 min ago</div>
+				</div>
+			</div>
+		</div>
+		<footer>
+			<div class="status">
+				<img class="icon left" src="images/icons/status_synced.svg" alt="" />
+				<span>Synced</span>
+			</div>
+			<img class="icon right" src="images/icons/settings.svg" />
+		</footer>
+	</section>
 	<script type="text/javascript">
-		var ipc = require('ipc');
+		window.$ = window.jQuery = require('jquery');
+		// load core modules first
+		var remote = require('electron').remote,
+			gAuth = remote.getGlobal('gAuth'),
+			ipcRenderer = require('electron').ipcRenderer,
+			remoteWin = remote.getCurrentWindow(),
+			paths = remote.getGlobal("paths"),
+			views = remote.getGlobal("views"),
+			mdb = remote.getGlobal("mdb"),
+			rconsole = remote.getGlobal("console"),
+			webContents = remoteWin.webContents;
+
+		/* Network change event */
 		var updateOnlineStatus = function() {
-			ipc.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
 		};
-
-		window.addEventListener('online',  updateOnlineStatus);
-		window.addEventListener('offline',  updateOnlineStatus);
-
+		window.addEventListener('online', updateOnlineStatus);
+		window.addEventListener('offline', updateOnlineStatus);
 		updateOnlineStatus();
 	</script>
-	<body>
-		<div id="content" class="container">
-			<h1>Crypto.Cloud</h1>
-			<p>
-				End-to-end encryption cloud sync client
-			</p>
-			<section class="main"></section>
-			<footer></footer>
-		</div>
-	</body>
+</body>
 </html>

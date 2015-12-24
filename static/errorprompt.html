@@ -16,11 +16,16 @@
 		// TODO: style all of this
 		var ipcRenderer = require('electron').ipcRenderer;
 		window.$ = window.jQuery = require('jquery');
-		$("#quit").click(function() {
-			ipcRenderer.send("response", "quit");
+		ipcRenderer.on("error", function(event, error) {
+			$("h1").text(error);
 		});
-		$("#retry").click(function() {
-			ipcRenderer.send("response", "retry");
+		$(window).load(function() {
+			$("#quit").click(function() {
+				ipcRenderer.send("response", "quit");
+			});
+			$("#retry").click(function() {
+				ipcRenderer.send("response", "retry");
+			});
 		});
 	</script>
 </body>

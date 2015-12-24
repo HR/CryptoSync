@@ -164,19 +164,27 @@
 			authErr = $("div.item.err > div.name").first(),
 			nav_to = getParam("nav_to", window.document.URL);
 
+		/* Network change event */
+		var updateOnlineStatus = function() {
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
+		window.addEventListener('online', updateOnlineStatus);
+		window.addEventListener('offline', updateOnlineStatus);
+		updateOnlineStatus();
+
 		/* Encryption animation */
 		$(window).load(function() {
 			$("#setMasterPass").click(function() {
 				console.log("setMasterPass button clicked");
 				var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
-						MasterPass = $("input#name").val();
+					MasterPass = $("input#name").val();
 				if (MPregex.test(MasterPass)) {
 					ipcRenderer.send("initSetMasterPass", MasterPass);
-				} else if(!MasterPass) {
+				} else if (!MasterPass) {
 					var errLabel = $('label[for="password"]');
 					errLabel.text("please enter a masterpass".toLocaleUpperCase());
 					errLabel.css('display', 'inline-block');
-				}else{
+				} else {
 					var errLabel = $('label[for="password"]');
 					errLabel.text("must contain at least 1 Alphabet, 1 number and 1 special character".toLocaleUpperCase());
 					errLabel.css('display', 'inline-block');

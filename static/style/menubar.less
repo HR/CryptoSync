@@ -1,11 +1,17 @@
-// out: ./menubar.css, compress: true
 /*
-	 Menubar styles
-	 ==========================================================================
+   Menubar styles
+   ==========================================================================
 */
+
 @import (less) "mixins.less";
 
-/* Variable declarations*/
+/* theme colors */
+@white: #FFFFFF;
+@light: #DDDDDD;
+@dark: #9D9D9D;
+@black: #333333;
+@blacker: #222222;
+
 @side-margin: 0.8rem;
 @name-fsize: 1rem;
 @header-fsize: 1rem;
@@ -15,113 +21,121 @@
 @ic-size: 1.4rem;
 @win-height: 18rem;
 
-/* Section styles */
 section#menubar {
-	min-height: 100%;
-	position: relative;
-	background-color: @white;
-	border-radius: 6px;
-	border: 1px solid @light;
+  min-height: 100%;
+  position: relative;
+  background-color: @white;
+  border-radius: 6px;
+  border: 1px solid @light;
 }
 
 header {
-	clear: both;
-	padding: @spacing04 0rem @spacing04 @side-margin;
-	margin: 0px;
-	font-size: @header-fsize;
-	border-top: 1px solid @light;
-	border-bottom: 1px solid @light;
+  clear: both;
+  padding: @spacing04 0rem @spacing04 @side-margin;
+  margin: 0px;
+  font-size: @header-fsize;
+  border-top: 1px solid @light;
+  border-bottom: 1px solid @light;
+}
+
+.left {
+   -webkit-align-self: flex-start;
+   align-self: flex-start !important;
+}
+
+.right {
+   margin-left: auto !important;
 }
 
 div.fileList {
-	height: @win-height - 3rem;
-	width: 100%;
-	overflow: scroll;
-	margin-bottom: 3rem;
+  height: @win-height - 3rem;
+  width: 100%;
+  overflow-y: auto;
+  margin-bottom: 3rem;
 }
 
 div.content,
 div.type {
-	display: inline-block;
-	position: relative;
+  display: inline-block;
+  position: relative;
 }
 
 div.content {
-	vertical-align: top;
-	margin-left: @spacing-ic-txt;
+  vertical-align: top;
+  margin-left: @spacing-ic-txt;
 }
 
 div.name {
-	font-size: @name-fsize;
+  font-size: @name-fsize;
 }
 
 div.lastMod {
-	font-size: @lastMod-fsize;
+  font-size: @lastMod-fsize;
 }
 
 div.cloudType {
-	position: absolute;
-	bottom: -3px;
-	right: -3px;
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
 }
 
 div.cloudType > img {
-	height: 0.8rem;
-	width: auto;
-	opacity: 0.7;
+  height: 0.8rem;
+  opacity: 0.7;
 }
 
 img.fileType {
-	width: 1.6rem;
-	padding-left: @side-margin;
-	margin: 0px;
+  width: 1.6rem;
+  padding-left: @side-margin;
+  margin: 0px;
 }
 
 div.item {
-	border-top: 1px solid @light;
-	padding: @spacing04 0rem @spacing04 0rem;
+  border-top: 1px solid @light;
+  padding: @spacing04 0rem @spacing04 0rem;
 }
 
 div.status {
-	display: flex;
-	display: -webkit-flex;
-	align-items:	center;
-	left: 0;
-	bottom: 0;
+  display: flex;
+  display: -webkit-flex;
+  align-items:  center;
+  left: 0;
+  bottom: 0;
 }
 
 
 div.status > span {
-	font-size: 0.9rem;
+  font-size: 0.9rem;
 }
 
 div.head {
-	display: flex;
-	align-items:	center;
+  display: flex;
+  display: -webkit-flex;
+  align-items:  center;
 }
 
 div.status > img {
-	margin-right: @spacing-ic-txt !important;
+  margin-right: @spacing-ic-txt !important;
 }
 
 footer {
-	display: flex;
-	clear:both;
-	border-top: 1px solid @light;
-	width: 100%;
-	position: absolute;
-	padding-bottom: 0px;
-	background-color: @white;
-	bottom: 0;
-	left: 0;
+  display: flex;
+  clear:both;
+  border-top: 1px solid @light;
+  width: 100%;
+  position: absolute;
+  padding-bottom: 0px;
+  background-color: @white;
+  bottom: 0;
+  left: 0;
 }
 
 img.icon {
-	height: @ic-size;
-	display: inline;
-	margin: @side-margin;
+  height: @ic-size;
+  display: inline;
+  margin: @side-margin;
 }
 
 div.item:first-child {
-	border-top: none !important;
+  border-top: none !important;
 }

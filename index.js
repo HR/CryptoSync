@@ -48,6 +48,7 @@ let mainWindow;
 
 function createMenubar() {
 	// Implement menubar
+	
 }
 
 // function createMainWindow() {
