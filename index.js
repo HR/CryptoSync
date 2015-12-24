@@ -8,6 +8,8 @@ const ipc = electron.ipcMain;
 const OAuth = require('./src/OAuth');
 const fs = require('fs-plus');
 const Db = require('./src/Db');
+// MasterPass is protected (private var) and only exist in Main memory
+global.MasterPass = require('./src/MasterPass');
 global.gAuth;
 global.paths = {
 	home: fs.getHomeDirectory() + "/CryptoSync",
@@ -21,7 +23,6 @@ global.views = {
 	masterpassprompt: `file://${__dirname}/static/masterpassprompt.html`,
 	setup: `file://${__dirname}/static/setup.html`
 };
-
 
 // logProp(global.paths);
 // logProp(app);
@@ -160,13 +161,12 @@ function createSetup() {
 		}
 	});
 
-	ipc.on('masterpass-submission', function(event, masterpass, intype) {
-		if (intype === "default") {
-			console.log("Masterpass setting...");
-			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-			// 	// body...
-			// });
-		}
+	ipc.on('initSetMasterPass', function(event, masterpass) {
+		console.log("Masterpass setting...");
+		global.MasterPass.set(masterpass);
+		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+		// 	// body...
+		// });
 	});
 
 	win.on('closed', onClosed);
