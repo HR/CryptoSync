@@ -2,7 +2,7 @@
 // Environment variables
 // Google: process.env.CS_GAPI_CID, process.env.CS_GAPI_S
 // Dropbox: process.env.CS_DBAPI_KEY, process.env.CS_DBAPI_SKEY
-/* TO DO:
+/* TODO:
  * - Add auth
  */
 const fs = require('fs'),
@@ -17,7 +17,7 @@ const fs = require('fs'),
 
 
 function OAuth(type, secretPath) {
-  // TO DO: Check type and accordingly init oauth2
+  // TODO: Check type and accordingly init oauth2
   this.type = type;
   this.secretPath = secretPath;
   this.oauth2Client;
@@ -33,7 +33,7 @@ OAuth.prototype.authorize = function(mdb, callback) {
     // Authorize a client with the loaded credentials, then call the
     // Drive API.
     console.log("Got credentials file content: \n" + content + "\n");
-		// TO DO: Fix OAuth.isGDrive === undefined issue
+		// TODO: Fix OAuth.isGDrive === undefined issue
 		console.log("Is gdrive: "+OAuth.isGDrive);
     if (true) {
       // Google Drive Auth
@@ -114,7 +114,7 @@ function getNewToken(callback) {
     // GO TO URL "authUrl" in BrowserWindow to auth user
     callback(authUrl);
   } else {
-		// TO DO: IMPLEMENT .generateAuthUrl in /dropbox/src/
+		// TODO: IMPLEMENT .generateAuthUrl in /dropbox/src/
     OAuth.oauth2Client.generateAuthUrl(function(authUrl) {
 
     });

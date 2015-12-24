@@ -115,7 +115,7 @@
 						<img class="info" src="images/icons/info.svg" alt="" />
 						<p class="info">The Vault contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass.</p>
 					</header>
-					<form action="#">
+					<form onSubmit="return false">
 						<div class="masterpass">
 							<input type="password" name="name" id="name" class="" placeholder="********" />
 							<label for="password">INCORRECT MASTER PASSWORD</label>
@@ -141,7 +141,7 @@
 					<h1>All done!</h1>
 					<p>You have successfully setup Crypto.Sync. It will shortly start doing its magic and protecting your privacy.</p>
 				</header>
-				<button class="fancy" class="done navigationLink">FINISH</button>
+				<button class="fancy" class="done navigationLink" id="done">FINISH</button>
 				<footer class="credit">
 					<img src="images/icons/code.svg" alt="" class="icon" /> with
 					<img src="images/icons/heart.svg" alt="" class="icon" /> by <a onclick="event.preventDefault();require('shell').openExternal('https://git.io/HR');">Habib Rehman</a>
@@ -181,7 +181,9 @@
 					errLabel.text("must contain at least 1 Alphabet, 1 number and 1 special character".toLocaleUpperCase());
 					errLabel.css('display', 'inline-block');
 				}
-
+			});
+			$("#done").click(function() {
+				ipcRenderer.send("done");
 			});
 			if (!nav_to) {
 				var speed = 3000;
@@ -282,26 +284,6 @@
 		// 	var fhtml = t.slice(0, 5).join("<br/>");
 		// 	return fhtml;
 		// }
-		// var current = $("div.current");
-		//
-		function handleSubmit() {
-			var MasterPass = current.find("#masterpass"),
-				label = current.find("div.masterpass > label");
-			console.log("MasterPass: " + MasterPass.val());
-			if (!(MasterPass.val())) {
-				MasterPass.addClass("invalid");
-				label.html("EMPTY MASTERPASS");
-				label.css("display", "block");
-				label.css("color", "#9F3A38");
-			} else {
-				// TO DO: Send another arg to distinguish input type
-				// (i.e. masterpass, shares, reset)
-				ipcRenderer.sendSync('masterpass-submission', MasterPass.val(), current.attr('id'));
-				label.html("INCORRECT MASTERPASS");
-				MasterPass.removeClass("invalid")
-				current.find("div.masterpass > label").css("display", "none");
-			}
-		}
 	</script>
 	<script src="js/jquery.marquee.min.js" type="text/javascript"></script>
 </body>

@@ -45,6 +45,10 @@ require('electron-debug')();
 // prevent window being garbage collected
 let mainWindow;
 
+function createMenubar() {
+	// Implement menubar
+}
+
 // function createMainWindow() {
 //	 const win = new BrowserWindow({
 //		 width: 600,
@@ -98,6 +102,7 @@ function createMasterPassPrompt() {
 	win.openDevTools();
 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
 		if (intype === "default") {
+			global.MasterPass.set(masterpass);
 			console.log("Decrypting DB using masspass... using masterpass:" + masterpass);
 			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
 			//	 // body...
@@ -110,18 +115,19 @@ function createMasterPassPrompt() {
 	return win;
 }
 
-function createSetup() {
+function createSetup(callback) {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	var win = new BrowserWindow({
 		width: 800,
 		height: 400,
 		center: true,
-		show: true
+		show: true,
 			// width: 400,
 			// height: 460
 			// resizable: false,
 	});
+	var setupComplete = false;
 	var webContents = win.webContents;
 	win.loadURL(global.views.setup);
 	win.openDevTools();
@@ -162,20 +168,60 @@ function createSetup() {
 	});
 
 	ipc.on('initSetMasterPass', function(event, masterpass) {
-		console.log("Masterpass setting...");
+		console.log("Setting Masterpass...");
 		global.MasterPass.set(masterpass);
+		win.loadURL(global.views.setup + "?nav_to=done");
 		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
 		// 	// body...
 		// });
 	});
 
-	win.on('closed', onClosed);
+	ipc.on('done', function(event, masterpass) {
+		console.log("Setup completed. Closing this window and opening menubar...");
+		setupComplete = true;
+		win.close();
+	});
 
-	return win;
+	win.on('closed', function(){
+		console.log("win.closed event emitted for setupWindow.");
+		global.mdb.close();
+		win = null;
+		if (setupComplete) {
+			callback(null);
+		} else {
+			callback("Setup did not finish successfully");
+		}
+	});
 }
 
-function createMenubar() {
-	// Implement menubar
+function createErrorPrompt(err, callback) {
+	var win = new BrowserWindow({
+		width: 60,
+		height: 20,
+		center: true,
+		show: true,
+	});
+	var webContents = win.webContents;
+	win.loadURL(global.views.error);
+	console.log("ERROR PROMPT: the error is "+err);
+	webContents.on('did-finish-load', function() {
+		webContents.send("error", err);
+	});
+
+	ipc.on('response', function(event, response) {
+		console.log("ERROR PROMPT: Got user response");
+		win.close(response);
+	});
+
+	win.on('closed', function(response){
+		console.log("win.closed event emitted for ErrPromptWindow.");
+		win = null;
+		if (response) {
+			callback(response);
+		} else {
+			callback(null);
+		}
+	});
 }
 
 /**
@@ -184,18 +230,20 @@ function createMenubar() {
 
 function Setup() {
 	// Guide user through setting up a MasterPass and connecting to cloud services
-	// TO DO: transform into Async using a Promise
+	// TODO: transform into Async using a Promise
 	fs.makeTreeSync(global.paths.home);
+	fs.makeTreeSync(global.paths.mdb);
 	fs.makeTreeSync(global.paths.vault);
 	global.mdb = new Db(global.paths.mdb);
 	// Setup routine
-	let setupWindow = createSetup();
+	return createSetup();
 }
 
 
 function init() {
+	// Prompt
 	// Decrypt db (the Vault) and get ready for use
-	// create mdb
+	// open mdb
 	global.vault = new Db(global.paths.vault, MasterPass);
 }
 
@@ -203,13 +251,12 @@ function init() {
  * Event handlers
  **/
 
-function onClosed() {
+function onClosed(win) {
 	// dereference the window
 	// for multiple windows store them in an array
-	// TO DO: encryot the db
+	// TODO: encrypt the vault before dumping on fs
 	console.log("win.closed event emitted;\n Calling on onClosed");
-	global.mdb.close();
-	mainWindow = null;
+	win = null;
 }
 
 // Check for connection status
@@ -220,19 +267,20 @@ ipc.on('online-status-changed', function(event, status) {
 app.on('window-all-closed', () => {
 	console.log("window-all-closed event emitted");
 	if (process.platform !== 'darwin') {
-		// Cease any db OPs; encrypt database before quitting the app
+		// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
 		console.log("Calling db.close()");
 		global.vault.close();
+		global.mdb.close();
 		app.quit();
 	}
 });
 
-app.on('activate', () => {
-	console.log("activate event emitted");
-	if (!mainWindow) {
-		mainWindow = createMainWindow();
-	}
-});
+// app.on('activate', function(win) {
+// 	console.log("activate event emitted");
+// 	if (!win) {
+// 		win = createMainWindow();
+// 	}
+// });
 
 app.on('ready', () => {
 	let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
@@ -247,7 +295,21 @@ app.on('ready', () => {
 		global.mdb = new Db(global.paths.mdb);
 
 		console.log("Normal run. Creating Setup...");
-		mainWindow = createSetup();
+		createSetup(function(err) {
+			if (err) {
+				console.log(err);
+				createErrorPrompt(err, function(response) {
+					if (response) {
+						// TODO: new createSetup
+					} else {
+						// TODO: Quit app
+					}
+				});
+				// throw err;
+			}
+			let mainWindow = createMenubar();
+			console.log("MAIN setupWindow closed and equal to null. Start menubar...");
+		});
 		//init();
 		// Prompt for MasterPass OR retrieve temporarily stored MasterPass
 		// (if user has select the store MasterPass tenporarily)

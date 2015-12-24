@@ -3,7 +3,7 @@ let secrets = require('secrets.js'),
 		crypto = require('crypto');
 
 // Crypto default constants
-// TO DO: change accordingly when changed in settings
+// TODO: change accordingly when changed in settings
 let defaults = {
 	iterations: 4096,
 	keyLength: 128,
@@ -15,7 +15,7 @@ let defaults = {
 
 /*	Crypto
  *
- *	TO DO:
+ *	TODO:
  *	- Implement bitcoin blockchain as source of randomness (in iv generation)
  */
 
@@ -63,7 +63,7 @@ exports.decrypt = function (ctext, key, iv, callback) {
 exports.shares2pass = function (sharedata) {
 	// reconstructs the pass from the shares of the pass
 	// using Shamir's Secret Sharing
-	/*	TO DO:
+	/*	TODO:
 	 *	Parsing shares[type = Array]:
 	 *	- shares = [["s1", "s2",..., "sS"], "S", "N"]
 	 *	- N = total number of shares originally generated

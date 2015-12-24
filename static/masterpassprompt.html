@@ -112,7 +112,7 @@
 				label.css("display", "block");
 				label.css("color", "#9F3A38");
 			} else {
-				// TO DO: Send another arg to distinguish input type
+				// TODO: Send another arg to distinguish input type
 				// (i.e. masterpass, shares, reset)
 				ipcRenderer.sendSync('masterpass-submission', MasterPass.val(), current.attr('id'));
 				label.html("INCORRECT MASTERPASS");

@@ -49,14 +49,14 @@ util.inherits(Db, levelup);
 
 /*	Crypto
  *
- *	TO DO:
+ *	TODO:
  *	- Differentiate between MasterPass and secret share as arguments
  *	- Implement treatment accordingly
  */
 
 Db.prototype.decrypt = function (path, pass, callback) {
 	// decrypt Db
-	// TO DO;
+	// TODO;
 	crypto.decrypt(path, mpass, true, function(decrypted, err) {
 		if (err) {
 			callback(null, err);
