@@ -3,11 +3,12 @@ const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 const ipc = electron.ipcMain;
-// const Menu = electron.Menu;
-// const Tray = electron.Tray;
+const Menu = electron.Menu;
+const Tray = electron.Tray;
 const OAuth = require('./src/OAuth');
 const fs = require('fs-plus');
 const Db = require('./src/Db');
+var appIcon = null;
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
 global.gAuth;
@@ -282,19 +283,15 @@ app.on('window-all-closed', () => {
 // 	}
 // });
 
-app.on('ready', () => {
-	let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
-	if (firstRun) {
+app.on('ready', function() {
+	// TODO: Wrap all this into init();
+	// let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
+	if (false) {
+		// TODO: Do more extensive FIRST RUN check
 		console.log("First run. Creating Setup wizard...");
-		Setup();
-	} else {
+		// Setup();
+		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
-		// start menubar
-		// console.log("Normal run. Creating MasterPass prompt...");
-		// let masterPassPrompt = createMasterPassPrompt();
-		global.mdb = new Db(global.paths.mdb);
-
-		console.log("Normal run. Creating Setup...");
 		createSetup(function(err) {
 			if (err) {
 				console.log(err);
@@ -307,17 +304,23 @@ app.on('ready', () => {
 				});
 				// throw err;
 			}
+			console.log("MAIN createSetup successfully completed. Starting menubar...");
 			let mainWindow = createMenubar();
-			console.log("MAIN setupWindow closed and equal to null. Start menubar...");
 		});
-		//init();
-		// Prompt for MasterPass OR retrieve temporarily stored MasterPass
-		// (if user has select the store MasterPass tenporarily)
-		// > look into persistent cookies/sessions to temporarily store MasterPass
-		// sessions are shared between open windows
-		// so cookies set in either main window/menubar accessible in either
-		//mainWindow = createMainWindow();
-		// MasterPassPromptWindow = createMPassPromptWindow();
+	} else {
+		// start menubar
+		// console.log("Normal run. Creating MasterPass prompt...");
+		console.log("Normal run. Creating Menubar...");
+		// TODO: Implement masterPassPrompt function
+
+		// if (!global.MasterPass.get()) {
+		// 	masterPassPrompt(function(masterpass) {
+		// 		global.MasterPass.set(masterpass);
+		// 	});
+		// }
+		// global.mdb = new Db(global.paths.mdb);
+		// global.vault = new Db(global.paths.vault);
+
+		let mainWindow = createMenubar();
 	}
-	// var appIcon = new Tray('static/images/mb/trayic_light.png');
 });
