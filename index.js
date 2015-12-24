@@ -318,7 +318,7 @@ app.on('window-all-closed', () => {
 app.on('ready', function() {
 	// TODO: Wrap all this into init();
 	// let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
-	if (true) {
+	if (false) {
 		// TODO: Do more extensive FIRST RUN check
 		console.log("First run. Creating Setup wizard...");
 		// Setup();
