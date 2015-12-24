@@ -4,9 +4,6 @@
 */
 @import (less) "mixins.less";
 /* Variable declarations*/
-@invalid-color: #F05A5C;
-@orange: #EEA849;
-@orange_d: #F46B45;
 @border-width: 2px;
 @side-margin: 0.8rem;
 @section-width: 60%;
@@ -131,27 +128,6 @@ h1 + p {
 // 	transition: none;
 // }
 
-button {
-	background-color: @white;
-	border: 1px solid @light;
-	width: 100%;
-	padding: 0.3rem;
-	font-weight: 400;
-	outline: none;
-	&:active,
-	&:hover {
-		opacity: 0.8;
-	}
-}
-button.fancy {
-	margin-top: 0.2rem;
-	border: none;
-	color: @white;
-	width: 30%;
-	background: linear-gradient(to right, @orange, @orange_d);
-	background-size: 200% 200%;
-	animation: OrangeAnimGrad 3s ease infinite;
-}
 .right {
 	margin-left: auto !important;
 }

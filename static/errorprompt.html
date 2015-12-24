@@ -5,13 +5,15 @@
 	<link rel="stylesheet" href="style/errorprompt.css" charset="utf-8">
 </head>
 <body>
-	<section id="errorprompt">
-		<header>
-			<h1></h1>
-		</header>
-		<button type="button" name="quit" id="quit">Quit</button>
-		<button type="button" name="retry" id="retry">Retry</button>
-	</section>
+	<div class="container">
+		<section id="errorprompt">
+			<header>
+				<h1></h1>
+			</header>
+			<button type="button" name="quit" id="quit">Quit</button>
+			<button type="button" name="retry" id="retry">Retry</button>
+		</section>
+	</div>
 	<script type="text/javascript">
 		// TODO: style all of this
 		var ipcRenderer = require('electron').ipcRenderer;

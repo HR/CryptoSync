@@ -7,6 +7,9 @@
 @dark: #9D9D9D;
 @black: #333333;
 @blacker: #222222;
+@invalid-color: #F05A5C;
+@orange: #EEA849;
+@orange_d: #F46B45;
 
 /* Animations */
 @keyframes colorTrans {
@@ -37,6 +40,33 @@ div.none {
 
 .right {
 	 margin-left: auto !important;
+}
+
+button {
+	background-color: @white;
+	border: 1px solid @light;
+	width: 100%;
+	padding: 0.3rem;
+	font-weight: 400;
+	outline: none;
+	&:active,
+	&:hover {
+		background-color: @light;
+	}
+}
+
+button.fancy {
+	margin-top: 0.2rem;
+	border: none;
+	color: @white;
+	width: 30%;
+	background: linear-gradient(to right, @orange, @orange_d);
+	background-size: 200% 200%;
+	animation: OrangeAnimGrad 3s ease infinite;
+	&:active,
+	&:hover {
+		opacity: 0.8;
+	}
 }
 
 /* Page transitions */
