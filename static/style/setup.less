@@ -9,6 +9,7 @@
 @orange_d: #F46B45;
 @border-width: 2px;
 @side-margin: 0.8rem;
+@section-width: 60%;
 @name-fsize: 1rem;
 @header-fsize: 1rem;
 @spacing04: 0.4rem;
@@ -342,7 +343,7 @@ section.accounts {
 
 }
 section.accounts {
-	width: 70%;
+	width: @section-width;
 	margin: auto;
 }
 section.accounts > header {
@@ -443,7 +444,7 @@ section.accounts > header {
 #masterpassprompt {
 	height: 100%;
 	min-height: 20rem;
-	width: 70%;
+	width: @section-width;
 	margin: auto;
 }
 #masterpassprompt > button {
