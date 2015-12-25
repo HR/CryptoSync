@@ -11,13 +11,13 @@
 	<!-- CS Menubar v1f -->
 	<section id="menubar">
 		<div class="head">
-			<a class="left" data-target="openSyncFolder" id="openSyncFolder" class="navigationLink">
+			<a class="left navigationLink" data-target="openSyncFolder" id="openSyncFolder">
 				<img class="icon" src="images/icons/folder.svg" alt="" />
 			</a>
-			<a class="left" data-target="openAccounts" class="navigationLink">
+			<a class="left navigationLink" data-target="openAccounts">
 				<img class="icon" src="images/icons/accounts.svg" alt="" />
 			</a>
-			<a class="right" data-target="openTheVault" class="navigationLink" s>
+			<a class="right navigationLink" data-target="openTheVault" s>
 				<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
 			</a>
 		</div>
@@ -101,7 +101,7 @@
 				<img class="icon left" src="images/icons/status_synced.svg" alt="" />
 				<span>Synced</span>
 			</div>
-			<a class="right" data-target="openSettings" class="navigationLink">
+			<a class="right navigationLink" data-target="openSettings">
 				<img class="icon" src="images/icons/settings.svg" />
 			</a>
 		</footer>
@@ -128,7 +128,7 @@
 		updateOnlineStatus();
 		$(window).load(function() {
 			// attach click listners
-			$('.navigationLink').each(function(index) {
+			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
 					if (this.hasAttribute("data-target")) emittEvent(this.getAttribute("data-target"));
 				});

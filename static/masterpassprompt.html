@@ -102,7 +102,7 @@
 
 		navigate("default");
 		$(window).load(function() {
-			$('.navigationLink').each(function(index) {
+			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
 					if (this.hasAttribute("data-auth")) navigate(this.getAttribute("data-target"), this.getAttribute("data-auth"));
 					navigate(this.getAttribute("data-target"));
