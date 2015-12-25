@@ -19,6 +19,9 @@
     "start": "electron .",
     "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
   },
+	"xo": {
+		"esnext": true
+	},
   "keywords": [
     "cloud",
     "sync",
@@ -32,8 +35,6 @@
   "dependencies": {
     "async": "*",
     "babel-core": "^6.2.1",
-    "babel-preset-react": "^6.1.18",
-    "bluebird": "^3.0.5",
     "dropbox": "^0.10.3",
     "electron-debug": "^0.5.1",
     "electron-positioner": "^2.0.3",
@@ -50,22 +51,13 @@
     "leveldown": "*",
     "levelup": "^1.3.0",
     "lodash": "*",
-    "menubar": "^3.0.0",
     "moment": "*",
     "nslog": "*",
-    "passport": "^0.3.2",
-    "passport-dropbox": "*",
-    "passport-google-oauth": "*",
     "pathwatcher": "*",
-    "promise-queue": "*",
-    "q": "^2.0.3",
     "querystring": "^0.2.0",
-    "react": "^0.14.3",
-    "react-dom": "^0.14.3",
     "request": "^2.67.0",
     "request-progress": "*",
     "secrets.js": "*",
-    "trianglify": "^0.4.0",
     "xo": "^0.11.2"
   },
   "devDependencies": {
@@ -74,13 +66,6 @@
     "electron-rebuild": "*",
     "gulp": "*",
     "gulp-shell": "*",
-    "xo": "*"
-  },
-  "xo": {
-    "esnext": true,
-    "envs": [
-      "node",
-      "browser"
-    ]
+    "xo": "^0.11.2"
   }
 }
