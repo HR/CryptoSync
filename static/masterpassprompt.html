@@ -1,10 +1,12 @@
 <html>
+
 <head>
 	<meta charset="utf-8">
 	<title>Unlock the Vault</title>
 	<link rel="stylesheet" href="style/masterpassprompt.css" charset="utf-8">
 	<!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
 </head>
+
 <body>
 	<!-- CS Menubar v1f -->
 	<section id="masterpassprompt">
@@ -20,7 +22,7 @@
 				</header>
 				<form onsubmit="return false;">
 					<div class="masterpass">
-						<input type="password" name="masterpass" id="masterpass" placeholder="********"/>
+						<input type="password" name="masterpass" id="masterpass" placeholder="********" />
 						<label for="password">INCORRECT MASTER PASSWORD</label>
 					</div>
 
@@ -29,7 +31,7 @@
 					</div>
 
 					<div class="submit">
-						<input type="submit" value="Unlock" onClick="handleSubmit(); return false;"/>
+						<input type="submit" value="Unlock" onClick="handleSubmit(); return false;" />
 					</div>
 				</form>
 				<footer>
@@ -57,7 +59,9 @@
 					</div>
 				</form>
 				<footer>
-					<a class="back navigationLink" data-target="default"><img src=" images/icons/back.svg" alt=" " /></a>
+					<a class="back navigationLink" data-target="default">
+						<img src=" images/icons/back.svg" alt=" " />
+					</a>
 				</footer>
 			</div>
 			<div id="panel-reset">
@@ -78,7 +82,9 @@
 					</div>
 				</form>
 				<footer>
-					<a href="#" class="back navigationLink" data-target="default"><img src="images/icons/back.svg" alt="" /></a>
+					<a href="#" class="back navigationLink" data-target="default">
+						<img src="images/icons/back.svg" alt="" />
+					</a>
 				</footer>
 			</div>
 		</div>
@@ -86,6 +92,7 @@
 	<script type="text/javascript">
 		var ipcRenderer = require('electron').ipcRenderer;
 		window.$ = window.jQuery = require('jquery');
+
 		function updateOnlineStatus() {
 			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
 		};
@@ -94,25 +101,28 @@
 		updateOnlineStatus();
 
 		navigate("default");
-		navigationLinks = $('.navigationLink');
-		navigationLinks.each( function(index) {
-		    $(this).click(function() {
-		      navigate(this.getAttribute("data-target"));
-		    });
+		$(window).load(function() {
+			$('.navigationLink').each(function(index) {
+				$(this).click(function() {
+					if (this.hasAttribute("data-auth")) navigate(this.getAttribute("data-target"), this.getAttribute("data-auth"));
+					navigate(this.getAttribute("data-target"));
+				});
+			});
 		});
 
 		function navigate(panelID) {
 			var oldSelection = $('.panel-container > div.current');
 			if (oldSelection) oldSelection.removeClass("current");
-			$("#panel-"+panelID).addClass("current");
+			$("#panel-" + panelID).addClass("current");
 		}
 
 		var current = $("div.current");
+
 		function handleSubmit() {
 			var MasterPass = current.find("#masterpass"),
-					label = current.find("div.masterpass > label");
-			console.log("MasterPass: "+MasterPass.val());
-			if(!(MasterPass.val())) {
+				label = current.find("div.masterpass > label");
+			console.log("MasterPass: " + MasterPass.val());
+			if (!(MasterPass.val())) {
 				MasterPass.addClass("invalid");
 				label.html("EMPTY MASTERPASS");
 				label.css("display", "block");
@@ -128,4 +138,5 @@
 		}
 	</script>
 </body>
+
 </html>

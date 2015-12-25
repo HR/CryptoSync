@@ -11,14 +11,14 @@
 	<!-- CS Menubar v1f -->
 	<section id="menubar">
 		<div class="head">
-			<a class="left">
-				<img class="icon" src="images/icons/folder.svg" alt="" data-target="folder" />
+			<a class="left" data-target="openSyncFolder" id="openSyncFolder" class="navigationLink">
+				<img class="icon" src="images/icons/folder.svg" alt="" />
 			</a>
-			<a class="left">
-				<img class="icon" src="images/icons/accounts.svg" alt="" data-target="accounts" />
+			<a class="left" data-target="openAccounts" class="navigationLink">
+				<img class="icon" src="images/icons/accounts.svg" alt="" />
 			</a>
-			<a class="right">
-				<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" data-target="vault"/>
+			<a class="right" data-target="openTheVault" class="navigationLink" s>
+				<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
 			</a>
 		</div>
 		<header>RECENTLY CHANGED</header>
@@ -101,8 +101,8 @@
 				<img class="icon left" src="images/icons/status_synced.svg" alt="" />
 				<span>Synced</span>
 			</div>
-			<a class="right">
-				<img class="icon" src="images/icons/settings.svg" data-target="settings"/>
+			<a class="right" data-target="openSettings" class="navigationLink">
+				<img class="icon" src="images/icons/settings.svg" />
 			</a>
 		</footer>
 	</section>
@@ -126,11 +126,20 @@
 		$(window).on('online', updateOnlineStatus);
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
-
 		$(window).load(function() {
 			// attach click listners
-
+			$('.navigationLink').each(function(index) {
+				$(this).click(function() {
+					if (this.hasAttribute("data-target")) emittEvent(this.getAttribute("data-target"));
+				});
+			});
 		});
+
+		function emittEvent(event) {
+			// send event to main
+			rconsole.log("RENDER: " + event + " event emitted");
+			ipcRenderer.send(event);
+		}
 	</script>
 </body>
 

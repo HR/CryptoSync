@@ -9,6 +9,7 @@ const OAuth = require('./src/OAuth');
 const fs = require('fs-plus');
 const Db = require('./src/Db');
 const menubar = require('menubar');
+const shell = require('electron').shell;
 const Positioner = require('electron-positioner');
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
@@ -51,7 +52,7 @@ let mainWindow;
 let Menubar;
 
 function Cryptobar(callback) {
-	function click (e, bounds) {
+	function click(e, bounds) {
 		if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) return hideWindow();
 
 		if (win && win.isVisible()) return hideWindow();
@@ -63,7 +64,7 @@ function Cryptobar(callback) {
 		showWindow(cachedBounds);
 	}
 
-	function showWindow (trayPos) {
+	function showWindow(trayPos) {
 		// Default the window to the right if `trayPos` bounds are undefined or null.
 		var noBoundsPosition = null;
 		if ((trayPos === undefined || trayPos.x === 0) && win_position.substr(0, 4) === 'tray') {
@@ -76,7 +77,7 @@ function Cryptobar(callback) {
 		return;
 	}
 
-	function hideWindow () {
+	function hideWindow() {
 		if (!win) return;
 		// emit hide
 		win.hide();
@@ -88,7 +89,7 @@ function Cryptobar(callback) {
 		height: 310,
 		frame: false,
 		show: false
-		// resizable: false
+			// resizable: false
 	});
 	app.dock.hide();
 	var cachedBounds;
@@ -99,8 +100,14 @@ function Cryptobar(callback) {
 	.on('double-click', click);
 
 	win.on('blur', hideWindow);
+
 	win.loadURL(global.views.menubar);
 	win.openDevTools();
+
+	win.on('openSyncFolder', function(event) {
+		console.log("MAIN: openSyncFolder event emitted");
+		shell.showItemInFolder(global.paths.home);
+	});
 
 	win.on('closed', function() {
 		console.log("win.closed event emitted for Menubar.");
@@ -112,33 +119,33 @@ function Cryptobar(callback) {
  * Window constructors
  **/
 
- function createMasterPassPrompt() {
- 	// var BrowserWindow = electron.remote.BrowserWindow;
- 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
- 	const win = new BrowserWindow({
- 		width: 800, //600
- 		height: 600,
- 		center: true
- 			// width: 400,
- 			// height: 460
- 			// resizable: false,
- 	});
- 	win.loadURL(global.views.masterpassprompt);
- 	win.openDevTools();
- 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
- 		if (intype === "default") {
- 			global.MasterPass.set(masterpass);
- 			console.log("Decrypting DB using masspass... using masterpass:" + masterpass);
- 			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
- 			//	 // body...
- 			// });
- 		}
- 	});
+function createMasterPassPrompt() {
+	// var BrowserWindow = electron.remote.BrowserWindow;
+	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
+	const win = new BrowserWindow({
+		width: 800, //600
+		height: 600,
+		center: true
+			// width: 400,
+			// height: 460
+			// resizable: false,
+	});
+	win.loadURL(global.views.masterpassprompt);
+	win.openDevTools();
+	ipc.on('masterpass-submission', function(event, masterpass, intype) {
+		if (intype === "default") {
+			global.MasterPass.set(masterpass);
+			console.log("Decrypting DB using masspass... using masterpass:" + masterpass);
+			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+			//	 // body...
+			// });
+		}
+	});
 
- 	win.on('closed', onClosed);
+	win.on('closed', onClosed);
 
- 	return win;
- }
+	return win;
+}
 
 function createSetup(callback) {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
@@ -149,9 +156,9 @@ function createSetup(callback) {
 		center: true,
 		show: true,
 		titleBarStyle: "hidden-inset"
-		// width: 400,
-		// height: 460
-		// resizable: false,
+			// width: 400,
+			// height: 460
+			// resizable: false,
 	});
 	var setupComplete = false;
 	var webContents = win.webContents;
@@ -329,7 +336,7 @@ app.on('ready', function() {
 			if (err) {
 				console.log(err);
 				createErrorPrompt(err, function(response) {
-					console.log("REPOSNSE: "+response);
+					console.log("REPOSNSE: " + response);
 					if (response === "retry") {
 						// TODO: new createSetup
 						createSetup(null);
