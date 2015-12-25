@@ -7,20 +7,16 @@
 @import (less) "mixins.less";
 
 /* theme colors */
-@white: #FFFFFF;
-@light: #DDDDDD;
-@dark: #9D9D9D;
-@black: #333333;
-@blacker: #222222;
-
 @side-margin: 0.8rem;
-@name-fsize: 1rem;
-@header-fsize: 1rem;
+@tb-margin: 0.6rem;
+@fitem-margin-b: 2rem;
+@name-fsize: 0.8rem;
+@header-fsize: 0.8rem;
 @spacing04: 0.4rem;
 @spacing-ic-txt: @side-margin - 0.4rem;
-@lastMod-fsize: 0.8rem;
-@ic-size: 1.4rem;
-@win-height: 18rem;
+@lastMod-fsize: 0.6rem;
+@ic-size: 1.2rem;
+@win-height: 15rem;
 
 section#menubar {
   min-height: 100%;
@@ -48,10 +44,10 @@ header {
 }
 
 div.fileList {
-  height: @win-height - 3rem;
+  height: @win-height - @fitem-margin-b;
   width: 100%;
   overflow-y: auto;
-  margin-bottom: 3rem;
+	margin-bottom: @fitem-margin-b;
 }
 
 div.content,
@@ -86,7 +82,7 @@ div.cloudType > img {
 }
 
 img.fileType {
-  width: 1.6rem;
+  width: 1.4rem;
   padding-left: @side-margin;
   margin: 0px;
 }
@@ -134,7 +130,7 @@ footer {
 img.icon {
   height: @ic-size;
   display: inline;
-  margin: @side-margin;
+  margin: @tb-margin @side-margin;
 }
 
 div.item:first-child {

@@ -9,7 +9,7 @@ const OAuth = require('./src/OAuth');
 const fs = require('fs-plus');
 const Db = require('./src/Db');
 const menubar = require('menubar');
-var appIcon = null;
+const Positioner = require('electron-positioner');
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
 global.gAuth;
@@ -48,6 +48,7 @@ require('electron-debug')();
 
 // prevent window being garbage collected
 let mainWindow;
+let Menubar;
 
 function Cryptobar(callback) {
 	// Implement menubar
@@ -63,15 +64,61 @@ function Cryptobar(callback) {
 	//	 console.log('menubar is ready');
 	//	 // your app code here
 	// });
-	const win = new BrowserWindow({
-		width: 350, //600
-		height: 400,
+	function click (e, bounds) {
+		if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) return hideWindow();
+
+		if (win && win.isVisible()) return hideWindow();
+
+		// double click sometimes returns `undefined`
+		bounds = bounds || cachedBounds;
+
+		cachedBounds = bounds;
+		showWindow(cachedBounds);
+	}
+
+	function showWindow (trayPos) {
+		// Default the window to the right if `trayPos` bounds are undefined or null.
+		var noBoundsPosition = null;
+		if ((trayPos === undefined || trayPos.x === 0) && win_position.substr(0, 4) === 'tray') {
+			noBoundsPosition = (process.platform === 'win32') ? 'bottomRight' : 'topRight';
+		}
+
+		var position = positioner.calculate(noBoundsPosition || win_position, trayPos);
+		win.setPosition(position.x, position.y);
+		win.show();
+		return;
+	}
+
+	function hideWindow () {
+		if (!win) return;
+		// emit hide
+		win.hide();
+		// emitt after-hide
+	}
+
+	var win = new BrowserWindow({
+		width: 290, // 290
+		height: 310,
 		frame: false,
-		icon: "res/app-icons/CryptoSync256.png"
+		show: false
+		// resizable: false
 	});
-	//
+	app.dock.hide();
+	var cachedBounds;
+	var win_position = (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter';
+	var positioner = new Positioner(win);
+	Menubar = new Tray("static/images/mb/trayic_light.png");
+	Menubar.on('click', click)
+	.on('double-click', click);
+
+	win.on('blur', hideWindow);
 	win.loadURL(global.views.menubar);
-	// win.openDevTools();
+	//win.openDevTools();
+
+	win.on('closed', function() {
+		console.log("win.closed event emitted for Menubar.");
+		win = null;
+	});
 }
 
 // function createMainWindow() {
@@ -112,33 +159,33 @@ function Cryptobar(callback) {
  * Window constructors
  **/
 
-function createMasterPassPrompt() {
-	// var BrowserWindow = electron.remote.BrowserWindow;
-	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
-	const win = new BrowserWindow({
-		width: 800, //600
-		height: 600,
-		center: true
-			// width: 400,
-			// height: 460
-			// resizable: false,
-	});
-	win.loadURL(global.views.masterpassprompt);
-	win.openDevTools();
-	ipc.on('masterpass-submission', function(event, masterpass, intype) {
-		if (intype === "default") {
-			global.MasterPass.set(masterpass);
-			console.log("Decrypting DB using masspass... using masterpass:" + masterpass);
-			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-			//	 // body...
-			// });
-		}
-	});
+ function createMasterPassPrompt() {
+ 	// var BrowserWindow = electron.remote.BrowserWindow;
+ 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
+ 	const win = new BrowserWindow({
+ 		width: 800, //600
+ 		height: 600,
+ 		center: true
+ 			// width: 400,
+ 			// height: 460
+ 			// resizable: false,
+ 	});
+ 	win.loadURL(global.views.masterpassprompt);
+ 	win.openDevTools();
+ 	ipc.on('masterpass-submission', function(event, masterpass, intype) {
+ 		if (intype === "default") {
+ 			global.MasterPass.set(masterpass);
+ 			console.log("Decrypting DB using masspass... using masterpass:" + masterpass);
+ 			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+ 			//	 // body...
+ 			// });
+ 		}
+ 	});
 
-	win.on('closed', onClosed);
+ 	win.on('closed', onClosed);
 
-	return win;
-}
+ 	return win;
+ }
 
 function createSetup(callback) {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
