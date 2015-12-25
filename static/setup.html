@@ -1,4 +1,5 @@
 <html>
+
 <head>
 	<meta charset="utf-8">
 	<title>Crypto.Sync Setup</title>
@@ -164,11 +165,11 @@
 			nav_to = getParam("nav_to", window.document.URL);
 
 		/* Network change event */
-		var updateOnlineStatus = function() {
+		function updateOnlineStatus() {
 			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
 		};
-		window.addEventListener('online', updateOnlineStatus);
-		window.addEventListener('offline', updateOnlineStatus);
+		$(window).on('online', updateOnlineStatus);
+		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
 
 		/* Encryption animation */

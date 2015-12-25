@@ -46,24 +46,11 @@ global.views = {
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')();
 
-// prevent window being garbage collected
+// prevent the following from being garbage collected
 let mainWindow;
 let Menubar;
 
 function Cryptobar(callback) {
-	// Implement menubar
-	// const mb = menubar({
-	//	 icon: "static/images/mb/trayic_light.png",
-	//	 index: "static/menubar.html",
-	//	 width: 350,
-	//	 height: 450,
-	//	 showDockIcon: false
-	// });
-	//
-	// mb.on('ready', function ready() {
-	//	 console.log('menubar is ready');
-	//	 // your app code here
-	// });
 	function click (e, bounds) {
 		if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) return hideWindow();
 
@@ -97,7 +84,7 @@ function Cryptobar(callback) {
 	}
 
 	var win = new BrowserWindow({
-		width: 290, // 290
+		width: 500, // 290
 		height: 310,
 		frame: false,
 		show: false
@@ -113,47 +100,13 @@ function Cryptobar(callback) {
 
 	win.on('blur', hideWindow);
 	win.loadURL(global.views.menubar);
-	//win.openDevTools();
+	win.openDevTools();
 
 	win.on('closed', function() {
 		console.log("win.closed event emitted for Menubar.");
 		win = null;
 	});
 }
-
-// function createMainWindow() {
-//	 const win = new BrowserWindow({
-//		 width: 600,
-//		 height: 400
-//	 });
-//
-//	 win.loadURL(global.views.main);
-//	 win.webContents.on('did-finish-load', function() {
-//		 // Query all cookies.
-//		 win.webContents.session.cookies.get({}, function(error, cookies) {
-//			 if (error) throw error;
-//
-//		 });
-//
-//		 // Set a cookie with the given cookie data;
-//		 // may overwrite equivalent cookies if they exist.
-//		 win.webContents.session.cookies.set(
-//			 { url : "http://crypto.sync", name : "MasterPass", value : "aPrettyGoodPassword", session : true},
-//			 function(error, cookies) {
-//				 if (error) throw error;
-//
-//				 // Query all cookies.
-//				 win.webContents.session.cookies.get({}, function(error, cookies) {
-//					 if (error) throw error;
-//					 console.log(cookies);
-//				 });
-//		 });
-//
-//	 });
-//	 win.on('closed', onClosed);
-//
-//	 return win;
-// }
 
 /**
  * Window constructors

@@ -1,17 +1,25 @@
 <!doctype html>
 <html>
+
 <head>
 	<meta charset="utf-8">
 	<title>Crypto.Sync</title>
 	<link rel="stylesheet" href="style/menubar.css">
 </head>
+
 <body>
 	<!-- CS Menubar v1f -->
 	<section id="menubar">
 		<div class="head">
-			<img class="icon left" src="images/icons/folder.svg" alt="" />
-			<img class="icon left" src="images/icons/accounts.svg" alt="" />
-			<img class="icon right" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
+			<a class="left">
+				<img class="icon" src="images/icons/folder.svg" alt="" data-target="folder" />
+			</a>
+			<a class="left">
+				<img class="icon" src="images/icons/accounts.svg" alt="" data-target="accounts" />
+			</a>
+			<a class="right">
+				<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" data-target="vault"/>
+			</a>
 		</div>
 		<header>RECENTLY CHANGED</header>
 		<div class="fileList">
@@ -93,7 +101,9 @@
 				<img class="icon left" src="images/icons/status_synced.svg" alt="" />
 				<span>Synced</span>
 			</div>
-			<img class="icon right" src="images/icons/settings.svg" />
+			<a class="right">
+				<img class="icon" src="images/icons/settings.svg" data-target="settings"/>
+			</a>
 		</footer>
 	</section>
 	<script type="text/javascript">
@@ -110,12 +120,18 @@
 			webContents = remoteWin.webContents;
 
 		/* Network change event */
-		var updateOnlineStatus = function() {
+		function updateOnlineStatus() {
 			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
 		};
-		window.addEventListener('online', updateOnlineStatus);
-		window.addEventListener('offline', updateOnlineStatus);
+		$(window).on('online', updateOnlineStatus);
+		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
+
+		$(window).load(function() {
+			// attach click listners
+
+		});
 	</script>
 </body>
+
 </html>

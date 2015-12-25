@@ -86,6 +86,12 @@
 	<script type="text/javascript">
 		var ipcRenderer = require('electron').ipcRenderer;
 		window.$ = window.jQuery = require('jquery');
+		function updateOnlineStatus() {
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
+		$(window).on('online', updateOnlineStatus);
+		$(window).on('offline', updateOnlineStatus);
+		updateOnlineStatus();
 
 		navigate("default");
 		navigationLinks = $('.navigationLink');
