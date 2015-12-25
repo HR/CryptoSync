@@ -3,13 +3,13 @@
  * Custom DB (levelup) API implementation
  **/
 let levelup = require('levelup'),
-		fs = require('fs-plus'),
-		crypto = require('./crypto'),
-		util = require("util");
+	fs = require('fs-plus'),
+	crypto = require('./crypto'),
+	util = require("util");
 
 function readFile(filename, enc) {
-	return new Promise(function (fulfill, reject){
-		fs.readFile(filename, enc, function (err, res){
+	return new Promise(function (fulfill, reject) {
+		fs.readFile(filename, enc, function (err, res) {
 			if (err) reject(err);
 			else fulfill(res);
 		});
@@ -17,24 +17,24 @@ function readFile(filename, enc) {
 }
 
 function Db(path, password) {
-	 // Initialize necessary methods/properties from levelup in this instance
+	// Initialize necessary methods/properties from levelup in this instance
 	// levelup.call(this);
 
 	var pass = password || false;
 	if (fs.isFileSync(path)) {
 		// prompt user for master password and store temporarily (while running)
 		if (pass) {
-			return  readFile(path, 'hex')
-							.then(Db.decrypt(path, pass)) // decrypt Db before opening
-							.then(function(value) {
-								 // on fulfillment
-								return levelup(path);
-								}, function(reason) {
-								// rejection
-							})
-							.catch(function(reason) {
-								console.log('Handle rejected promise ('+reason+') here.');
-							});
+			return readFile(path, 'hex')
+				.then(Db.decrypt(path, pass)) // decrypt Db before opening
+				.then(function (value) {
+					// on fulfillment
+					return levelup(path);
+				}, function (reason) {
+					// rejection
+				})
+				.catch(function (reason) {
+					console.log('Handle rejected promise (' + reason + ') here.');
+				});
 		} else {
 			return levelup(path);
 		}
@@ -57,7 +57,7 @@ util.inherits(Db, levelup);
 Db.prototype.decrypt = function (path, pass, callback) {
 	// decrypt Db
 	// TODO;
-	crypto.decrypt(path, mpass, true, function(decrypted, err) {
+	crypto.decrypt(path, mpass, true, function (decrypted, err) {
 		if (err) {
 			callback(null, err);
 		} else {
@@ -71,12 +71,12 @@ Db.prototype.encrypt = function (path, pass, callback) {
 	let mpass = (Array.isArray(pass)) ? crypto.shares2pass(pass) : pass;
 	let encrypted = fs.readFileSync(path, 'utf8', function (err, data) {
 		if (err) throw err;
-		console.log("Opened "+path);
+		console.log(`Opened ${path}`);
 		return crypto.encrypt(data, mpass, 5000, 256);
 	});
 	fs.writeFileSync(path, encrypted, 'hex', function (err) {
 		if (err) throw err;
-		console.log("Written "+path);
+		console.log(`Written ${path}`);
 		callback();
 	});
 };
