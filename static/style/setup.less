@@ -119,7 +119,7 @@ h1 + p {
 	margin-top: 1rem;
 }
 
-/* TODO DIABLE ANIMATION ON FIRST PANE */
+/* TODO DISABLE ANIMATION ON FIRST PANE */
 // #panel-default ~ div {
 // 	transform: none;
 // }
@@ -140,11 +140,18 @@ h3 {
 	font-weight: normal;
 }
 a {
-	cursor: hand;
+	// cursor: hand;
 	font-size: 0.8rem;
 	color: @blacker;
 	text-decoration: none;
 	outline: none;
+}
+a.csp {
+	padding: 0.6rem 0rem !important;
+	img {
+		height: 1.6rem;
+		widht: auto;
+	}
 }
 footer.credit {
 	text-align: center;

@@ -22,9 +22,11 @@ function OAuth(type, secretPath) {
 	this.secretPath = secretPath;
 	this.oauth2Client;
 	this.isGDrive = Boolean(type === 'gdrive'); // Cloud type flag
+	// prr(OAuth, 'isGDrive', 'bar');
 }
 
 OAuth.prototype.authorize = function (mdb, callback) {
+	var self = this;
 	fs.readFile(this.secretPath, function (err, content) {
 		if (err) {
 			console.log(`Error loading client secret file: ${err}`);
@@ -33,67 +35,53 @@ OAuth.prototype.authorize = function (mdb, callback) {
 		// Authorize a client with the loaded credentials, then call the
 		// Drive API.
 		console.log(`Got credentials file content: \n ${content} \n`);
-		// TODO: Fix OAuth.isGDrive === undefined issue
-		console.log(`Is gdrive: ${OAuth.isGDrive}`);
-		// if (true) {
-		// Google Drive Auth
-		console.log(`Google Drive auth initiated`);
-		var credentials = JSON.parse(content).gdrive;
-		var auth = new googleAuth();
-		OAuth.oauth2Client = new auth.OAuth2(credentials.client_id, credentials.client_secret, credentials.redirect_uris[1]);
+		console.log(`Is gdrive: ${self.isGDrive}`);
+		if (self.isGDrive) {
+			// Google Drive Auth
+			console.log(`Google Drive auth initiated`);
+			var credentials = JSON.parse(content).gdrive;
+			var auth = new googleAuth();
+			self.oauth2Client = new auth.OAuth2(credentials.client_id, credentials.client_secret, credentials.redirect_uris[1]);
 
-		mdb.get('gdrive-token', function (err, token) {
-			if (err) {
-				console.log(err);
-				// if (err.notFound) {
-				// handle a `NotFoundError` here
-				console.log(`TOKEN DOES NOT EXIST, Calling getNewToken...`);
-				getNewToken(callback);
-				return;
-				// }
-				// I/O or other error, pass it up the callback
-			}
-			console.log(`TOKEN FOUND: ` + token);
-			OAuth.oauth2Client.credentials = JSON.parse(token);
-			callback();
-		});
-		// } else {
-		// 	return;
-		//   // Drobpox Auth
-		// 	console.log(`Dropbox auth initiated`);
-		//   var credentials = JSON.parse(content).dropbox;
-		//   OAuth.oauth2Client = new dropbox.Client({
-		//     key: credentials.client_id,
-		//     secret: credentials.client_secret
-		//   });
-		//   mdb.get(`dropbox-token`, function(err, token) {
-		//     if (err) {
-		//       console.log(err);
-		//       // if (err.notFound) {
-		//       // handle a `NotFoundError` here
-		//       console.log(`TOKEN DOENS`T EXIST, Calling getNewToken...`);
-		//       getNewToken(callback);
-		//       return;
-		//       // }
-		//       // I/O or other error, pass it up the callback
-		//     }
-		//     console.log(`TOKEN FOUND: ` + token);
-		//     OAuth.oauth2Client.credentials = JSON.parse(token);
-		//     callback();
-		//   });
-		// }
-
-
-		// Check if we have previously stored a token.
-
-		// fs.readFile(TOKEN_PATH, function(err, token) {
-		//	 if (err) {
-		//		 getNewToken(this.oauth2Client, callback);
-		//	 } else {
-		//		 this.oauth2Client.credentials = JSON.parse(token);
-		//		 callback(this.oauth2Client);
-		//	 }
-		// });
+			mdb.get('gdrive-token', function (err, token) {
+				if (err) {
+					console.log(err);
+					// if (err.notFound) {
+					// handle a `NotFoundError` here
+					console.log(`TOKEN DOES NOT EXIST, Calling getNewToken...`);
+					getNewToken(self, callback);
+					return;
+					// }
+					// I/O or other error, pass it up the callback
+				}
+				console.log(`TOKEN FOUND: ` + token);
+				self.oauth2Client.credentials = JSON.parse(token);
+				callback();
+			});
+		} else {
+			// Drobpox Auth
+			console.log(`Dropbox auth initiated`);
+			var credentials = JSON.parse(content).dropbox;
+			self.oauth2Client = new dropbox.Client({
+				key: credentials.client_id,
+				secret: credentials.client_secret
+			});
+			mdb.get('dropbox-token', function (err, token) {
+				if (err) {
+					console.log(err);
+					// if (err.notFound) {
+					// handle a `NotFoundError` here
+					console.log(`TOKEN DOES NOT EXIST, Calling getNewToken...`);
+					getNewToken(self, callback);
+					return;
+					// }
+					// I/O or other error, pass it up the callback
+				}
+				console.log(`TOKEN FOUND: ${token}`);
+				self.oauth2Client.credentials = JSON.parse(token);
+				callback();
+			});
+		}
 	});
 };
 
@@ -105,9 +93,10 @@ OAuth.prototype.authorize = function (mdb, callback) {
  * @param {getEventsCallback} callback The callback to call with the authorized
  *		 client.
  */
-function getNewToken(callback) {
-	if (true) {
-		var authUrl = OAuth.oauth2Client.generateAuthUrl({
+function getNewToken(self, callback) {
+	console.log(`getNewToken, isGDrive = ${self.isGDrive}`);
+	if (self.isGDrive) {
+		var authUrl = self.oauth2Client.generateAuthUrl({
 			access_type: 'offline',
 			scope: SCOPES
 		});
@@ -115,28 +104,30 @@ function getNewToken(callback) {
 		callback(authUrl);
 	} else {
 		// TODO: IMPLEMENT .generateAuthUrl in /dropbox/src/
-		OAuth.oauth2Client.generateAuthUrl(function (authUrl) {
+		self.oauth2Client.generateAuthUrl(function (authUrl) {
 
 		});
 	}
 }
 
 OAuth.prototype.getToken = function (auth_code, callback) {
-	// if (true) {
-	// Google Drive
-	OAuth.oauth2Client.getToken(auth_code, function (err, token) {
-		if (err) {
-			console.log(`Error while trying to retrieve access token ${err}`);
-			return;
-		}
-		console.log(`Got the ACCESS_TOKEN: ${token}`);
-		OAuth.oauth2Client.credentials = token;
-		callback(token);
-	});
-	// } else {
-	//   // Drobpox
-	//
-	// }
+	var self = this;
+	if (this.isGDrive) {
+		// Google Drive
+		console.log(`gDrive getToken`);
+		this.oauth2Client.getToken(auth_code, function (err, token) {
+			if (err) {
+				console.log(`Error while trying to retrieve access token ${err}`);
+				return;
+			}
+			console.log(`Got the ACCESS_TOKEN: ${token}`);
+			self.oauth2Client.credentials = token;
+			callback(token);
+		});
+	} else {
+		// Drobpox
+		console.log(`Drobpox getToken`);
+	}
 };
 
 /**
@@ -151,35 +142,5 @@ OAuth.prototype.storeToken = function (token, mdb) {
 		console.log(`Token stored in mdb`);
 	});
 };
-
-/**
- * Lists the names and IDs of up to 10 files.
- *
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- * i.e. oauth2Client
- */
-function listFiles(auth) {
-	var service = google.drive('v3');
-	service.files.list({
-		auth: auth,
-		pageSize: 10,
-		fields: 'nextPageToken, files(id, name)'
-	}, function (err, response) {
-		if (err) {
-			console.log(`The API returned an error: ${err}`);
-			return;
-		}
-		var files = response.files;
-		if (files.length == 0) {
-			console.log(`No files found.`);
-		} else {
-			console.log(`Files:`);
-			for (var i = 0; i < files.length; i++) {
-				var file = files[i];
-				console.log(`%s (%s)`, file.name, file.id);
-			}
-		}
-	});
-}
 
 module.exports = OAuth;

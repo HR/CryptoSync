@@ -19,9 +19,9 @@
     "start": "electron .",
     "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
   },
-	"xo": {
-		"esnext": true
-	},
+  "xo": {
+    "esnext": true
+  },
   "keywords": [
     "cloud",
     "sync",
@@ -54,6 +54,7 @@
     "moment": "*",
     "nslog": "*",
     "pathwatcher": "*",
+    "prr": "^1.0.1",
     "querystring": "^0.2.0",
     "request": "^2.67.0",
     "request-progress": "*",

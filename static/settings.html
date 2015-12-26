@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Crypto.Sync</title>
+	<link rel="stylesheet" href="style/menubar.css">
+</head>
+
+<body>
+	<!-- CS Menubar v1f -->
+	<section id="menubar">
+		<div class="head">
+			<a class="left navigationLink" data-target="openSyncFolder" id="openSyncFolder">
+				<img class="icon" src="images/icons/folder.svg" alt="" />
+			</a>
+			<a class="left navigationLink" data-target="openAccounts">
+				<img class="icon" src="images/icons/accounts.svg" alt="" />
+			</a>
+			<a class="right navigationLink" data-target="openVault" s>
+				<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
+			</a>
+		</div>
+		<header>RECENTLY CHANGED</header>
+		<div class="fileList">
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/filetypes/word.svg">
+					<div class="cloudType">
+						<img src="images/icons/gdrive.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Planv2.doc</div>
+					<div class="lastMod">20 min ago</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/filetypes/pdf.svg">
+					<div class="cloudType">
+						<img src="images/icons/dropbox_stroke.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Goo.pdf</div>
+					<div class="lastMod">2 hours ago.</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/filetypes/vector.svg">
+					<div class="cloudType">
+						<img src="images/icons/gdrive.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Planv2.psd</div>
+					<div class="lastMod">3 days ago</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/filetypes/pdf.svg">
+					<div class="cloudType">
+						<img src="images/icons/dropbox_stroke.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Goo.pdf</div>
+					<div class="lastMod">2 hours ago.</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/filetypes/word.svg">
+					<div class="cloudType">
+						<img src="images/icons/gdrive.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">Planv2.doc</div>
+					<div class="lastMod">20 min ago</div>
+				</div>
+			</div>
+			<div class="item">
+				<div class="type">
+					<img class="fileType" src="images/icons/filetypes/word.svg">
+					<div class="cloudType">
+						<img src="images/icons/gdrive.svg"></img>
+					</div>
+				</div>
+				<div class="content">
+					<div class="name">LastD.doc</div>
+					<div class="lastMod">20 min ago</div>
+				</div>
+			</div>
+		</div>
+		<footer>
+			<div class="status">
+				<img class="icon left" src="images/icons/status_synced.svg" alt="" />
+				<span>Synced</span>
+			</div>
+			<a class="right navigationLink" data-target="openSettings">
+				<img class="icon" src="images/icons/settings.svg" />
+			</a>
+		</footer>
+	</section>
+	<script type="text/javascript">
+		window.$ = window.jQuery = require('jquery');
+		// load core modules first
+		var remote = require('electron').remote,
+			gAuth = remote.getGlobal('gAuth'),
+			ipcRenderer = require('electron').ipcRenderer,
+			remoteWin = remote.getCurrentWindow(),
+			paths = remote.getGlobal("paths"),
+			views = remote.getGlobal("views"),
+			mdb = remote.getGlobal("mdb"),
+			rconsole = remote.getGlobal("console"),
+			webContents = remoteWin.webContents;
+
+		/* Network change event */
+		function updateOnlineStatus() {
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
+		$(window).on('online', updateOnlineStatus);
+		$(window).on('offline', updateOnlineStatus);
+		updateOnlineStatus();
+		$(window).load(function() {
+			// attach click listners
+			$(".navigationLink").each(function(index) {
+				$(this).click(function() {
+					if (this.hasAttribute("data-target")) emittEvent(this.getAttribute("data-target"));
+				});
+			});
+		});
+
+		function emittEvent(event) {
+			// send event to main
+			rconsole.log("RENDER: " + event + " event emitted");
+			ipcRenderer.send(event);
+		}
+	</script>
+</body>
+
+</html>

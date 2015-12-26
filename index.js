@@ -19,19 +19,21 @@ global.paths = {
 	home: `${fs.getHomeDirectory()}/CryptoSync`,
 	mdb: `${app.getPath('userData')}/mdb`,
 	userData: app.getPath('userData'),
-	vault: `${fs.getHomeDirectory()}/CryptoSync/Vault`
+	vault: `${fs.getHomeDirectory()}/CryptoSync/Vault`,
+	gdriveSecret: `${app.getPath('userData')}/client_secret_gdrive.json`,
+	dropboxSecret: `${app.getPath('userData')}/client_secret_dropbox.json`
 };
 
 // TODO: Get from mdb as JSON and store as JSON as one value
-global.settings.user = {};
+global.settings = {
+	user: {},
+	default: { // TODO: finalise the default settings
+		crypto: {
 
-// TODO: finalise the default settings
-global.settings.default = {
-	crypto: {
+		},
+		sync: {
 
-	},
-	sync: {
-
+		}
 	}
 };
 
@@ -40,7 +42,8 @@ global.views = {
 	masterpassprompt: `file://${__dirname}/static/masterpassprompt.html`,
 	setup: `file://${__dirname}/static/setup.html`,
 	menubar: `file://${__dirname}/static/menubar.html`,
-	errorprompt: `file://${__dirname}/static/errorprompt.html`
+	errorprompt: `file://${__dirname}/static/errorprompt.html`,
+	settings: `file://${__dirname}/static/settings.html`
 };
 
 // enable remote debugging
@@ -61,10 +64,14 @@ require('electron-debug')();
 // prevent the following from being garbage collected
 let Menubar;
 
+/**
+ * Window constructors
+ **/
+
 function Cryptobar(callback) {
 	let win = new BrowserWindow({
 		width: 500, // 290
-		height: 310,
+		height: 315,
 		frame: false,
 		show: false
 			// resizable: false
@@ -89,7 +96,9 @@ function Cryptobar(callback) {
 
 	ipc.on('openAccounts', function (event) {
 		console.log('MAIN: openAccounts event emitted');
+		createSettings(function(result){
 
+		});
 	});
 
 	ipc.on('openSettings', function (event) {
@@ -147,9 +156,20 @@ function Cryptobar(callback) {
 	});
 }
 
-/**
- * Window constructors
- **/
+function createSettings(){
+	const win = new BrowserWindow({
+		width: 800,
+		height: 600,
+		center: true
+	});
+	win.loadURL(global.views.settings);
+	win.openDevTools();
+	win.on('closed', function () {
+		console.log('win.closed event emitted for createSettings.');
+		win = null;
+		callback();
+	});
+}
 
 function createMasterPassPrompt() {
 	// var BrowserWindow = electron.remote.BrowserWindow;
@@ -195,12 +215,11 @@ function createSetup(callback) {
 	let setupComplete = false;
 	let webContents = win.webContents;
 	win.loadURL(global.views.setup);
-	//win.openDevTools();
+	win.openDevTools();
 	ipc.on('initAuth', function (event, type) {
 		console.log('initAuth emitted. Creating gAuth...');
 		// if (type === 'gdrive') {
-		var secretPath = `${global.paths.userData}/client_secret_gdrive.json`;
-		global.gAuth = new OAuth(type, secretPath);
+		global.gAuth = new OAuth(type, global.paths.gdriveSecret);
 		global.gAuth.authorize(global.mdb, function (authUrl) {
 			if (authUrl) {
 				console.log(`Loading authUrl... ${authUrl}`);
