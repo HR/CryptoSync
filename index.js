@@ -43,7 +43,8 @@ global.views = {
 	setup: `file://${__dirname}/static/setup.html`,
 	menubar: `file://${__dirname}/static/menubar.html`,
 	errorprompt: `file://${__dirname}/static/errorprompt.html`,
-	settings: `file://${__dirname}/static/settings.html`
+	settings: `file://${__dirname}/static/settings.html`,
+	vault: `file://${__dirname}/static/vault.html`
 };
 
 // enable remote debugging
@@ -63,54 +64,11 @@ require('electron-debug')();
 
 // prevent the following from being garbage collected
 let Menubar;
-
 /**
  * Window constructors
  **/
 
 function Cryptobar(callback) {
-	let win = new BrowserWindow({
-		width: 500, // 290
-		height: 315,
-		frame: false,
-		show: false
-			// resizable: false
-	});
-	app.dock.hide();
-	let cachedBounds;
-	const winPosition = (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter';
-	const positioner = new Positioner(win);
-	Menubar = new Tray('static/images/mb/trayic_light.png');
-	Menubar.on('click', click)
-		.on('double-click', click);
-
-	win.on('blur', hideWindow);
-
-	win.loadURL(global.views.menubar);
-	win.openDevTools();
-
-	ipc.on('openSyncFolder', function (event) {
-		console.log('MAIN: openSyncFolder event emitted');
-		shell.showItemInFolder(global.paths.vault);
-	});
-
-	ipc.on('openAccounts', function (event) {
-		console.log('MAIN: openAccounts event emitted');
-		createSettings(function(result){
-
-		});
-	});
-
-	ipc.on('openSettings', function (event) {
-		console.log('MAIN: openSettings event emitted');
-		shell.showItemInFolder(global.paths.vault);
-	});
-
-	ipc.on('openVault', function (event) {
-		console.log('MAIN: openVault event emitted');
-		shell.showItemInFolder(global.paths.vault);
-	});
-
 	function click(e, bounds) {
 		if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) {
 			return hideWindow();
@@ -149,10 +107,70 @@ function Cryptobar(callback) {
 		// emitt after-hide
 	}
 
+	let win = new BrowserWindow({
+		width: 500, // 290
+		height: 315,
+		frame: false,
+		show: false
+			// resizable: false
+	});
+	app.dock.hide();
+	let cachedBounds;
+	const winPosition = (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter';
+	const positioner = new Positioner(win);
+	Menubar = new Tray('static/images/mb/trayic_light.png');
+	Menubar.on('click', click)
+		.on('double-click', click);
+
+	win.on('blur', hideWindow);
+
+	win.loadURL(global.views.menubar);
+	win.openDevTools();
+
+	ipc.on('openSyncFolder', function (event) {
+		console.log('MAIN: openSyncFolder event emitted');
+		shell.showItemInFolder(global.paths.vault);
+	});
+
+	ipc.on('openAccounts', function (event) {
+		console.log('MAIN: openAccounts event emitted');
+		createSettings(function(result){
+
+		});
+	});
+
+	ipc.on('openSettings', function (event) {
+		console.log('MAIN: openSettings event emitted');
+		createSettings(function(result){
+
+		});
+	});
+
+	ipc.on('openVault', function (event) {
+		console.log('MAIN: openVault event emitted');
+		createVault(null);
+	});
+
 	win.on('closed', function () {
 		console.log('win.closed event emitted for Menubar.');
 		win = null;
 		callback();
+	});
+}
+
+function createVault(callback){
+	const win = new BrowserWindow({
+		width: 800,
+		height: 600,
+		center: true,
+		titleBarStyle: 'hidden-inset'
+	});
+	win.loadURL(global.views.vault);
+	win.openDevTools();
+	win.on('closed', function () {
+		console.log('win.closed event emitted for createSettings.');
+		win = null;
+		if (callback) callback();
 	});
 }
 
@@ -184,14 +202,24 @@ function createMasterPassPrompt() {
 	});
 	win.loadURL(global.views.masterpassprompt);
 	win.openDevTools();
-	ipc.on('masterpass-submission', function (event, masterpass, intype) {
-		if (intype === 'default') {
-			global.MasterPass.set(masterpass);
-			console.log(`Decrypting DB using masspass... using masterpass: ${masterpass}`);
-			// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-			//	 // body...
-			// });
-		}
+	ipc.on('checkMasterPass', function (event, masterpass) {
+		console.log('Setting Masterpass...');
+		// TODO: Hash MasterPass and check against hash in mdb
+		global.MasterPass.set(masterpass);
+		win.loadURL(`${global.views.setup}?nav_to=done`);
+		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+		// 	// body...
+		// });
+	});
+	ipc.on('resetMasterPass', function (event, masterpass) {
+		console.log('Setting Masterpass...');
+		// TODO: Hash MasterPass
+		// TODO: Replace old MasterPass hash in mdb
+		global.MasterPass.set(masterpass); // set MasterPass locally
+		win.loadURL(`${global.views.setup}?nav_to=done`);
+		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+		// 	// body...
+		// });
 	});
 
 	win.on('closed', onClosed);
@@ -254,6 +282,8 @@ function createSetup(callback) {
 
 	ipc.on('initSetMasterPass', function (event, masterpass) {
 		console.log('Setting Masterpass...');
+		// TODO: Hash MasterPass
+		// TODO: Store in mdb
 		global.MasterPass.set(masterpass);
 		win.loadURL(`${global.views.setup}?nav_to=done`);
 		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
@@ -317,6 +347,17 @@ function createErrorPrompt(err, callback) {
 /**
  * Functions
  **/
+function setMasterPass(MP) {
+
+}
+
+function resetMasterPass(newMP) {
+
+}
+
+function checkMasterPass(MP) {
+
+}
 
 function Setup() {
 	// Guide user through setting up a MasterPass and connecting to cloud services

@@ -1,0 +1,168 @@
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>The Vault</title>
+	<link rel="stylesheet" href="style/vault.css" charset="utf-8">
+	<!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
+</head>
+
+<body>
+	<section id="vault">
+		<header class="top">
+			<img src="images/icons/CryptoSyncVault.svg" class="icon centre" alt="">
+			<a class="right"><img src="images/icons/folder.svg" class="icon" alt="" /></a>
+			<a class="left"><img src="images/icons/settings.svg" class="icon" alt="" /></a>
+		</header>
+		<div class="main">
+			<div class="segment" id="accounts">
+				<div class="table">
+					<div class="row selected">
+						<div class="type">
+							<div class="profile"></div>
+							<div class="cloudType">
+								<img src="images/icons/gdrive.svg"></img>
+							</div>
+						</div>
+						<div class="content">
+							<div class="name">Nikola Tesla</div>
+							<div class="email">nikola.tesla.scientist@gmail.com</div>
+						</div>
+
+					</div>
+					<div class="row">
+						<div class="type">
+							<div class="profile"></div>
+							<div class="cloudType">
+								<img src="images/icons/dropbox.svg"></img>
+							</div>
+						</div>
+						<div class="content">
+							<div class="name">Nikola Tesla (Никола Тесла)</div>
+							<div class="email">nikola@tesla.org</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="segment" id="files">
+				<input type="text" placeholder="    Search files" />
+				<div class="table">
+					<header>
+						<h4>Home</h4>
+					</header>
+					<div class="row selected">
+						<div class="name">InnovationBlue....psd</div>
+						<div class="lastMod">2 days ago.</div>
+					</div>
+					<div class="row">
+						<div class="name">Secret_selfie.jpeg</div>
+						<div class="lastMod">2 days ago.</div>
+					</div>
+					<div class="row">
+						<div class="name">EM_induction.pdf</div>
+						<div class="lastMod">2 days ago.</div>
+					</div>
+					<div class="row">
+						<div class="name">ACvsDC_lecture....pdf</div>
+						<div class="lastMod">3 days ago.</div>
+					</div>
+					<header>
+						<h4>Home/png</h4>
+					</header>
+					<div class="row">
+						<div class="name">tesla.psd</div>
+						<div class="lastMod">3 days ago.</div>
+					</div>
+					<div class="row">
+						<div class="name">random.psd</div>
+						<div class="lastMod">4 days ago.</div>
+					</div>
+					<div class="row">
+						<div class="name">true.png</div>
+						<div class="lastMod">5 days ago.</div>
+					</div>
+					<div class="row">
+						<div class="name">true.png</div>
+						<div class="lastMod">5 days ago.</div>
+					</div>
+					<div class="row">
+						<div class="name">true.png</div>
+						<div class="lastMod">5 days ago.</div>
+					</div>
+					<div class="row">
+						<div class="name">true.png</div>
+						<div class="lastMod">5 days ago.</div>
+					</div>
+				</div>
+			</div>
+			<div class="segment" id="info">
+				<div id="content">
+					<h3>InnovationBlueprint.psd</h3>
+					<table>
+						<tr>
+							<td>Creation date</td>
+							<td>12 may 2015</td>
+						</tr>
+						<tr>
+							<td>Last Modified</td>
+							<td>12 may 2015</td>
+						</tr>
+						<tr>
+							<td>Checksum</td>
+							<td>
+								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
+								<a data-action="clip"><img src="images/icons/clippy.svg" alt="" /></a>
+							</td>
+						</tr>
+						<tr>
+							<td>Shares</td>
+							<td>
+								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
+								<a data-action="clip"><img src="images/icons/clippy.svg" alt="" /></a>
+								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
+								<a data-action="clip"><img src="images/icons/clippy.svg" alt="" /></a>
+								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
+								<a data-action="clip"><img src="images/icons/clippy.svg" alt="" /></a>
+							</td>
+						</tr>
+						<tr>
+							<td class="bttline">Encryption key</td>
+							<td>
+								<button class="default">Reconstruct</button>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<footer>
+					<a class="right"><img src="images/icons/trashcan.svg" alt="" /></a>
+				</footer>
+			</div>
+		</div>
+	</section>
+	<script type="text/javascript">
+		window.$ = window.jQuery = require('jquery');
+		// load core modules first
+		var remote = require('electron').remote,
+			ipcRenderer = require('electron').ipcRenderer,
+			remoteWin = remote.getCurrentWindow(),
+			mdb = remote.getGlobal("mdb"),
+			rconsole = remote.getGlobal("console"),
+			webContents = remoteWin.webContents;
+
+		/* Network change event */
+		function updateOnlineStatus() {
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
+		$(window).on('online', updateOnlineStatus);
+		$(window).on('offline', updateOnlineStatus);
+		updateOnlineStatus();
+
+		/* Encryption animation */
+		$(window).load(function() {
+			/* Navigation */
+
+		});
+	</script>
+</body>
+
+</html>

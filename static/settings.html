@@ -3,108 +3,209 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Crypto.Sync</title>
-	<link rel="stylesheet" href="style/menubar.css">
+	<title>Settings</title>
+	<link rel="stylesheet" href="style/settings.css">
 </head>
 
 <body>
 	<!-- CS Menubar v1f -->
-	<section id="menubar">
-		<div class="head">
-			<a class="left navigationLink" data-target="openSyncFolder" id="openSyncFolder">
-				<img class="icon" src="images/icons/folder.svg" alt="" />
-			</a>
-			<a class="left navigationLink" data-target="openAccounts">
-				<img class="icon" src="images/icons/accounts.svg" alt="" />
-			</a>
-			<a class="right navigationLink" data-target="openVault" s>
-				<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
-			</a>
-		</div>
-		<header>RECENTLY CHANGED</header>
-		<div class="fileList">
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/word.svg">
-					<div class="cloudType">
-						<img src="images/icons/gdrive.svg"></img>
+	<section id="settings">
+		<div class="panel-container">
+			<div class="menu">
+				<a class="item active">Accounts</a>
+				<a class="item">Crypto</a>
+				<a class="item">Sync</a>
+				<a class="item">
+					<img class="icon" src="images/icons/mark-github.svg" alt="" />
+					<a class="item right">
+						<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
+					</a>
+			</div>
+			<div id="panel-accounts" class="current">
+				<section class="accounts">
+					<header>
+						<img class="icon" src="images/icons/accounts.svg" alt="" />
+						<h3>Cloud accounts</h3>
+					</header>
+					<div class="list">
+						<div class="item">
+							<div class="type">
+								<div class="profile"></div>
+								<div class="cloudType">
+									<img src="images/icons/drive.svg"></img>
+								</div>
+							</div>
+							<div class="content">
+								<div class="name">Nikola Tesla</div>
+								<div class="lastMod">nikola.tesla@gmail.com</div>
+								<div class="qouta">5.76GB / 15GB</div>
+							</div>
+							<img src="images/icons/remove.svg" alt="" class="icon remove right" />
+						</div>
+						<div class="item">
+							<div class="type">
+								<div class="profile"></div>
+								<div class="cloudType">
+									<img src="images/icons/dropbox.svg"></img>
+								</div>
+							</div>
+							<div class="content">
+								<div class="name">Nikola Tesla</div>
+								<div class="lastMod">nikola.tesla@gmail.com</div>
+								<div class="qouta">520.5 MB / 2GB</div>
+							</div>
+							<img src="images/icons/remove.svg" alt="" class="icon remove right" />
+
+						</div>
+
 					</div>
+					<button class="button add">
+						<img src="images/icons/add.svg" alt="" class="icon" />
+					</button>
+				</section>
+			</div>
+			<div id="panel-crypto">
+				<section id="settings">
+					<section id="crypto">
+						<header>
+							<img class="icon" src="images/icons/crypto.svg" alt="">
+							<h3>Crypto</h3>
+						</header>
+						<section class="category">
+							<h4>Encryption</h4>
+							<div class="options">
+								<div class="option">
+									<span>Key Length</span>
+									<select class="right">
+										<option value="128">128-bit</option>
+										<option value="256">256-bit</option>
+									</select>
+								</div>
+								<div class="option">
+									<span>Algorithm</span>
+									<select class="right">
+										<option value="CTR">CTR</option>
+										<option value="CBC">CBC</option>
+									</select>
+								</div>
+								<div class="option">
+									<span>Randomness (experimental)</span>
+									<select class="right">
+										<option value="true">True</option>
+										<option value="pseudo">Pseudo</option>
+									</select>
+								</div>
+							</div>
+						</section>
+						<section class="category">
+							<h4>Vault</h4>
+							<div class="options">
+								<div class="option">
+									<span>Encryption key length</span>
+									<select class="right">
+										<option value="128">128-bit</option>
+										<option value="256">256-bit</option>
+									</select>
+								</div>
+								<div class="option">
+									<span>Algorithm</span>
+									<select class="right">
+										<option value="CTR">CTR</option>
+										<option value="CBC">CBC</option>
+									</select>
+								</div>
+							</div>
+						</section>
+						<section class="category">
+							<h4>MasterPass</h4>
+							<div class="options">
+								<div class="option">
+									<span>Shares</span>
+									<select class="right">
+										<option value="s2n3">s = 2, n = 3</option>
+										<option value="s2n4">s = 2, n = 4</option>
+									</select>
+								</div>
+								<div class="option">
+									<img class="info" src="images/icons/info.svg" alt="">
+									<p class="info">Where n = Number of shares required to reconstruct MasterPass and S = Total number of shares</p>
+								</div>
+								<div class="option">
+									<span>Change</span>
+									<button class="right">Reset</button>
+								</div>
+							</div>
+						</section>
+					</section>
+				</section>
+			</div>
+			<div id="panel-sync">
+				<section id="sync">
+					<header>
+						<img class="icon" src="images/icons/sync.svg" alt="" />
+						<h3>Sync</h3>
+					</header>
+					<section class="category">
+						<h4>General</h4>
+						<div class="options">
+							<div class="option">
+								<span>Autostart</span>
+								<input type="checkbox" class="right" checked/>
+							</div>
+							<div class="option">
+								<span>Encrypt while offline</span>
+								<input type="checkbox" class="right" checked/>
+							</div>
+							<div class="option">
+								<span>Location</span>
+								<select class="right">
+									<option value="home">Home</option>
+									<option value="other">Other...</option>
+								</select>
+							</div>
+					</section>
+				</section>
 				</div>
-				<div class="content">
-					<div class="name">Planv2.doc</div>
-					<div class="lastMod">20 min ago</div>
+				<div id="panel-contribute">
+					<section id="contribute">
+						<header>
+							<img class="icon" src="images/icons/mark-github.svg" alt="" />
+							<h3>Contribute</h3>
+						</header>
+						<div class="list">
+							<div class="item">
+								<img src="images/icons/issue-opened.svg" alt="" class="icon" />
+								<div class="name">
+									Report an issue / Give feedback
+								</div>
+							</div>
+							<div class="item">
+								<img src="images/icons/star.svg" alt="" class="icon" />
+								<div class="name">
+									Star the repo
+								</div>
+							</div>
+							<div class="item">
+								<img src="images/icons/repo-forked.svg" alt="" class="icon" />
+								<div class="name">
+									Fork the repo
+								</div>
+							</div>
+							<div class="item">
+								<img src="images/icons/package.svg" alt="" class="icon" />
+								<div class="name">
+									Check for Updates
+								</div>
+							</div>
+						</div>
+						<footer>
+							<img src="images/icons/code.svg" alt="" class="icon" /> with
+							<img src="images/icons/heart.svg" alt="" class="icon" /> by
+							<br><a href="https://git.io/HR">Habib Rehman</a>
+						</footer>
+					</section>
 				</div>
 			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/pdf.svg">
-					<div class="cloudType">
-						<img src="images/icons/dropbox_stroke.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">Goo.pdf</div>
-					<div class="lastMod">2 hours ago.</div>
-				</div>
-			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/vector.svg">
-					<div class="cloudType">
-						<img src="images/icons/gdrive.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">Planv2.psd</div>
-					<div class="lastMod">3 days ago</div>
-				</div>
-			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/pdf.svg">
-					<div class="cloudType">
-						<img src="images/icons/dropbox_stroke.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">Goo.pdf</div>
-					<div class="lastMod">2 hours ago.</div>
-				</div>
-			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/word.svg">
-					<div class="cloudType">
-						<img src="images/icons/gdrive.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">Planv2.doc</div>
-					<div class="lastMod">20 min ago</div>
-				</div>
-			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/word.svg">
-					<div class="cloudType">
-						<img src="images/icons/gdrive.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">LastD.doc</div>
-					<div class="lastMod">20 min ago</div>
-				</div>
-			</div>
-		</div>
-		<footer>
-			<div class="status">
-				<img class="icon left" src="images/icons/status_synced.svg" alt="" />
-				<span>Synced</span>
-			</div>
-			<a class="right navigationLink" data-target="openSettings">
-				<img class="icon" src="images/icons/settings.svg" />
-			</a>
-		</footer>
 	</section>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
