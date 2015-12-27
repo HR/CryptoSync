@@ -46,7 +46,6 @@
 		background-position: 0 51%;
 	}
 }
-
 /* General styles */
 #setup {
 	height: 100%;
@@ -59,14 +58,14 @@ form {
 }
 header {
 	margin: 0;
-}
-header > p {
-	color: @blacker;
-}
-header.minimal {
-	h1 {
-		margin-top: 1rem;
-		font-weight: 300;
+	p {
+		color: @blacker;
+	}
+	.minimal {
+		h1 {
+			margin-top: 1rem;
+			font-weight: 300;
+		}
 	}
 }
 h1 {
@@ -77,22 +76,44 @@ h1 {
 p {
 	margin: 0;
 	color: @dark;
-}
-p.note {
+	.note {
 	font-size: 0.8rem;
+	}
 }
 h1 + p {
 	margin: 0rem 2rem;
 }
 .panel-container {
 	position: relative;
+	& > div {
+		position: absolute;
+		text-align: center;
+		transform: translateX(-110%);
+		transition: transform 0.5s;
+		& > button {
+			margin-top: 1rem;
+		}
+	}
+	& > div.current {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		transform: none;
+		position: relative;
+	}
+	& > div.current ~ div {
+		transform: translateX(110%);
+	}
+	header {
+		margin-top: 2rem;
+	}
 }
-.panel-container > div {
-	position: absolute;
-	text-align: center;
-	transform: translateX(-110%);
-	transition: transform 0.5s;
-}
+// .panel-container > div {
+// 	position: absolute;
+// 	text-align: center;
+// 	transform: translateX(-110%);
+// 	transition: transform 0.5s;
+// }
 
 // .panel-container > div > footer {
 // 	transform: translateX(-110%);
@@ -101,23 +122,6 @@ h1 + p {
 // .panel-container > div.current > footer {
 // 	transform: translateX(100%);
 // }
-.panel-container > div.current ~ div {
-	transform: translateX(110%);
-}
-.panel-container > div.current {
-	display: block;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-	transform: none;
-	position: relative;
-}
-.panel-container header {
-	margin-top: 2rem;
-}
-.panel-container > div > button {
-	margin-top: 1rem;
-}
 
 /* TODO DISABLE ANIMATION ON FIRST PANE */
 // #panel-default ~ div {

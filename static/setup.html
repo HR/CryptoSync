@@ -190,7 +190,7 @@
 				var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
 					MasterPass = $("input#name").val();
 				if (MPregex.test(MasterPass)) {
-					ipcRenderer.send("initSetMasterPass", MasterPass);
+					ipcRenderer.send("setMasterPass", MasterPass);
 				} else if (!MasterPass) {
 					var errLabel = $('label[for="password"]');
 					errLabel.text("please enter a masterpass".toLocaleUpperCase());
@@ -256,8 +256,8 @@
 			ipcRenderer.send("initAuth", authType);
 		}
 
-		ipcRenderer.on("auth-result", function(event, url) {
-			rconsole.log("IPCRENDER auth-result emitted,\n URL: " + url + "\n");
+		ipcRenderer.on("authResult", function(event, url) {
+			rconsole.log("IPCRENDER authResult emitted,\n URL: " + url + "\n");
 			// code to get AUTH CODE
 			var err = getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#
@@ -288,13 +288,9 @@
 				navigate("accounts");
 			}
 		});
+		ipcRenderer.on("setMasterPassResult", function(event, result) {
 
-		// function genCryptoHTML(text, cryption) {
-		// 	var t = text.match(/(.{1,45})/g);
-		// 	if (t.length < 6) throw "genCryptoHTML()->ERROR: the argument passed into genCryptoHTML is too short";
-		// 	var fhtml = t.slice(0, 5).join("<br/>");
-		// 	return fhtml;
-		// }
+		});
 	</script>
 	<script src="js/jquery.marquee.min.js" type="text/javascript"></script>
 </body>

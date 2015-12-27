@@ -8,6 +8,7 @@ const OAuth = require('./src/OAuth');
 const fs = require('fs-plus');
 const Db = require('./src/Db');
 const shell = require('electron').shell;
+const crypto = require('crypto');
 const Positioner = require('electron-positioner');
 //	TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
@@ -128,26 +129,26 @@ function Cryptobar(callback) {
 	win.openDevTools();
 
 	ipc.on('openSyncFolder', function (event) {
-		console.log('MAIN: openSyncFolder event emitted');
+		console.log('IPCMAIN: openSyncFolder event emitted');
 		shell.showItemInFolder(global.paths.vault);
 	});
 
 	ipc.on('openAccounts', function (event) {
-		console.log('MAIN: openAccounts event emitted');
+		console.log('IPCMAIN: openAccounts event emitted');
 		createSettings(function(result){
 
 		});
 	});
 
 	ipc.on('openSettings', function (event) {
-		console.log('MAIN: openSettings event emitted');
+		console.log('IPCMAIN: openSettings event emitted');
 		createSettings(function(result){
 
 		});
 	});
 
 	ipc.on('openVault', function (event) {
-		console.log('MAIN: openVault event emitted');
+		console.log('IPCMAIN: openVault event emitted');
 		createVault(null);
 	});
 
@@ -203,20 +204,18 @@ function createMasterPassPrompt() {
 	win.loadURL(global.views.masterpassprompt);
 	win.openDevTools();
 	ipc.on('checkMasterPass', function (event, masterpass) {
-		console.log('Setting Masterpass...');
+		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
 		// TODO: Hash MasterPass and check against hash in mdb
 		global.MasterPass.set(masterpass);
-		win.loadURL(`${global.views.setup}?nav_to=done`);
 		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
 		// 	// body...
 		// });
 	});
-	ipc.on('resetMasterPass', function (event, masterpass) {
-		console.log('Setting Masterpass...');
+	ipc.on('setMasterPass', function (event, masterpass) {
+		console.log('IPCMAIN: setMasterPass emitted. Setting Masterpass...');
 		// TODO: Hash MasterPass
 		// TODO: Replace old MasterPass hash in mdb
 		global.MasterPass.set(masterpass); // set MasterPass locally
-		win.loadURL(`${global.views.setup}?nav_to=done`);
 		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
 		// 	// body...
 		// });
@@ -245,7 +244,7 @@ function createSetup(callback) {
 	win.loadURL(global.views.setup);
 	win.openDevTools();
 	ipc.on('initAuth', function (event, type) {
-		console.log('initAuth emitted. Creating gAuth...');
+		console.log('IPCMAIN: initAuth emitted. Creating gAuth...');
 		// if (type === 'gdrive') {
 		global.gAuth = new OAuth(type, global.paths.gdriveSecret);
 		global.gAuth.authorize(global.mdb, function (authUrl) {
@@ -267,7 +266,7 @@ function createSetup(callback) {
 	});
 
 	webContents.on('will-navigate', function (event, url) {
-		console.log(`IPCMAIN will-navigate emitted,\n URL: ${url}`);
+		console.log(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
 		const regex = /http:\/\/localhost/g;
 		if (regex.test(url)) {
 			// win.loadURL(global.views.setup);
@@ -275,16 +274,21 @@ function createSetup(callback) {
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
 			console.log('MAIN: url matched, sending to RENDER...');
 			webContents.on('did-finish-load', function () {
-				webContents.send('auth-result', url);
+				webContents.send('authResult', url);
 			});
 		}
 	});
 
-	ipc.on('initSetMasterPass', function (event, masterpass) {
-		console.log('Setting Masterpass...');
-		// TODO: Hash MasterPass
-		// TODO: Store in mdb
-		global.MasterPass.set(masterpass);
+	ipc.on('setMasterPass', function (event, masterpass) {
+		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
+		setMasterPass(masterpass, function(err) {
+			if (err) {
+				webContents.send('setMasterPassResult', err);
+				return;
+			}
+			global.MasterPass.set(masterpass);
+			webContents.send('setMasterPassResult', null);
+		});
 		win.loadURL(`${global.views.setup}?nav_to=done`);
 		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
 		// 	// body...
@@ -292,13 +296,13 @@ function createSetup(callback) {
 	});
 
 	ipc.on('done', function (event, masterpass) {
-		console.log('Setup completed. Closing this window and opening menubar...');
+		console.log('IPCMAIN: done emitted, setup complete. Closing this window and opening menubar...');
 		setupComplete = true;
 		win.close();
 	});
 
 	win.on('closed', function () {
-		console.log('win.closed event emitted for setupWindow.');
+		console.log('IPCMAIN: win.closed event emitted for setupWindow.');
 		global.mdb.close();
 		win = null;
 		if (setupComplete) {
@@ -347,20 +351,41 @@ function createErrorPrompt(err, callback) {
 /**
  * Functions
  **/
-function setMasterPass(MP) {
-
+function setMasterPass(MP, callback) {
+	var hash = crypto.createHash('sha256').update(MP).digest('hex');
+	global.mdb.put('MPhash', hash, function (err, token) {
+		if (err) {
+			console.log(`ERROR: mdb.put('MPhash') failed, ${err}`);
+			return callback(err);
+			// I/O or other error, pass it up the callback
+		}
+		console.log(`SUCCESS: mdb.put('MPhash')`);
+		return callback(null);
+	});
 }
 
-function resetMasterPass(newMP) {
 
-}
-
-function checkMasterPass(MP) {
-
+function checkMasterPass(MP, callback) {
+	var hash = crypto.createHash('sha256').update(MP).digest('hex');
+	global.mdb.get('MPhash', function (err, MPhash) {
+		if (err) {
+			if (err.notFound) {
+				console.log(`ERROR: MPhash NOT FOUND, Need setMasterPass...`);
+				return callback(err, null);
+			}
+			// I/O or other error, pass it up the callback
+			console.log(`ERROR: mdb.get('MPhash') failed, ${err}`);
+			return callback(err, null);
+		}
+		console.log(`SUCCESS: MPhash FOUND, ${MPhash}`);
+		console.log(`MATCH: ${hash} === ${MPhash} = ${(hash === MPhash)}`);
+		let match = (hash === MPhash);
+		return callback(null, match);
+	});
 }
 
 function Setup() {
-	// Guide user through setting up a MasterPass and connecting to cloud services
+	// Guide user through setting up a MPhash and connecting to cloud services
 	// TODO: transform into Async using a Promise
 	fs.makeTreeSync(global.paths.home);
 	fs.makeTreeSync(global.paths.mdb);
