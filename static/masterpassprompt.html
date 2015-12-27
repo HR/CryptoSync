@@ -31,11 +31,11 @@
 					</div>
 
 					<div class="submit">
-						<input type="submit" value="Unlock" onClick="handleSubmit(); return false;" />
+						<input type="submit" value="Unlock" id="setMasterPass"/>
 					</div>
 				</form>
 				<footer>
-					<a class="navigationLink" data-target="shares">Got shares?</a>
+					<a class="navigationLink right" data-target="shares">Got shares?</a>
 				</footer>
 			</div>
 			<div id="panel-shares">
@@ -90,7 +90,9 @@
 		</div>
 	</section>
 	<script type="text/javascript">
-		var ipcRenderer = require('electron').ipcRenderer;
+		var ipcRenderer = require('electron').ipcRenderer,
+				rconsole = require('electron').remote.getGlobal("console"),
+				errLabelCheckMP;
 		window.$ = window.jQuery = require('jquery');
 
 		function updateOnlineStatus() {
@@ -102,27 +104,26 @@
 
 		navigate("default");
 		$(window).load(function() {
+			errLabelCheckMP = $('label[for="password"]').first();
+			errLabelCheckMP.hide();
 			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
-					if (this.hasAttribute("data-auth")) navigate(this.getAttribute("data-target"), this.getAttribute("data-auth"));
 					navigate(this.getAttribute("data-target"));
 				});
 			});
-
 			$("#setMasterPass").click(function() {
 				console.log("setMasterPass button clicked");
 				var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
-					MasterPass = $("input#name").val();
+					MasterPass = $("input#masterpass").val();
 				if (MPregex.test(MasterPass)) {
-					ipcRenderer.send("initSetMasterPass", MasterPass);
+					errLabelCheckMP.hide();
+					ipcRenderer.send("checkMasterPass", MasterPass);
 				} else if (!MasterPass) {
-					var errLabel = $('label[for="password"]');
-					errLabel.text("please enter a masterpass".toLocaleUpperCase());
-					errLabel.css('display', 'inline-block');
+					errLabelCheckMP.text("please enter a masterpass".toLocaleUpperCase());
+					errLabelCheckMP.show();
 				} else {
-					var errLabel = $('label[for="password"]');
-					errLabel.text("must contain at least 1 Alphabet, 1 number and 1 special character".toLocaleUpperCase());
-					errLabel.css('display', 'inline-block');
+					errLabelCheckMP.text("Invalid password".toLocaleUpperCase());
+					errLabelCheckMP.show();
 				}
 			});
 		});
@@ -132,7 +133,26 @@
 			if (oldSelection) oldSelection.removeClass("current");
 			$("#panel-" + panelID).addClass("current");
 		}
+
+		ipcRenderer.on('checkMasterPassResult', function (event, result) {
+			if (result.err) {
+				errLabelCheckMP.text(`ERROR: ${err}`);
+				errLabelCheckMP.show();
+				return;
+			}
+
+			if (result.match) {
+				// TODO: show confirmation
+				errLabelCheckMP.text(`CORRECT PASSWORD`);
+				errLabelCheckMP.css('color', '#2ECC71');
+				errLabelCheckMP.show();
+				return;
+			} else {
+				errLabelCheckMP.text(`INCORRECT PASSWORD`);
+				errLabelCheckMP.show();
+				return;
+			}
+		});
 	</script>
 </body>
-
 </html>

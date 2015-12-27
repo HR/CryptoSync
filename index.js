@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const Positioner = require('electron-positioner');
 //	TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
+// YOLO#101
 
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
@@ -190,42 +191,6 @@ function createSettings(){
 	});
 }
 
-function createMasterPassPrompt() {
-	// var BrowserWindow = electron.remote.BrowserWindow;
-	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
-	const win = new BrowserWindow({
-		width: 800, //600
-		height: 600,
-		center: true
-			// width: 400,
-			// height: 460
-			// resizable: false,
-	});
-	win.loadURL(global.views.masterpassprompt);
-	win.openDevTools();
-	ipc.on('checkMasterPass', function (event, masterpass) {
-		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
-		// TODO: Hash MasterPass and check against hash in mdb
-		global.MasterPass.set(masterpass);
-		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-		// 	// body...
-		// });
-	});
-	ipc.on('setMasterPass', function (event, masterpass) {
-		console.log('IPCMAIN: setMasterPass emitted. Setting Masterpass...');
-		// TODO: Hash MasterPass
-		// TODO: Replace old MasterPass hash in mdb
-		global.MasterPass.set(masterpass); // set MasterPass locally
-		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-		// 	// body...
-		// });
-	});
-
-	win.on('closed', onClosed);
-
-	return win;
-}
-
 function createSetup(callback) {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
@@ -282,17 +247,9 @@ function createSetup(callback) {
 	ipc.on('setMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
 		setMasterPass(masterpass, function(err) {
-			if (err) {
-				webContents.send('setMasterPassResult', err);
-				return;
-			}
 			global.MasterPass.set(masterpass);
-			webContents.send('setMasterPassResult', null);
+			webContents.send('setMasterPassResult', err);
 		});
-		win.loadURL(`${global.views.setup}?nav_to=done`);
-		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-		// 	// body...
-		// });
 	});
 
 	ipc.on('done', function (event, masterpass) {
@@ -348,11 +305,71 @@ function createErrorPrompt(err, callback) {
 	});
 }
 
+function masterPassPrompt(callback) {
+	// var BrowserWindow = electron.remote.BrowserWindow;
+	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
+	let win = new BrowserWindow({
+		width: 300, //600
+		height: 415,
+		center: true,
+		titleBarStyle: 'hidden-inset'
+		// resizable: false,
+	});
+	let webContents = win.webContents;
+	win.loadURL(global.views.masterpassprompt);
+	//win.openDevTools();
+	ipc.on('checkMasterPass', function (event, masterpass) {
+		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
+		// TODO: Clean this up and remove redundancies
+		checkMasterPass(masterpass, function(err, match) {
+			if (err) {
+				//send error
+				webContents.send('checkMasterPassResult', err);
+				return;
+			}
+			if (match) {
+				console.log("IPCMAIN: PASSWORD MATCHES!");
+				global.MasterPass.set(masterpass);
+				console.log(`global.MasterPass.get() = ${global.MasterPass.get()}`);
+				webContents.send('checkMasterPassResult', {err:null, match:match});
+				// TODO: Open Vault and start Menubar
+				// callback();
+				// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+				// 	// body...
+				// });
+				return;
+			} else {
+				console.log("IPCMAIN: PASSWORD DOES NOT MATCH!");
+				webContents.send('checkMasterPassResult', {err:null, match:match});
+				return;
+			}
+		});
+	});
+	ipc.on('setMasterPass', function (event, masterpass) {
+		console.log('IPCMAIN: setMasterPass emitted. Setting Masterpass...');
+		// TODO: Hash MasterPass
+		// TODO: Replace old MasterPass hash in mdb
+		global.MasterPass.set(masterpass); // set MasterPass locally
+		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+		// 	// body...
+		// });
+	});
+
+	win.on('closed', function () {
+		console.log('win.closed event emitted for createSettings.');
+		win = null;
+		callback();
+	});
+
+	return win;
+}
+
 /**
  * Functions
  **/
 function setMasterPass(MP, callback) {
 	var hash = crypto.createHash('sha256').update(MP).digest('hex');
+	console.log(`hash (of new MP) = ${hash}`);
 	global.mdb.put('MPhash', hash, function (err, token) {
 		if (err) {
 			console.log(`ERROR: mdb.put('MPhash') failed, ${err}`);
@@ -367,6 +384,7 @@ function setMasterPass(MP, callback) {
 
 function checkMasterPass(MP, callback) {
 	var hash = crypto.createHash('sha256').update(MP).digest('hex');
+	console.log(`hash = new MPhash = ${hash}`);
 	global.mdb.get('MPhash', function (err, MPhash) {
 		if (err) {
 			if (err.notFound) {
@@ -378,8 +396,8 @@ function checkMasterPass(MP, callback) {
 			return callback(err, null);
 		}
 		console.log(`SUCCESS: MPhash FOUND, ${MPhash}`);
-		console.log(`MATCH: ${hash} === ${MPhash} = ${(hash === MPhash)}`);
 		let match = (hash === MPhash);
+		console.log(`MATCH: ${hash} === ${MPhash} = ${match}`);
 		return callback(null, match);
 	});
 }
@@ -456,6 +474,7 @@ app.on('ready', function () {
 						// TODO: new createSetup
 						createSetup(null);
 					} else {
+						// TODO: add persistent flag of firstRun = false
 						app.quit();
 					}
 				});
@@ -469,13 +488,16 @@ app.on('ready', function () {
 		// console.log('Normal run. Creating MasterPass prompt...');
 		console.log('Normal run. Creating Menubar...');
 		// TODO: Implement masterPassPrompt function
-		Cryptobar(function (result) {
-			// body...
-		});
+		// Cryptobar(function (result) {
+		// 	// body...
+		// });
+		global.mdb = new Db(global.paths.mdb);
 		// if (!global.MasterPass.get()) {
-		// 	masterPassPrompt(function(masterpass) {
-		// 		global.MasterPass.set(masterpass);
-		// 	});
+			masterPassPrompt(function(err) {
+				if (err) {
+					console.log(`ERROR: ${err}`);
+				}
+			});
 		// }
 		// global.mdb = new Db(global.paths.mdb);
 		// global.vault = new Db(global.paths.vault);

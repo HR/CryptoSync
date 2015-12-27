@@ -76,9 +76,6 @@ h1 {
 p {
 	margin: 0;
 	color: @dark;
-	.note {
-	font-size: 0.8rem;
-	}
 }
 h1 + p {
 	margin: 0rem 2rem;
@@ -441,6 +438,7 @@ section.accounts > header {
 }
 #masterpassprompt p.note {
 	margin: none;
+	font-size: 0.8rem;
 }
 div.forgotMP {
 	padding: 0.2rem 0.2rem 0 0;
@@ -449,9 +447,9 @@ div.forgotMP {
 
 /* INVALID STYLING */
 div.masterpass > label {
-	display: none;
+	display:inline-block;
 	font-size: 0.8rem;
-	margin: 0.5rem 0rem;
+	margin: 0.2rem 0rem;
 	color: @invalid-color;
 }
 .invalid {

@@ -115,10 +115,10 @@
 						<img class="info" src="images/icons/info.svg" alt="" />
 						<p class="info">The Vault contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass.</p>
 					</header>
-					<form onSubmit="return false">
+					<form onSubmit="return false;">
 						<div class="masterpass">
 							<input type="password" name="name" id="name" class="" placeholder="********" />
-							<label for="password">INCORRECT MASTER PASSWORD</label>
+							<label for="password"></label>
 						</div>
 
 					</form>
@@ -150,6 +150,7 @@
 		</div>
 	</section>
 	<script type="text/javascript">
+		// TODO: encapsulate all of this (anonymous function) to mitigate global var space pollution
 		window.$ = window.jQuery = require('jquery');
 		// load core modules first
 		var remote = require('electron').remote,
@@ -161,8 +162,9 @@
 			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console"),
 			webContents = remoteWin.webContents,
-			authErr = $("div.item.err > div.name").first(),
-			nav_to = getParam("nav_to", window.document.URL);
+			nav_to = getParam("nav_to", window.document.URL),
+			authErr,
+			errLabel;
 
 		/* Network change event */
 		function updateOnlineStatus() {
@@ -174,7 +176,11 @@
 
 		/* Encryption animation */
 		$(window).load(function() {
+			/* Variable assignments */
+			var authErr = $("div.item.err > div.name").first(),
+			errLabel = $('label[for="password"]').first();
 			/* Navigation */
+			errLabel.hide();
 			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
 					if (this.hasAttribute("data-auth")) navigate(this.getAttribute("data-target"), this.getAttribute("data-auth"));
@@ -190,15 +196,14 @@
 				var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
 					MasterPass = $("input#name").val();
 				if (MPregex.test(MasterPass)) {
+					errLabel.hide()
 					ipcRenderer.send("setMasterPass", MasterPass);
 				} else if (!MasterPass) {
-					var errLabel = $('label[for="password"]');
 					errLabel.text("please enter a masterpass".toLocaleUpperCase());
-					errLabel.css('display', 'inline-block');
+					errLabel.show();
 				} else {
-					var errLabel = $('label[for="password"]');
 					errLabel.text("must contain at least 1 Alphabet, 1 number and 1 special character".toLocaleUpperCase());
-					errLabel.css('display', 'inline-block');
+					errLabel.show();
 				}
 			});
 			$("#done").click(function() {
@@ -288,8 +293,14 @@
 				navigate("accounts");
 			}
 		});
-		ipcRenderer.on("setMasterPassResult", function(event, result) {
-
+		ipcRenderer.on("setMasterPassResult", function(event, err) {
+			rconsole.log("IPCRENDER: setMasterPassResult emitted");
+			if (err) {
+				errLabel.text(`ERROR: ${err}`.toLocaleUpperCase());
+				errLabel.show();
+			} else {
+				navigate("done");
+			}
 		});
 	</script>
 	<script src="js/jquery.marquee.min.js" type="text/javascript"></script>
