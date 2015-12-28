@@ -490,16 +490,16 @@ app.on('ready', function () {
 		// console.log('Normal run. Creating MasterPass prompt...');
 		console.log('Normal run. Creating Menubar...');
 		// TODO: Implement masterPassPrompt function
-		// Cryptobar(function (result) {
-		// 	// body...
-		// });
 		global.mdb = new Db(global.paths.mdb);
+		Cryptobar(function (result) {
+			// body...
+		});
 		// if (!global.MasterPass.get()) {
-			masterPassPrompt(function(err) {
-				if (err) {
-					console.log(`ERROR: ${err}`);
-				}
-			});
+		// 	masterPassPrompt(function(err) {
+		// 		if (err) {
+		// 			console.log(`ERROR: ${err}`);
+		// 		}
+		// 	});
 		// }
 		// global.mdb = new Db(global.paths.mdb);
 		// global.vault = new Db(global.paths.vault);

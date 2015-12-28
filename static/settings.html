@@ -8,23 +8,23 @@
 </head>
 
 <body>
-	<!-- CS Menubar v1f -->
 	<section id="settings">
 		<div class="panel-container">
 			<div class="menu">
-				<a class="item active">Accounts</a>
-				<a class="item">Crypto</a>
-				<a class="item">Sync</a>
-				<a class="item">
-					<img class="icon" src="images/icons/mark-github.svg" alt="" />
-					<a class="item right">
-						<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
-					</a>
+				<a class="item navigationLink active" data-target="accounts">Accounts</a>
+				<a class="item navigationLink" data-target="crypto">Crypto</a>
+				<a class="item navigationLink" data-target="sync">Sync</a>
+				<a class="item navigationLink" data-target="contribute">
+					<img class="icon" src="https://dl.dropboxusercontent.com/s/f73k883q1pmtzvl/mark-github.svg?dl=0" alt="" />
+				</a>
+				<a class="item right">
+					<img class="icon" src="https://dl.dropboxusercontent.com/s/43f7yhtft9nyenh/CryptoSyncVault_sl.svg?dl=0" alt="" />
+				</a>
 			</div>
 			<div id="panel-accounts" class="current">
 				<section class="accounts">
 					<header>
-						<img class="icon" src="images/icons/accounts.svg" alt="" />
+						<img class="icon" src="https://dl.dropboxusercontent.com/s/vlec2evyeviy95f/accounts.svg?dl=0" alt="" />
 						<h3>Cloud accounts</h3>
 					</header>
 					<div class="list">
@@ -32,7 +32,7 @@
 							<div class="type">
 								<div class="profile"></div>
 								<div class="cloudType">
-									<img src="images/icons/drive.svg"></img>
+									<img src="https://dl.dropboxusercontent.com/s/9by04o230s86tak/drive.svg?dl=0"></img>
 								</div>
 							</div>
 							<div class="content">
@@ -40,13 +40,13 @@
 								<div class="lastMod">nikola.tesla@gmail.com</div>
 								<div class="qouta">5.76GB / 15GB</div>
 							</div>
-							<img src="images/icons/remove.svg" alt="" class="icon remove right" />
+							<img src="https://dl.dropboxusercontent.com/s/byh63tillrffwty/remove.svg?dl=0" alt="" class="icon remove right" />
 						</div>
 						<div class="item">
 							<div class="type">
 								<div class="profile"></div>
 								<div class="cloudType">
-									<img src="images/icons/dropbox.svg"></img>
+									<img src="https://dl.dropboxusercontent.com/s/59d9tigfezyqolm/dropbox.svg?dl=0"></img>
 								</div>
 							</div>
 							<div class="content">
@@ -54,95 +54,93 @@
 								<div class="lastMod">nikola.tesla@gmail.com</div>
 								<div class="qouta">520.5 MB / 2GB</div>
 							</div>
-							<img src="images/icons/remove.svg" alt="" class="icon remove right" />
+							<img src="https://dl.dropboxusercontent.com/s/byh63tillrffwty/remove.svg?dl=0" alt="" class="icon remove right" />
 
 						</div>
 
 					</div>
 					<button class="button add">
-						<img src="images/icons/add.svg" alt="" class="icon" />
+						<img src="https://dl.dropboxusercontent.com/s/vuikp7or3ayis20/add.svg?dl=0" alt="" class="icon" />
 					</button>
 				</section>
 			</div>
 			<div id="panel-crypto">
-				<section id="settings">
-					<section id="crypto">
-						<header>
-							<img class="icon" src="images/icons/crypto.svg" alt="">
-							<h3>Crypto</h3>
-						</header>
-						<section class="category">
-							<h4>Encryption</h4>
-							<div class="options">
-								<div class="option">
-									<span>Key Length</span>
-									<select class="right">
-										<option value="128">128-bit</option>
-										<option value="256">256-bit</option>
-									</select>
-								</div>
-								<div class="option">
-									<span>Algorithm</span>
-									<select class="right">
-										<option value="CTR">CTR</option>
-										<option value="CBC">CBC</option>
-									</select>
-								</div>
-								<div class="option">
-									<span>Randomness (experimental)</span>
-									<select class="right">
-										<option value="true">True</option>
-										<option value="pseudo">Pseudo</option>
-									</select>
-								</div>
+				<section class="crypto">
+					<header>
+						<img class="icon" src="https://dl.dropboxusercontent.com/s/3wwtpblnzuis8by/crypto.svg?dl=0" alt="">
+						<h3>Crypto</h3>
+					</header>
+					<section class="category">
+						<h4>Encryption</h4>
+						<div class="options">
+							<div class="option">
+								<span>Key Length</span>
+								<select class="right">
+									<option value="128">128-bit</option>
+									<option value="256">256-bit</option>
+								</select>
 							</div>
-						</section>
-						<section class="category">
-							<h4>Vault</h4>
-							<div class="options">
-								<div class="option">
-									<span>Encryption key length</span>
-									<select class="right">
-										<option value="128">128-bit</option>
-										<option value="256">256-bit</option>
-									</select>
-								</div>
-								<div class="option">
-									<span>Algorithm</span>
-									<select class="right">
-										<option value="CTR">CTR</option>
-										<option value="CBC">CBC</option>
-									</select>
-								</div>
+							<div class="option">
+								<span>Algorithm</span>
+								<select class="right">
+									<option value="CTR">CTR</option>
+									<option value="CBC">CBC</option>
+								</select>
 							</div>
-						</section>
-						<section class="category">
-							<h4>MasterPass</h4>
-							<div class="options">
-								<div class="option">
-									<span>Shares</span>
-									<select class="right">
-										<option value="s2n3">s = 2, n = 3</option>
-										<option value="s2n4">s = 2, n = 4</option>
-									</select>
-								</div>
-								<div class="option">
-									<img class="info" src="images/icons/info.svg" alt="">
-									<p class="info">Where n = Number of shares required to reconstruct MasterPass and S = Total number of shares</p>
-								</div>
-								<div class="option">
-									<span>Change</span>
-									<button class="right">Reset</button>
-								</div>
+							<div class="option">
+								<span>Randomness (experimental)</span>
+								<select class="right">
+									<option value="true">True</option>
+									<option value="pseudo">Pseudo</option>
+								</select>
 							</div>
-						</section>
+						</div>
+					</section>
+					<section class="category">
+						<h4>Vault</h4>
+						<div class="options">
+							<div class="option">
+								<span>Encryption key length</span>
+								<select class="right">
+									<option value="128">128-bit</option>
+									<option value="256">256-bit</option>
+								</select>
+							</div>
+							<div class="option">
+								<span>Algorithm</span>
+								<select class="right">
+									<option value="CTR">CTR</option>
+									<option value="CBC">CBC</option>
+								</select>
+							</div>
+						</div>
+					</section>
+					<section class="category">
+						<h4>MasterPass</h4>
+						<div class="options">
+							<div class="option">
+								<span>Shares</span>
+								<select class="right">
+									<option value="s2n3">s = 2, n = 3</option>
+									<option value="s2n4">s = 2, n = 4</option>
+								</select>
+							</div>
+							<div class="option">
+								<img class="info" src="https://dl.dropboxusercontent.com/s/a4lvoxnxgokddih/info.svg?dl=0" alt="">
+								<p class="info">Where n = Number of shares required to reconstruct MasterPass and S = Total number of shares</p>
+							</div>
+							<div class="option">
+								<span>Change</span>
+								<button class="right">Reset</button>
+							</div>
+						</div>
 					</section>
 				</section>
 			</div>
 			<div id="panel-sync">
-				<section id="sync">
+				<section class="sync">
 					<header>
-						<img class="icon" src="images/icons/sync.svg" alt="" />
+						<img class="icon" src="https://dl.dropboxusercontent.com/s/5p89zba5f1we31j/sync.svg?dl=0" alt="" />
 						<h3>Sync</h3>
 					</header>
 					<section class="category">
@@ -163,49 +161,50 @@
 									<option value="other">Other...</option>
 								</select>
 							</div>
+						</div>
 					</section>
 				</section>
-				</div>
-				<div id="panel-contribute">
-					<section id="contribute">
-						<header>
-							<img class="icon" src="images/icons/mark-github.svg" alt="" />
-							<h3>Contribute</h3>
-						</header>
-						<div class="list">
-							<div class="item">
-								<img src="images/icons/issue-opened.svg" alt="" class="icon" />
-								<div class="name">
-									Report an issue / Give feedback
-								</div>
-							</div>
-							<div class="item">
-								<img src="images/icons/star.svg" alt="" class="icon" />
-								<div class="name">
-									Star the repo
-								</div>
-							</div>
-							<div class="item">
-								<img src="images/icons/repo-forked.svg" alt="" class="icon" />
-								<div class="name">
-									Fork the repo
-								</div>
-							</div>
-							<div class="item">
-								<img src="images/icons/package.svg" alt="" class="icon" />
-								<div class="name">
-									Check for Updates
-								</div>
+			</div>
+			<div id="panel-contribute">
+				<section class="contribute">
+					<header>
+						<img class="icon" src="https://dl.dropboxusercontent.com/s/f73k883q1pmtzvl/mark-github.svg?dl=0" alt="" />
+						<h3>Contribute</h3>
+					</header>
+					<div class="list">
+						<div class="item">
+							<img src="https://dl.dropboxusercontent.com/s/3hdniotned82fyc/issue-opened.svg?dl=0" alt="" class="icon" />
+							<div class="name">
+								Report an issue / Give feedback
 							</div>
 						</div>
-						<footer>
-							<img src="images/icons/code.svg" alt="" class="icon" /> with
-							<img src="images/icons/heart.svg" alt="" class="icon" /> by
-							<br><a href="https://git.io/HR">Habib Rehman</a>
-						</footer>
-					</section>
-				</div>
+						<div class="item">
+							<img src="https://dl.dropboxusercontent.com/s/93nnmblbyxeaeuk/star.svg?dl=0" alt="" class="icon" />
+							<div class="name">
+								Star the repo
+							</div>
+						</div>
+						<div class="item">
+							<img src="https://dl.dropboxusercontent.com/s/xek0wbmsort7pjb/repo-forked.svg?dl=0" alt="" class="icon" />
+							<div class="name">
+								Fork the repo
+							</div>
+						</div>
+						<div class="item">
+							<img src="https://dl.dropboxusercontent.com/s/lap85kc0piaghrj/package.svg?dl=0" alt="" class="icon" />
+							<div class="name">
+								Check for Updates
+							</div>
+						</div>
+					</div>
+					<footer>
+						<img src="https://dl.dropboxusercontent.com/s/1ds6lcn06497nya/code.svg?dl=0" alt="" class="icon" /> with
+						<img src="https://dl.dropboxusercontent.com/s/ca6wuvy61bw9gvc/heart.svg?dl=0" alt="" class="icon" /> by
+						<br><a href="https://git.io/HR">Habib Rehman</a>
+					</footer>
+				</section>
 			</div>
+		</div>
 	</section>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
@@ -227,19 +226,23 @@
 		$(window).on('online', updateOnlineStatus);
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
-		$(window).load(function() {
+		(window).load(function() {
 			// attach click listners
 			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
-					if (this.hasAttribute("data-target")) emittEvent(this.getAttribute("data-target"));
+          var target = this.getAttribute("data-target");
+          this.classList.remove("active");
+          $("a[data-target='" + target +"']").addClass("active");
+					navigate(target);
 				});
 			});
 		});
 
-		function emittEvent(event) {
-			// send event to main
-			rconsole.log("RENDER: " + event + " event emitted");
-			ipcRenderer.send(event);
+		function navigate(panelID) {
+			var oldSel = $('.panel-container > div.current');
+			var currSel = $("#panel-" + panelID);
+			if (oldSel) oldSel.removeClass("current");
+			$("#panel-" + panelID).addClass("current");
 		}
 	</script>
 </body>
