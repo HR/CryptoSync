@@ -226,12 +226,12 @@
 		$(window).on('online', updateOnlineStatus);
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
-		(window).load(function() {
+		$(window).load(function() {
 			// attach click listners
 			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
           var target = this.getAttribute("data-target");
-          this.classList.remove("active");
+					$(".active").first().removeClass("active");
           $("a[data-target='" + target +"']").addClass("active");
 					navigate(target);
 				});

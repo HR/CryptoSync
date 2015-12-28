@@ -170,14 +170,14 @@ function createVault(callback){
 	win.loadURL(global.views.vault);
 	win.openDevTools();
 	win.on('closed', function () {
-		console.log('win.closed event emitted for createSettings.');
+		console.log('win.closed event emitted for createVault.');
 		win = null;
 		if (callback) callback();
 	});
 }
 
-function createSettings(){
-	const win = new BrowserWindow({
+function createSettings(callback){
+	let win = new BrowserWindow({
 		width: 800,
 		height: 600,
 		center: true
