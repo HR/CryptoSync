@@ -262,7 +262,7 @@
 		}
 
 		ipcRenderer.on("authResult", function(event, url) {
-			rconsole.log("IPCRENDER authResult emitted,\n URL: " + url + "\n");
+			rconsole.log(`IPCRENDER authResult emitted,\n URL: ${url}\n`);
 			// code to get AUTH CODE
 			var err = getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#

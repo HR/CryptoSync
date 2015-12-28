@@ -8,11 +8,11 @@ const OAuth = require('./src/OAuth');
 const fs = require('fs-plus');
 const Db = require('./src/Db');
 const shell = require('electron').shell;
-const crypto = require('crypto');
+const crypto = require('./src/crypto');
 const Positioner = require('electron-positioner');
 //	TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
-// YOLO#101
+// YOLO$101
 
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
@@ -309,7 +309,7 @@ function masterPassPrompt(callback) {
 	// var BrowserWindow = electron.remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	let win = new BrowserWindow({
-		width: 300, //600
+		width: 300,
 		height: 415,
 		center: true,
 		titleBarStyle: 'hidden-inset'
@@ -317,7 +317,7 @@ function masterPassPrompt(callback) {
 	});
 	let webContents = win.webContents;
 	win.loadURL(global.views.masterpassprompt);
-	//win.openDevTools();
+	// win.openDevTools();
 	ipc.on('checkMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
 		// TODO: Clean this up and remove redundancies
@@ -346,13 +346,12 @@ function masterPassPrompt(callback) {
 		});
 	});
 	ipc.on('setMasterPass', function (event, masterpass) {
-		console.log('IPCMAIN: setMasterPass emitted. Setting Masterpass...');
-		// TODO: Hash MasterPass
-		// TODO: Replace old MasterPass hash in mdb
-		global.MasterPass.set(masterpass); // set MasterPass locally
-		// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-		// 	// body...
-		// });
+		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
+		setMasterPass(masterpass, function(err) {
+			// TODO: create new Vault, delete old data and start re-encrypting
+			global.MasterPass.set(masterpass);
+			webContents.send('setMasterPassResult', err);
+		});
 	});
 
 	win.on('closed', function () {
@@ -367,10 +366,10 @@ function masterPassPrompt(callback) {
 /**
  * Functions
  **/
-function setMasterPass(MP, callback) {
-	var hash = crypto.createHash('sha256').update(MP).digest('hex');
-	console.log(`hash (of new MP) = ${hash}`);
-	global.mdb.put('MPhash', hash, function (err, token) {
+function setMasterPass(masterpass, callback) {
+	let MPhash = crypto.genPassHash(masterpass);
+	console.log(`MPhash = ${MPhash}`);
+	global.mdb.put('MPhash', MPhash, function (err) {
 		if (err) {
 			console.log(`ERROR: mdb.put('MPhash') failed, ${err}`);
 			return callback(err);
@@ -382,9 +381,7 @@ function setMasterPass(MP, callback) {
 }
 
 
-function checkMasterPass(MP, callback) {
-	var hash = crypto.createHash('sha256').update(MP).digest('hex');
-	console.log(`hash = new MPhash = ${hash}`);
+function checkMasterPass(masterpass, callback) {
 	global.mdb.get('MPhash', function (err, MPhash) {
 		if (err) {
 			if (err.notFound) {
@@ -396,8 +393,13 @@ function checkMasterPass(MP, callback) {
 			return callback(err, null);
 		}
 		console.log(`SUCCESS: MPhash FOUND, ${MPhash}`);
-		let match = (hash === MPhash);
-		console.log(`MATCH: ${hash} === ${MPhash} = ${match}`);
+		MPhash = MPhash.split("#");
+		const SALT = MPhash[0];
+		const MPHASH = MPhash[1];
+		console.log(`SALT = ${SALT}, MPHASH = ${MPHASH}`);
+		let hash = crypto.genPassHash(masterpass, SALT);
+		let match = (hash === MPHASH);
+		console.log(`MATCH: ${hash} === ${MPHASH} = ${match}`);
 		return callback(null, match);
 	});
 }

@@ -8,7 +8,6 @@
 </head>
 
 <body>
-	<!-- CS Menubar v1f -->
 	<section id="masterpassprompt">
 		<img src="images/icons/CryptoSyncvault.svg" alt="some" id="vault" />
 		<div class="panel-container">
@@ -22,8 +21,8 @@
 				</header>
 				<form onsubmit="return false;">
 					<div class="masterpass">
-						<input type="password" name="masterpass" id="masterpass" placeholder="********" />
-						<label for="password">INCORRECT MASTER PASSWORD</label>
+						<input type="password" name="masterpass" id="checkMasterPassInput" placeholder="********" />
+						<label for="checkMasterPassInput"></label>
 					</div>
 
 					<div class="forgotMP">
@@ -31,7 +30,7 @@
 					</div>
 
 					<div class="submit">
-						<input type="submit" value="Unlock" id="setMasterPass"/>
+						<input type="submit" value="Unlock" id="checkMasterPass" />
 					</div>
 				</form>
 				<footer>
@@ -46,16 +45,16 @@
 					<img class="info" src="images/icons/info.svg" alt="" />
 					<p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass - constructed using your secret shares</p>
 				</header>
-				<form onsubmit="return handleShareSubmit()">
+				<form onsubmit="return false;">
 					<div class="masterpass">
-						<input type="password" name="share" class="" placeholder="********" required/>
-						<input type="password" name="share" class="" placeholder="********" required/>
-						<input type="password" name="share" class="" placeholder="********" required/>
-						<input type="password" name="share" class="" placeholder="********" required/>
-						<label for="password">INCORRECT SECRET SHARES(S)</label>
+						<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
+						<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
+						<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
+						<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
+						<label for="checkSharesInput">STILL UNDER DEV</label>
 					</div>
 					<div class="submit">
-						<input type="submit" value="Unlock" />
+						<input type="submit" value="Unlock" id="checkShares"/>
 					</div>
 				</form>
 				<footer>
@@ -72,13 +71,14 @@
 					<img class="info" src="images/icons/info.svg" alt=" " />
 					<p class="info ">The MasterPass is used to encrypt the Vault. Thus, the strength of the Vault relies on the strength of your password. Resetting your password will prompt the re-encryption of all the data and discard the former encrypted</p>
 				</header>
-				<form onsubmit="handleReset(); return false;">
+				<form onsubmit="return false;">
 					<div class="masterpass">
-						<input type="password" name="name" id="name" placeholder="********" required/>
+						<input type="password" name="name" id="setMasterPassInput" placeholder="********" required/>
+						<label for="setMasterPassInput"></label>
 					</div>
 
 					<div class="submit">
-						<input type="submit" value="Reset" />
+						<input type="submit" value="Reset" id="setMasterPass" />
 					</div>
 				</form>
 				<footer>
@@ -91,8 +91,7 @@
 	</section>
 	<script type="text/javascript">
 		var ipcRenderer = require('electron').ipcRenderer,
-				rconsole = require('electron').remote.getGlobal("console"),
-				errLabelCheckMP;
+			rconsole = require('electron').remote.getGlobal("console");
 		window.$ = window.jQuery = require('jquery');
 
 		function updateOnlineStatus() {
@@ -104,29 +103,39 @@
 
 		navigate("default");
 		$(window).load(function() {
-			errLabelCheckMP = $('label[for="password"]').first();
+			errLabelCheckMP = $('label[for="checkMasterPassInput"]');
+			errLabelSetMP = $('label[for="setMasterPassInput"]');
 			errLabelCheckMP.hide();
+			errLabelSetMP.hide();
 			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
 					navigate(this.getAttribute("data-target"));
 				});
 			});
+			$("#checkMasterPass").click(function() {
+				console.log("checkMasterPass button clicked");
+				validateField("checkMasterPass", errLabelCheckMP);
+			});
 			$("#setMasterPass").click(function() {
 				console.log("setMasterPass button clicked");
-				var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
-					MasterPass = $("input#masterpass").val();
-				if (MPregex.test(MasterPass)) {
-					errLabelCheckMP.hide();
-					ipcRenderer.send("checkMasterPass", MasterPass);
-				} else if (!MasterPass) {
-					errLabelCheckMP.text("please enter a masterpass".toLocaleUpperCase());
-					errLabelCheckMP.show();
-				} else {
-					errLabelCheckMP.text("Invalid password".toLocaleUpperCase());
-					errLabelCheckMP.show();
-				}
+				validateField("setMasterPass", errLabelSetMP);
 			});
 		});
+
+		function validateField(field, errLabel) {
+			var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
+				masterpass = $(`input#${field+"Input"}`).val();
+			if (MPregex.test(masterpass)) {
+				errLabel.hide();
+				ipcRenderer.send(field, masterpass);
+			} else if (!masterpass) {
+				errLabel.text("please enter a masterpass".toLocaleUpperCase());
+				errLabel.show();
+			} else {
+				errLabel.text("Invalid masterpass".toLocaleUpperCase());
+				errLabel.show();
+			}
+		}
 
 		function navigate(panelID) {
 			var oldSelection = $('.panel-container > div.current');
@@ -134,7 +143,8 @@
 			$("#panel-" + panelID).addClass("current");
 		}
 
-		ipcRenderer.on('checkMasterPassResult', function (event, result) {
+		ipcRenderer.on('checkMasterPassResult', function(event, result) {
+			rconsole.log(`IPCRENDER checkMasterPassResult emitted`);
 			if (result.err) {
 				errLabelCheckMP.text(`ERROR: ${err}`);
 				errLabelCheckMP.show();
@@ -143,16 +153,31 @@
 
 			if (result.match) {
 				// TODO: show confirmation
-				errLabelCheckMP.text(`CORRECT PASSWORD`);
+				errLabelCheckMP.text(`CORRECT MASTERPASS`);
 				errLabelCheckMP.css('color', '#2ECC71');
 				errLabelCheckMP.show();
 				return;
 			} else {
-				errLabelCheckMP.text(`INCORRECT PASSWORD`);
+				errLabelCheckMP.text(`INCORRECT MASTERPASS`);
 				errLabelCheckMP.show();
+				return;
+			}
+		});
+
+		ipcRenderer.on('setMasterPassResult', function(event, err) {
+			rconsole.log(`IPCRENDER setMasterPassResult emitted, err = ${err}`);
+			if (err) {
+				errLabelSetMP.text(`ERROR: ${err}`);
+				errLabelSetMP.show();
+				return;
+			} else {
+				errLabelSetMP.text(`MASTERPASS SUCCESSFULLY SET`);
+				errLabelSetMP.css('color', '#2ECC71');
+				errLabelSetMP.show();
 				return;
 			}
 		});
 	</script>
 </body>
+
 </html>

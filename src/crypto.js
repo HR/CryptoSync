@@ -20,6 +20,7 @@ let defaults = {
  */
 
 exports.encrypt = function (ptext, password, mp, callback) {
+	// TODO: Use HMAC to authoritatively add metadata about the encryption
 	// decrypts any arbitrary data passed with the pass
 	let i = defaults.iterations,
 		kL = defaults.keyLength,
@@ -91,4 +92,14 @@ exports.pass2shares = function (pass, N, S) {
 	let shares = secrets.share(key, N, S, defaults.padLength);
 
 	return [shares, N, S];
+};
+
+exports.genPassHash = function (pass, salt) {
+	if (salt) {
+		return crypto.createHash('sha256').update(pass+salt).digest('hex');
+	} else {
+		let salt = crypto.randomBytes(32).toString('hex'); // generate 256 random bits
+		let hash = crypto.createHash('sha256').update(pass+salt).digest('hex');
+		return `${salt}#${hash}`;
+	}
 };
