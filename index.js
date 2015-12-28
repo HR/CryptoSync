@@ -310,7 +310,7 @@ function masterPassPrompt(callback) {
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	let win = new BrowserWindow({
 		width: 300,
-		height: 415,
+		height: 435,
 		center: true,
 		titleBarStyle: 'hidden-inset'
 		// resizable: false,
