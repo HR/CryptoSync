@@ -30,12 +30,13 @@ global.paths = {
 global.settings = {
 	user: {},
 	default: { // TODO: finalise the default settings
-		crypto: {
-
-		},
-		sync: {
-
-		}
+		keyLength: "128", // TODO: parseInt ehen read
+		algorithm: "CTR", // TODO: set proper encrption arg on encryption
+		randomness: "Pseudo",
+		MPkeyLength: "256",
+		shares: "s2n3",
+		autostart: "true",
+		offlineEnc: "true"
 	}
 };
 

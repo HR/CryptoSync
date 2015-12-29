@@ -15,16 +15,16 @@
 				<a class="item navigationLink" data-target="crypto">Crypto</a>
 				<a class="item navigationLink" data-target="sync">Sync</a>
 				<a class="item navigationLink" data-target="contribute">
-					<img class="icon" src="https://dl.dropboxusercontent.com/s/f73k883q1pmtzvl/mark-github.svg?dl=0" alt="" />
+					<img class="icon" src="images/icons/mark-github.svg" alt="" />
 				</a>
 				<a class="item right">
-					<img class="icon" src="https://dl.dropboxusercontent.com/s/43f7yhtft9nyenh/CryptoSyncVault_sl.svg?dl=0" alt="" />
+					<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
 				</a>
 			</div>
 			<div id="panel-accounts" class="current">
 				<section class="accounts">
 					<header>
-						<img class="icon" src="https://dl.dropboxusercontent.com/s/vlec2evyeviy95f/accounts.svg?dl=0" alt="" />
+						<img class="icon" src="images/icons/accounts.svg" alt="" />
 						<h3>Cloud accounts</h3>
 					</header>
 					<div class="list">
@@ -32,7 +32,7 @@
 							<div class="type">
 								<div class="profile"></div>
 								<div class="cloudType">
-									<img src="https://dl.dropboxusercontent.com/s/9by04o230s86tak/drive.svg?dl=0"></img>
+									<img src="images/icons/gdrive.svg"></img>
 								</div>
 							</div>
 							<div class="content">
@@ -40,13 +40,13 @@
 								<div class="lastMod">nikola.tesla@gmail.com</div>
 								<div class="qouta">5.76GB / 15GB</div>
 							</div>
-							<img src="https://dl.dropboxusercontent.com/s/byh63tillrffwty/remove.svg?dl=0" alt="" class="icon remove right" />
+							<img src="images/icons/remove.svg" alt="" class="icon remove right" />
 						</div>
 						<div class="item">
 							<div class="type">
 								<div class="profile"></div>
 								<div class="cloudType">
-									<img src="https://dl.dropboxusercontent.com/s/59d9tigfezyqolm/dropbox.svg?dl=0"></img>
+									<img src="images/icons/dropbox_stroke.svg"></img>
 								</div>
 							</div>
 							<div class="content">
@@ -54,20 +54,18 @@
 								<div class="lastMod">nikola.tesla@gmail.com</div>
 								<div class="qouta">520.5 MB / 2GB</div>
 							</div>
-							<img src="https://dl.dropboxusercontent.com/s/byh63tillrffwty/remove.svg?dl=0" alt="" class="icon remove right" />
-
+							<img src="images/icons/remove.svg" alt="" class="icon remove right" />
 						</div>
-
 					</div>
 					<button class="button add">
-						<img src="https://dl.dropboxusercontent.com/s/vuikp7or3ayis20/add.svg?dl=0" alt="" class="icon" />
+						<img src="images/icons/add.svg" alt="" class="icon" />
 					</button>
 				</section>
 			</div>
 			<div id="panel-crypto">
 				<section class="crypto">
 					<header>
-						<img class="icon" src="https://dl.dropboxusercontent.com/s/3wwtpblnzuis8by/crypto.svg?dl=0" alt="">
+						<img class="icon" src="images/icons/crypto.svg" alt="">
 						<h3>Crypto</h3>
 					</header>
 					<section class="category">
@@ -75,23 +73,23 @@
 						<div class="options">
 							<div class="option">
 								<span>Key Length</span>
-								<select class="right">
+								<select class="right config" data-config="keyLength">
 									<option value="128">128-bit</option>
 									<option value="256">256-bit</option>
 								</select>
 							</div>
 							<div class="option">
 								<span>Algorithm</span>
-								<select class="right">
+								<select class="right config" data-config="algorithm">
 									<option value="CTR">CTR</option>
 									<option value="CBC">CBC</option>
 								</select>
 							</div>
 							<div class="option">
-								<span>Randomness (experimental)</span>
-								<select class="right">
-									<option value="true">True</option>
+								<span>Randomness</span>
+								<select class="right config" data-config="randomness">
 									<option value="pseudo">Pseudo</option>
+									<option value="true">True (experimental)</option>
 								</select>
 							</div>
 						</div>
@@ -101,16 +99,9 @@
 						<div class="options">
 							<div class="option">
 								<span>Encryption key length</span>
-								<select class="right">
+								<select class="right config" data-config="MPkeyLength">
 									<option value="128">128-bit</option>
-									<option value="256">256-bit</option>
-								</select>
-							</div>
-							<div class="option">
-								<span>Algorithm</span>
-								<select class="right">
-									<option value="CTR">CTR</option>
-									<option value="CBC">CBC</option>
+									<option value="256" selected>256-bit</option>
 								</select>
 							</div>
 						</div>
@@ -120,18 +111,18 @@
 						<div class="options">
 							<div class="option">
 								<span>Shares</span>
-								<select class="right">
+								<select class="right config" data-config="shares">
 									<option value="s2n3">s = 2, n = 3</option>
 									<option value="s2n4">s = 2, n = 4</option>
 								</select>
 							</div>
 							<div class="option">
-								<img class="info" src="https://dl.dropboxusercontent.com/s/a4lvoxnxgokddih/info.svg?dl=0" alt="">
+								<img class="info" src="images/icons/info.svg" alt="">
 								<p class="info">Where n = Number of shares required to reconstruct MasterPass and S = Total number of shares</p>
 							</div>
 							<div class="option">
 								<span>Change</span>
-								<button class="right">Reset</button>
+								<button class="right" data-action="resetMasterPass">Reset</button>
 							</div>
 						</div>
 					</section>
@@ -140,7 +131,7 @@
 			<div id="panel-sync">
 				<section class="sync">
 					<header>
-						<img class="icon" src="https://dl.dropboxusercontent.com/s/5p89zba5f1we31j/sync.svg?dl=0" alt="" />
+						<img class="icon" src="images/icons/sync.svg" alt="" />
 						<h3>Sync</h3>
 					</header>
 					<section class="category">
@@ -148,18 +139,14 @@
 						<div class="options">
 							<div class="option">
 								<span>Autostart</span>
-								<input type="checkbox" class="right" checked/>
+								<input type="checkbox" class="right config" data-config="autostart" checked/>
 							</div>
 							<div class="option">
 								<span>Encrypt while offline</span>
-								<input type="checkbox" class="right" checked/>
+								<input type="checkbox" class="right config" data-config="offlineEnc" checked/>
 							</div>
 							<div class="option">
 								<span>Location</span>
-								<select class="right">
-									<option value="home">Home</option>
-									<option value="other">Other...</option>
-								</select>
 							</div>
 						</div>
 					</section>
@@ -168,38 +155,46 @@
 			<div id="panel-contribute">
 				<section class="contribute">
 					<header>
-						<img class="icon" src="https://dl.dropboxusercontent.com/s/f73k883q1pmtzvl/mark-github.svg?dl=0" alt="" />
+						<img class="icon" src="images/icons/mark-github.svg" alt="" />
 						<h3>Contribute</h3>
 					</header>
 					<div class="list">
 						<div class="item">
-							<img src="https://dl.dropboxusercontent.com/s/3hdniotned82fyc/issue-opened.svg?dl=0" alt="" class="icon" />
-							<div class="name">
-								Report an issue / Give feedback
-							</div>
+							<a class="navigationLink" data-target="https://github.com/HR/CryptoSync/issues">
+								<img src="images/icons/issue-opened.svg" class="icon" alt="" />
+								<div class="name">
+									Report an issue / Give feedback
+								</div>
+							</a>
 						</div>
 						<div class="item">
-							<img src="https://dl.dropboxusercontent.com/s/93nnmblbyxeaeuk/star.svg?dl=0" alt="" class="icon" />
-							<div class="name">
-								Star the repo
-							</div>
+							<a class="navigationLink" data-target="https://github.com/HR/CryptoSync/issues">
+								<img src="images/icons/star.svg" alt="" class="icon" />
+								<div class="name">
+									Star the repo
+								</div>
+							</a>
 						</div>
 						<div class="item">
-							<img src="https://dl.dropboxusercontent.com/s/xek0wbmsort7pjb/repo-forked.svg?dl=0" alt="" class="icon" />
-							<div class="name">
-								Fork the repo
-							</div>
+							<a class="navigationLink" data-target="https://github.com/HR/CryptoSync/issues">
+								<img src="images/icons/repo-forked.svg" alt="" class="icon" />
+								<div class="name">
+									Fork the repo
+								</div>
+							</a>
 						</div>
 						<div class="item">
-							<img src="https://dl.dropboxusercontent.com/s/lap85kc0piaghrj/package.svg?dl=0" alt="" class="icon" />
-							<div class="name">
-								Check for Updates
-							</div>
+							<a class="navigationLink" data-action="checkUpdates">
+								<img src="images/icons/package.svg" alt="" class="icon" />
+								<div class="name">
+									Check for Updates
+								</div>
+							</a>
 						</div>
 					</div>
 					<footer>
-						<img src="https://dl.dropboxusercontent.com/s/1ds6lcn06497nya/code.svg?dl=0" alt="" class="icon" /> with
-						<img src="https://dl.dropboxusercontent.com/s/ca6wuvy61bw9gvc/heart.svg?dl=0" alt="" class="icon" /> by
+						<img src="images/icons/code.svg" alt="" class="icon" /> with
+						<img src="images/icons/heart.svg" alt="" class="icon" /> by
 						<br><a href="https://git.io/HR">Habib Rehman</a>
 					</footer>
 				</section>
@@ -213,11 +208,12 @@
 			gAuth = remote.getGlobal('gAuth'),
 			ipcRenderer = require('electron').ipcRenderer,
 			remoteWin = remote.getCurrentWindow(),
-			paths = remote.getGlobal("paths"),
-			views = remote.getGlobal("views"),
+			settings = remote.getGlobal("settings"),
 			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console"),
-			webContents = remoteWin.webContents;
+			shell = require('shell'),
+			webContents = remoteWin.webContents,
+			userSettings;
 
 		/* Network change event */
 		function updateOnlineStatus() {
@@ -230,19 +226,41 @@
 			// attach click listners
 			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
-          var target = this.getAttribute("data-target");
+					var target = this.getAttribute("data-target");
 					$(".active").first().removeClass("active");
-          $("a[data-target='" + target +"']").addClass("active");
+					$("a[data-target='" + target + "']").addClass("active");
+					if (this.getAttribute("data-action")) {
+						// TODO: Action (i.e. check for updates/open updater)
+						return;
+					}
 					navigate(target);
+				});
+			});
+
+			$(".config").each(function(index) {
+				var $this = $(this);
+				if ($.isEmptyObject(settings.user)) {
+					// TODO: Load defaults
+				}
+				$this.change(function() {
+					var config = this.getAttribute("data-config"),
+							value = ($this.is(':checkbox')) ? $this.is(':checked') : $this.val();
+					console.log(`${config} has changed to ${value} of type ${typeof value}`);
+					userSettings[config] = value;
 				});
 			});
 		});
 
-		function navigate(panelID) {
+		function navigate(dest) {
+			var URLregex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
+			if (URLregex.test(dest)) {
+				shell.openExternal(dest);
+				return;
+			}
 			var oldSel = $('.panel-container > div.current');
-			var currSel = $("#panel-" + panelID);
+			var currSel = $("#panel-" + dest);
 			if (oldSel) oldSel.removeClass("current");
-			$("#panel-" + panelID).addClass("current");
+			$("#panel-" + dest).addClass("current");
 		}
 	</script>
 </body>
