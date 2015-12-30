@@ -122,7 +122,7 @@
 							</div>
 							<div class="option">
 								<span>Change</span>
-								<button class="right" data-action="resetMasterPass">Reset</button>
+								<button class="right" id="resetMasterPass">Reset</button>
 							</div>
 						</div>
 					</section>
@@ -225,13 +225,19 @@
 		updateOnlineStatus();
 		$(window).load(function() {
 			// attach click listners
+			$(document).on("click", "#resetMasterPass", function(){
+				ipcRenderer.send("resetMasterPass");
+			});
 			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
-					var target = this.getAttribute("data-target");
+					var target = this.getAttribute("data-target"),
+							action = this.getAttribute("data-action");
 					$(".active").first().removeClass("active");
 					$("a[data-target='" + target + "']").addClass("active");
-					if (this.getAttribute("data-action")) {
+					if (action) {
 						// TODO: Action (i.e. check for updates/open updater)
+						console.log(`${this} has data-action attr`);
+						ipcRenderer.send(action);
 						return;
 					}
 					navigate(target);

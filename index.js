@@ -1,16 +1,16 @@
 'use strict';
 const electron = require('electron');
 const app = electron.app,
-			BrowserWindow = electron.BrowserWindow,
-			ipc = electron.ipcMain,
-			Tray = electron.Tray,
-			OAuth = require('./src/OAuth'),
-			fs = require('fs-plus'),
-			Db = require('./src/Db'),
-			shell = require('electron').shell,
-			crypto = require('./src/crypto'),
-			Positioner = require('electron-positioner'),
-			_ = require('lodash');
+	BrowserWindow = electron.BrowserWindow,
+	ipc = electron.ipcMain,
+	Tray = electron.Tray,
+	OAuth = require('./src/OAuth'),
+	fs = require('fs-plus'),
+	Db = require('./src/Db'),
+	shell = require('electron').shell,
+	crypto = require('./src/crypto'),
+	Positioner = require('electron-positioner'),
+	_ = require('lodash');
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
 // YOLO$101
@@ -145,7 +145,7 @@ function Cryptobar(callback) {
 
 	ipc.on('openSettings', function (event) {
 		console.log('IPCMAIN: openSettings event emitted');
-		createSettings(function(result){
+		createSettings(function (result) {
 
 		});
 	});
@@ -162,7 +162,7 @@ function Cryptobar(callback) {
 	});
 }
 
-function createVault(callback){
+function createVault(callback) {
 	const win = new BrowserWindow({
 		width: 800,
 		height: 600,
@@ -177,22 +177,6 @@ function createVault(callback){
 		if (callback) callback();
 	});
 }
-
-function createSettings(callback){
-	let win = new BrowserWindow({
-		width: 800,
-		height: 600,
-		center: true
-	});
-	win.loadURL(global.views.settings);
-	win.openDevTools();
-	win.on('closed', function () {
-		console.log('win.closed event emitted for createSettings.');
-		win = null;
-		callback();
-	});
-}
-
 function createSetup(callback) {
 	// var BrowserWindow = require('electron').remote.BrowserWindow;
 	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
@@ -248,7 +232,7 @@ function createSetup(callback) {
 
 	ipc.on('setMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
-		setMasterPass(masterpass, function(err) {
+		setMasterPass(masterpass, function (err) {
 			global.MasterPass.set(masterpass);
 			webContents.send('setMasterPassResult', err);
 		});
@@ -269,6 +253,102 @@ function createSetup(callback) {
 			callback('Setup did not finish successfully');
 		}
 	});
+}
+function createSettings(callback) {
+	let win = new BrowserWindow({
+		width: 800,
+		height: 600,
+		center: true
+	});
+	win.loadURL(global.views.settings);
+	win.openDevTools();
+	ipc.on('resetMasterPass', function (event, type) {
+		console.log('IPCMAIN: resetMasterPass emitted. Creating masterPassPrompt...');
+		masterPassPrompt(true, function(newMPset) {
+			// if (newMPset) then new new MP was set otherwise it wasn't
+			// TODO: show password was set successfully
+			console.log(`MAIN: masterPassPrompt, newMPset finished? ${newMPset}`);
+			return;
+		});
+	});
+	win.on('closed', function () {
+		console.log('win.closed event emitted for createSettings.');
+		win = null;
+		callback();
+	});
+}
+
+function masterPassPrompt(reset, callback) {
+	// var BrowserWindow = electron.remote.BrowserWindow;
+	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
+	let win = new BrowserWindow({
+		width: 500, // 300
+		height: 435,
+		center: true,
+		titleBarStyle: 'hidden-inset'
+			// resizable: false,
+	});
+	let webContents = win.webContents;
+	let newMPset = false;
+	if (reset) {
+		win.loadURL(`${global.views.masterpassprompt}?nav_to=reset`);
+	} else {
+		win.loadURL(global.views.masterpassprompt);
+	}
+	win.openDevTools();
+	ipc.on('checkMasterPass', function (event, masterpass) {
+		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
+		// TODO: Clean this up and remove redundancies
+		checkMasterPass(masterpass, function (err, match) {
+			if (err) {
+				//send error
+				webContents.send('checkMasterPassResult', err);
+				return;
+			}
+			if (match) {
+				console.log("IPCMAIN: PASSWORD MATCHES!");
+				global.MasterPass.set(masterpass);
+				console.log(`global.MasterPass.get() = ${global.MasterPass.get()}`);
+				webContents.send('checkMasterPassResult', {
+					err: null,
+					match: match
+				});
+				// TODO: Open Vault and start Menubar
+				// callback();
+				// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
+				// 	// body...
+				// });
+				return;
+			} else {
+				console.log("IPCMAIN: PASSWORD DOES NOT MATCH!");
+				webContents.send('checkMasterPassResult', {
+					err: null,
+					match: match
+				});
+				return;
+			}
+		});
+	});
+	ipc.on('setMasterPass', function (event, masterpass) {
+		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
+		setMasterPass(masterpass, function (err) {
+			// TODO: create new Vault, delete old data and start re-encrypting
+			if (!err) {
+				newMPset = true;
+				global.MasterPass.set(masterpass);
+				webContents.send('setMasterPassResult', null);
+			} else {
+				webContents.send('setMasterPassResult', err);
+			}
+		});
+	});
+	win.on('closed', function () {
+		console.log('win.closed event emitted for createSettings.');
+		win = null;
+		callback(((reset) ? newMPset : null));
+	});
+
+	return win;
 }
 
 function createErrorPrompt(err, callback) {
@@ -304,64 +384,6 @@ function createErrorPrompt(err, callback) {
 			}
 		}
 	});
-}
-
-function masterPassPrompt(callback) {
-	// var BrowserWindow = electron.remote.BrowserWindow;
-	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
-	let win = new BrowserWindow({
-		width: 300,
-		height: 435,
-		center: true,
-		titleBarStyle: 'hidden-inset'
-		// resizable: false,
-	});
-	let webContents = win.webContents;
-	win.loadURL(global.views.masterpassprompt);
-	// win.openDevTools();
-	ipc.on('checkMasterPass', function (event, masterpass) {
-		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
-		// TODO: Clean this up and remove redundancies
-		checkMasterPass(masterpass, function(err, match) {
-			if (err) {
-				//send error
-				webContents.send('checkMasterPassResult', err);
-				return;
-			}
-			if (match) {
-				console.log("IPCMAIN: PASSWORD MATCHES!");
-				global.MasterPass.set(masterpass);
-				console.log(`global.MasterPass.get() = ${global.MasterPass.get()}`);
-				webContents.send('checkMasterPassResult', {err:null, match:match});
-				// TODO: Open Vault and start Menubar
-				// callback();
-				// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
-				// 	// body...
-				// });
-				return;
-			} else {
-				console.log("IPCMAIN: PASSWORD DOES NOT MATCH!");
-				webContents.send('checkMasterPassResult', {err:null, match:match});
-				return;
-			}
-		});
-	});
-	ipc.on('setMasterPass', function (event, masterpass) {
-		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
-		setMasterPass(masterpass, function(err) {
-			// TODO: create new Vault, delete old data and start re-encrypting
-			global.MasterPass.set(masterpass);
-			webContents.send('setMasterPassResult', err);
-		});
-	});
-
-	win.on('closed', function () {
-		console.log('win.closed event emitted for createSettings.');
-		win = null;
-		callback();
-	});
-
-	return win;
 }
 
 /**
@@ -531,16 +553,16 @@ app.on('ready', function () {
 			global.settings.user = JSON.parse(userConfig);
 			return;
 		});
-		// Cryptobar(function (result) {
-		// 	// body...
-		// });
-		if (!global.MasterPass.get()) {
-			masterPassPrompt(function(err) {
-				if (err) {
-					console.log(`ERROR: ${err}`);
-				}
-			});
-		}
+		Cryptobar(function (result) {
+			// body...
+		});
+		// if (!global.MasterPass.get()) {
+		// 	masterPassPrompt(null, function(err) {
+		// 		if (err) {
+		// 			console.log(`ERROR: ${err}`);
+		// 		}
+		// 	});
+		// }
 		// global.mdb = new Db(global.paths.mdb);
 		// global.vault = new Db(global.paths.vault);
 	}
