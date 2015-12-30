@@ -139,7 +139,8 @@ function Cryptobar(callback) {
 	});
 
 	ipc.on('quitApp', function (event) {
-		console.log('IPCMAIN: quitApp event emitted');
+		console.log('IPCMAIN: quitApp event emitted, Calling app.quit()...');
+		app.quit();
 	});
 
 	ipc.on('openSettings', function (event) {
@@ -434,36 +435,44 @@ function onClosed() {
 	win = null;
 }
 
+/**
+ * Event handlers
+ **/
 // Check for connection status
 ipc.on('online-status-changed', function (event, status) {
-	console.log(status);
+	console.log(`APP: online-status-changed event emitted, changed to ${status}`);
 });
 
 app.on('window-all-closed', () => {
 	console.log('APP: window-all-closed event emitted');
-	console.log(`platform if ${process.platform}`);
 	if (process.platform !== 'darwin') {
-		// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
-		if (!(_.isEmpty(global.settings.user))) {
-			console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
-			let userConfig = JSON.stringify(global.settings.user);
-			global.mdb.put('userConfig', userConfig, function (err) {
-				if (err) {
-					console.log(`ERROR: mdb.put('userConfig') failed, ${err}`);
-					// I/O or other error, pass it up the callback
-				}
-				console.log(`SUCCESS: mdb.put('userConfig')`);
-				console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
-				global.vault.close();
-				global.mdb.close();
-				app.quit();
-			});
-		} else {
+		app.quit();
+	}
+});
+app.on('quit', () => {
+	console.log('APP: quit event emitted');
+});
+app.on('will-quit', () => {
+	console.log('APP: will-quit event emitted');
+	console.log(`platform is ${process.platform}`);
+	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
+	if (!(_.isEmpty(global.settings.user))) {
+		console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
+		let userConfig = JSON.stringify(global.settings.user);
+		global.mdb.put('userConfig', userConfig, function (err) {
+			if (err) {
+				console.log(`ERROR: mdb.put('userConfig') failed, ${err}`);
+				// I/O or other error, pass it up the callback
+			}
+			console.log(`SUCCESS: mdb.put('userConfig')`);
 			console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
-			global.vault.close();
+			// global.vault.close();
 			global.mdb.close();
-			app.quit();
-		}
+		});
+	} else {
+		console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
+		global.vault.close();
+		global.mdb.close();
 	}
 });
 
