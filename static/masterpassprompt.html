@@ -131,16 +131,20 @@
 
 		function validateField(field, errLabel) {
 			var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
-				masterpass = $(`input#${field+"Input"}`).val();
+				MPel = $(`input#${field+"Input"}`);
+			const masterpass = MPel.val();
 			if (MPregex.test(masterpass)) {
 				errLabel.hide();
+				MPel.val("");
 				ipcRenderer.send(field, masterpass);
 			} else if (!masterpass) {
 				errLabel.text("please enter a masterpass".toLocaleUpperCase());
 				errLabel.show();
+				MPel.val("");
 			} else {
 				errLabel.text("Invalid masterpass".toLocaleUpperCase());
 				errLabel.show();
+				MPel.val("");
 			}
 		}
 
@@ -181,6 +185,7 @@
 			rconsole.log(`IPCRENDER setMasterPassResult emitted, err = ${err}`);
 			if (err) {
 				errLabelSetMP.text(`ERROR: ${err}`);
+				errLabelSetMP.css('color', '#9F3A38');
 				errLabelSetMP.show();
 				return;
 			} else {
@@ -188,9 +193,15 @@
 				errLabelSetMP.css('color', '#2ECC71');
 				errLabelSetMP.show();
 				if (nav_to) {
-					remoteWin.close();
+					setTimeout(function() {
+						navigate("default");
+					}, 2000);
 				} else {
-					navigate("default");
+					setTimeout(function() {
+						navigate("default");
+						errLabelSetMP.hide();
+						errLabelSetMP.css('color', '#9F3A38');
+					}, 2000);
 				}
 				return;
 			}
