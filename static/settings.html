@@ -240,18 +240,23 @@
 
 			$(".config").each(function(index) {
 				var $this = $(this);
-				if ($.isEmptyObject(settings.user)) {
+				if (!($.isEmptyObject(settings.user))) {
 					// TODO: Load defaults
-					console.log("settings.user is empty");
+					console.log("settings.user is not empty");
+					for (var config in settings.user) {
+						if (settings.user.hasOwnProperty(config)) {
+								$("[data-config='" + config + "']").val(settings.user[config]);
+						}
+					}
+
 				}
 				$this.change(function() {
 					var config = this.getAttribute("data-config");
 					var isCheckbox = $this.is(':checkbox');
 					var value = (isCheckbox) ? $this.is(':checked') : $this.val();
-					console.log(`${config} has changed to ${value} of type ${typeof value}`);
-					// settings.user[config] = (isCheckbox) ? Boolean() : "" ;
+					rconsole.log(`RENDER: ${config} has changed to ${value} of type ${typeof value}`);
 					userSettings[config] = value;
-					console.log(`Set userSettings[${config}] to ${userSettings[config]}`);
+					rconsole.log(`RENDER: Set userSettings[${config}] to ${userSettings[config]}`);
 					settings.user = userSettings;
 				});
 			});
