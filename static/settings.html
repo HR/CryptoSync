@@ -245,7 +245,12 @@
 					console.log("settings.user is not empty");
 					for (var config in settings.user) {
 						if (settings.user.hasOwnProperty(config)) {
-								$("[data-config='" + config + "']").val(settings.user[config]);
+							var value = settings.user[config];
+							if ($.type(value) === "boolean") {
+								$("[data-config='" + config + "']").prop('checked', value);
+							} else {
+								$("[data-config='" + config + "']").val(value);
+							}
 						}
 					}
 

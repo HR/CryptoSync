@@ -8,207 +8,88 @@
 </head>
 
 <body>
-	<section id="settings">
-  <div class="panel-container">
-    <div class="menu">
-      <a class="item navigationLink active" data-target="accounts">Accounts</a>
-      <a class="item navigationLink" data-target="crypto">Crypto</a>
-      <a class="item navigationLink" data-target="sync">Sync</a>
-      <a class="item navigationLink" data-target="contribute">
-        <img class="icon" src="images/icons/mark-github.svg" alt="" />
-      </a>
-      <a class="item right">
-        <img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
-      </a>
-    </div>
-    <div id="panel-accounts" class="current">
-      <section class="accounts">
-        <header>
-          <img class="icon" src="images/icons/accounts.svg" alt="" />
-          <h3>Cloud accounts</h3>
-        </header>
-        <div class="list">
-          <div class="item">
-            <div class="type">
-              <div class="profile"></div>
-              <div class="cloudType">
-                <img src="images/icons/drive.svg"></img>
-              </div>
-            </div>
-            <div class="content">
-              <div class="name">Nikola Tesla</div>
-              <div class="lastMod">nikola.tesla@gmail.com</div>
-              <div class="qouta">5.76GB / 15GB</div>
-            </div>
-            <img src="images/icons/remove.svg" alt="" class="icon remove right" />
-          </div>
-          <div class="item">
-            <div class="type">
-              <div class="profile"></div>
-              <div class="cloudType">
-                <img src="images/icons/dropbox.svg"></img>
-              </div>
-            </div>
-            <div class="content">
-              <div class="name">Nikola Tesla</div>
-              <div class="lastMod">nikola.tesla@gmail.com</div>
-              <div class="qouta">520.5 MB / 2GB</div>
-            </div>
-            <img src="images/icons/remove.svg" alt="" class="icon remove right" />
-
-          </div>
-
-        </div>
-        <button class="button add">
-          <img src="images/icons/add.svg" alt="" class="icon" />
-        </button>
-      </section>
-    </div>
-    <div id="panel-crypto">
-      <section class="crypto">
-        <header>
-          <img class="icon" src="images/icons/crypto.svg" alt="">
-          <h3>Crypto</h3>
-        </header>
-        <section class="category">
-          <h4>Encryption</h4>
-          <div class="options">
-            <div class="option">
-              <span>Key Length</span>
-              <select class="right">
-                <option value="128">128-bit</option>
-                <option value="256">256-bit</option>
-              </select>
-            </div>
-            <div class="option">
-              <span>Algorithm</span>
-              <select class="right">
-                <option value="CTR">CTR</option>
-                <option value="CBC">CBC</option>
-              </select>
-            </div>
-            <div class="option">
-              <span>Randomness (experimental)</span>
-              <select class="right">
-                <option value="true">True</option>
-                <option value="pseudo">Pseudo</option>
-              </select>
-            </div>
-          </div>
-        </section>
-        <section class="category">
-          <h4>Vault</h4>
-          <div class="options">
-            <div class="option">
-              <span>Encryption key length</span>
-              <select class="right">
-                <option value="128">128-bit</option>
-                <option value="256">256-bit</option>
-              </select>
-            </div>
-            <div class="option">
-              <span>Algorithm</span>
-              <select class="right">
-                <option value="CTR">CTR</option>
-                <option value="CBC">CBC</option>
-              </select>
-            </div>
-          </div>
-        </section>
-        <section class="category">
-          <h4>MasterPass</h4>
-          <div class="options">
-            <div class="option">
-              <span>Shares</span>
-              <select class="right">
-                <option value="s2n3">s = 2, n = 3</option>
-                <option value="s2n4">s = 2, n = 4</option>
-              </select>
-            </div>
-            <div class="option">
-              <img class="info" src="images/icons/info.svg" alt="">
-              <p class="info">Where n = Number of shares required to reconstruct MasterPass and S = Total number of shares</p>
-            </div>
-            <div class="option">
-              <span>Change</span>
-              <button class="right">Reset</button>
-            </div>
-          </div>
-        </section>
-      </section>
-    </div>
-    <div id="panel-sync">
-      <section class="sync">
-        <header>
-          <img class="icon" src="images/icons/sync.svg" alt="" />
-          <h3>Sync</h3>
-        </header>
-        <section class="category">
-          <h4>General</h4>
-          <div class="options">
-            <div class="option">
-              <span>Autostart</span>
-              <input type="checkbox" class="right" checked/>
-            </div>
-            <div class="option">
-              <span>Encrypt while offline</span>
-              <input type="checkbox" class="right" checked/>
-            </div>
-            <div class="option">
-              <span>Location</span>
-              <select class="right">
-                <option value="home">Home</option>
-                <option value="other">Other...</option>
-              </select>
-            </div>
-          </div>
-        </section>
-      </section>
-    </div>
-    <div id="panel-contribute">
-      <section class="contribute">
-        <header>
-          <img class="icon" src="images/icons/mark-github.svg" alt="" />
-          <h3>Contribute</h3>
-        </header>
-        <div class="list">
-          <div class="item">
-            <img src="images/icons/issue-opened.svg" alt="" class="icon" />
-            <div class="name">
-              Report an issue / Give feedback
-            </div>
-          </div>
-          <div class="item">
-            <img src="images/icons/star.svg" alt="" class="icon" />
-            <div class="name">
-              Star the repo
-            </div>
-          </div>
-          <div class="item">
-            <img src="images/icons/repo-forked.svg" alt="" class="icon" />
-            <div class="name">
-              Fork the repo
-            </div>
-          </div>
-          <div class="item">
-            <img src="images/icons/package.svg" alt="" class="icon" />
-            <div class="name">
-              Check for Updates
-            </div>
-          </div>
-        </div>
-        <footer>
-          <img src="images/icons/code.svg" alt="" class="icon" /> with
-          <img src="images/icons/heart.svg" alt="" class="icon" /> by
-          <br><a href="https://git.io/HR">Habib Rehman</a>
-        </footer>
-      </section>
-    </div>
-  </div>
-</section>
+	<section id="masterpassprompt">
+		<img src="images/icons/CryptoSyncvault.svg" alt="some" id="vault" />
+		<div class="panel-container">
+			<div id="panel-default">
+				<header>
+					<h1>Unlock the Vault</h1>
+					<p>Please enter your Master Password to unlock the vault
+					</p>
+					<img class="info" src="images/icons/info.svg" alt="" />
+					<p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass</p>
+				</header>
+				<form onsubmit="return false;">
+					<div class="masterpass">
+						<input type="password" name="masterpass" id="checkMasterPassInput" placeholder="********" />
+						<label for="checkMasterPassInput"></label>
+					</div>
+					<div class="forgotMP">
+						<a class="navigationLink" data-target="reset">Forgot MasterPass?</a>
+					</div>
+					<div class="submit">
+						<input type="submit" value="Unlock" id="checkMasterPass" />
+					</div>
+				</form>
+				<!-- <footer>
+								<a class="navigationLink right" data-target="shares">Got shares?</a>
+							</footer> -->
+			</div>
+			<!-- <div id="panel-shares">
+							<header>
+								<h1>Unlock the Vault</h1>
+								<p>Please enter your Secret Shares to unlock the vault
+								</p>
+								<img class="info" src="images/icons/info.svg" alt="" />
+								<p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass - constructed using your secret shares</p>
+							</header>
+							<form onsubmit="return false;">
+								<div class="masterpass">
+									<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
+									<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
+									<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
+									<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
+									<label for="checkSharesInput">STILL UNDER DEV</label>
+								</div>
+								<div class="submit">
+									<input type="submit" value="Unlock" id="checkShares"/>
+								</div>
+							</form>
+							<footer>
+								<a class="back navigationLink" data-target="default">
+									<img src=" images/icons/back.svg" alt=" " />
+								</a>
+							</footer>
+						</div> -->
+			<div id="panel-reset">
+				<header>
+					<h1>Reset the MasterPass</h1>
+					<p>Please enter a new secure MasterPass
+					</p>
+					<img class="info" src="images/icons/info.svg" alt=" " />
+					<p class="info ">The MasterPass is used to encrypt the Vault. Thus, the strength of the Vault relies on the strength of your password. Resetting your password will prompt the re-encryption of all the data and discard the former encrypted</p>
+				</header>
+				<form onsubmit="return false;">
+					<div class="masterpass">
+						<input type="password" name="name" id="setMasterPassInput" placeholder="********" required/>
+						<label for="setMasterPassInput"></label>
+					</div>
+					<div class="submit">
+						<input type="submit" value="Reset" id="setMasterPass" />
+					</div>
+				</form>
+				<footer>
+					<a href="#" class="back navigationLink" data-target="default">
+						<img src="images/icons/back.svg" alt="" />
+					</a>
+				</footer>
+			</div>
+		</div>
+	</section>
 	<script type="text/javascript">
 		var ipcRenderer = require('electron').ipcRenderer,
-			rconsole = require('electron').remote.getGlobal("console");
+			rconsole = require('electron').remote.getGlobal("console"),
+			nav_to = getParam("nav_to", window.document.URL);
 		window.$ = window.jQuery = require('jquery');
 
 		function updateOnlineStatus() {
@@ -218,7 +99,12 @@
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
 
-		navigate("default");
+		if (nav_to) {
+			// reset
+			navigate(nav_to);
+		} else {
+			navigate("default");
+		}
 		$(window).load(function() {
 			errLabelCheckMP = $('label[for="checkMasterPassInput"]');
 			errLabelSetMP = $('label[for="setMasterPassInput"]');
@@ -239,6 +125,13 @@
 			});
 		});
 
+		function getParam(name, url) {
+			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+				results = regex.exec(url);
+			return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		}
+
 		function validateField(field, errLabel) {
 			var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
 				masterpass = $(`input#${field+"Input"}`).val();
@@ -257,7 +150,13 @@
 		function navigate(panelID) {
 			var oldSelection = $('.panel-container > div.current');
 			if (oldSelection) oldSelection.removeClass("current");
-			$("#panel-" + panelID).addClass("current");
+			if (nav_to) {
+				var currSel = $("#panel-" + panelID);
+				currSel.find("footer").hide();
+				currSel.addClass("current");
+			} else {
+				$("#panel-" + panelID).addClass("current");
+			}
 		}
 
 		ipcRenderer.on('checkMasterPassResult', function(event, result) {

@@ -531,16 +531,16 @@ app.on('ready', function () {
 			global.settings.user = JSON.parse(userConfig);
 			return;
 		});
-		Cryptobar(function (result) {
-			// body...
-		});
-		// if (!global.MasterPass.get()) {
-		// 	masterPassPrompt(function(err) {
-		// 		if (err) {
-		// 			console.log(`ERROR: ${err}`);
-		// 		}
-		// 	});
-		// }
+		// Cryptobar(function (result) {
+		// 	// body...
+		// });
+		if (!global.MasterPass.get()) {
+			masterPassPrompt(function(err) {
+				if (err) {
+					console.log(`ERROR: ${err}`);
+				}
+			});
+		}
 		// global.mdb = new Db(global.paths.mdb);
 		// global.vault = new Db(global.paths.vault);
 	}
