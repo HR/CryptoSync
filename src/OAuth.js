@@ -1,7 +1,10 @@
 `use strict`;
-// Environment variables
-// Google: process.env.CS_GAPI_CID, process.env.CS_GAPI_S
-// Dropbox: process.env.CS_DBAPI_KEY, process.env.CS_DBAPI_SKEY
+/**
+ * OAuth.js
+ * Establish a authorised OAuth 2 client
+ ******************************/
+
+
 /* TODO:
  * - Add auth
  */

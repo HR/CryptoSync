@@ -1,7 +1,9 @@
 'use strict';
-/**
- * Custom DB (levelup) API implementation
- **/
+ /**
+  * Db.js
+  * Custom DB (levelup) API implementation
+  ******************************/
+
 let levelup = require('levelup'),
 	fs = require('fs-plus'),
 	crypto = require('./crypto'),

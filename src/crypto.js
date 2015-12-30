@@ -1,4 +1,9 @@
 'use strict';
+/**
+ * crypto.js
+ * Provides the crypto functionality required
+ ******************************/
+
 let secrets = require('secrets.js'),
 	crypto = require('crypto');
 
