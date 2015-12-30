@@ -168,7 +168,7 @@
 							</a>
 						</div>
 						<div class="item">
-							<a class="navigationLink" data-target="https://github.com/HR/CryptoSync/issues">
+							<a class="navigationLink" data-target="https://github.com/HR/CryptoSync">
 								<img src="images/icons/star.svg" alt="" class="icon" />
 								<div class="name">
 									Star the repo
@@ -176,7 +176,7 @@
 							</a>
 						</div>
 						<div class="item">
-							<a class="navigationLink" data-target="https://github.com/HR/CryptoSync/issues">
+							<a class="navigationLink" data-target="https://github.com/HR/CryptoSync/fork">
 								<img src="images/icons/repo-forked.svg" alt="" class="icon" />
 								<div class="name">
 									Fork the repo
@@ -195,7 +195,7 @@
 					<footer>
 						<img src="images/icons/code.svg" alt="" class="icon" /> with
 						<img src="images/icons/heart.svg" alt="" class="icon" /> by
-						<br><a href="https://git.io/HR">Habib Rehman</a>
+						<br><a class="navigationLink" data-target="https://github.com/HR">Habib Rehman</a>
 					</footer>
 				</section>
 			</div>
@@ -212,8 +212,9 @@
 			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console"),
 			shell = require('shell'),
-			webContents = remoteWin.webContents,
-			userSettings;
+			prr = require('prr'),
+			webContents = remoteWin.webContents;
+		userSettings = {};
 
 		/* Network change event */
 		function updateOnlineStatus() {
@@ -241,12 +242,17 @@
 				var $this = $(this);
 				if ($.isEmptyObject(settings.user)) {
 					// TODO: Load defaults
+					console.log("settings.user is empty");
 				}
 				$this.change(function() {
-					var config = this.getAttribute("data-config"),
-							value = ($this.is(':checkbox')) ? $this.is(':checked') : $this.val();
+					var config = this.getAttribute("data-config");
+					var isCheckbox = $this.is(':checkbox');
+					var value = (isCheckbox) ? $this.is(':checked') : $this.val();
 					console.log(`${config} has changed to ${value} of type ${typeof value}`);
+					// settings.user[config] = (isCheckbox) ? Boolean() : "" ;
 					userSettings[config] = value;
+					console.log(`Set userSettings[${config}] to ${userSettings[config]}`);
+					settings.user = userSettings;
 				});
 			});
 		});

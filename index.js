@@ -1,16 +1,17 @@
 'use strict';
 const electron = require('electron');
-const app = electron.app;
-const BrowserWindow = electron.BrowserWindow;
-const ipc = electron.ipcMain;
-const Tray = electron.Tray;
-const OAuth = require('./src/OAuth');
-const fs = require('fs-plus');
-const Db = require('./src/Db');
-const shell = require('electron').shell;
-const crypto = require('./src/crypto');
-const Positioner = require('electron-positioner');
-//	TODO: consider using 'q' or 'bluebird' promise libs later
+const app = electron.app,
+			BrowserWindow = electron.BrowserWindow,
+			ipc = electron.ipcMain,
+			Tray = electron.Tray,
+			OAuth = require('./src/OAuth'),
+			fs = require('fs-plus'),
+			Db = require('./src/Db'),
+			shell = require('electron').shell,
+			crypto = require('./src/crypto'),
+			Positioner = require('electron-positioner'),
+			_ = require('lodash');
+// TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
 // YOLO$101
 
@@ -28,7 +29,9 @@ global.paths = {
 
 // TODO: Get from mdb as JSON and store as JSON as one value
 global.settings = {
-	user: {},
+	user: {
+
+	},
 	default: { // TODO: finalise the default settings
 		keyLength: "128", // TODO: parseInt ehen read
 		algorithm: "CTR", // TODO: set proper encrption arg on encryption
@@ -112,7 +115,7 @@ function Cryptobar(callback) {
 
 	let win = new BrowserWindow({
 		width: 500, // 290
-		height: 315,
+		height: 312,
 		frame: false,
 		show: false
 			// resizable: false
@@ -135,11 +138,8 @@ function Cryptobar(callback) {
 		shell.showItemInFolder(global.paths.vault);
 	});
 
-	ipc.on('openAccounts', function (event) {
-		console.log('IPCMAIN: openAccounts event emitted');
-		createSettings(function(result){
-
-		});
+	ipc.on('quitApp', function (event) {
+		console.log('IPCMAIN: quitApp event emitted');
 	});
 
 	ipc.on('openSettings', function (event) {
@@ -261,7 +261,6 @@ function createSetup(callback) {
 
 	win.on('closed', function () {
 		console.log('IPCMAIN: win.closed event emitted for setupWindow.');
-		global.mdb.close();
 		win = null;
 		if (setupComplete) {
 			callback(null);
@@ -441,13 +440,30 @@ ipc.on('online-status-changed', function (event, status) {
 });
 
 app.on('window-all-closed', () => {
-	console.log('window-all-closed event emitted');
+	console.log('APP: window-all-closed event emitted');
+	console.log(`platform if ${process.platform}`);
 	if (process.platform !== 'darwin') {
 		// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
-		console.log('Calling db.close()');
-		global.vault.close();
-		global.mdb.close();
-		app.quit();
+		if (!(_.isEmpty(global.settings.user))) {
+			console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
+			let userConfig = JSON.stringify(global.settings.user);
+			global.mdb.put('userConfig', userConfig, function (err) {
+				if (err) {
+					console.log(`ERROR: mdb.put('userConfig') failed, ${err}`);
+					// I/O or other error, pass it up the callback
+				}
+				console.log(`SUCCESS: mdb.put('userConfig')`);
+				console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
+				global.vault.close();
+				global.mdb.close();
+				app.quit();
+			});
+		} else {
+			console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
+			global.vault.close();
+			global.mdb.close();
+			app.quit();
+		}
 	}
 });
 
@@ -492,6 +508,20 @@ app.on('ready', function () {
 		console.log('Normal run. Creating Menubar...');
 		// TODO: Implement masterPassPrompt function
 		global.mdb = new Db(global.paths.mdb);
+		global.mdb.get('userConfig', function (err, userConfig) {
+			if (err) {
+				if (err.notFound) {
+					console.log(`ERROR: userConfig NOT FOUND, ...`);
+					return;
+				}
+				// I/O or other error, pass it up the callback
+				console.log(`ERROR: mdb.get('userConfig') failed, ${err}`);
+				return;
+			}
+			console.log(`SUCCESS: userConfig FOUND, ${userConfig}\n, doing JSON.parse & setting to global.settings.user`);
+			global.settings.user = JSON.parse(userConfig);
+			return;
+		});
 		Cryptobar(function (result) {
 			// body...
 		});
