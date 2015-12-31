@@ -10,7 +10,7 @@ sync.prototype.upload = function(file, account){
 sync.prototype.fetchFileList = function(OAuth, pSize){
 	// Fetch the entire file list for the account
 	if (OAuth.isGDrive) {
-		var service = google.drive('v3');
+		var service = google.drive('v2');
 		service.files.list({
 			auth: OAuth.oauth2Client,
 			pageSize: pSize || 10,

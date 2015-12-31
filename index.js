@@ -18,6 +18,7 @@ const app = electron.app,
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
 global.gAuth = null;
+global.accounts = {};
 global.paths = {
 	home: `${fs.getHomeDirectory()}/CryptoSync`,
 	mdb: `${app.getPath('userData')}/mdb`,
