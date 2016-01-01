@@ -261,35 +261,24 @@
 			ipcRenderer.send("initAuth", authType);
 		}
 
-		ipcRenderer.on("authResult", function(event, url) {
-			rconsole.log(`IPCRENDER authResult emitted,\n URL: ${url}\n`);
-			// code to get AUTH CODE
-			var err = getParam("error", url);
-			// if error then callback URL is http://localhost/?error=access_denied#
-			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
+		ipcRenderer.on("authResult", function(event, err) {
+			rconsole.log(`IPCRENDER: authResult emitted,\n URL: ${url}\n`);
+			// handle authResult
 			if (!err) {
-				navigate("auth");
-				var auth_code = getParam("code", url);
-				rconsole.log("\nGot the auth_code: " + auth_code);
-				rconsole.log("Calling callback with the code...");
+				// SUCCESS
+				rconsole.log("IPCRENDER: No err. Navigating to masterpass...");
+				navigate("masterpass");
 				// Send code to call back and redirect
 				// callback(code, function(err, authed) {
 				// 	// body...
 				// });
-				gAuth.getToken(auth_code, function(token) {
-					gAuth.storeToken(token, mdb);
-					rconsole.log("token retrieved and stored: " + token);
-					console.log("oauth2Client retrieved: " + gAuth.oauth2Client);
-					navigate("masterpass");
-				});
 			} else if (err === "access_denied") {
-				// if err === access_denied check
-				rconsole.log("ERR: access_denied");
+				rconsole.log("IPCRENDER: ERR, access_denied");
 				authErr.text("Access to your account was denied. Please try again.").show();
 				navigate("accounts");
 			} else {
-				rconsole.log("ERR: unknown, " + err);
-				authErr.text("Unknown error: " + err).show();
+				rconsole.log(`IPCRENDER: unknown ERR, ${err}`);
+				authErr.text(`Unknown error: ${err}`).show();
 				navigate("accounts");
 			}
 		});

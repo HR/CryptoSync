@@ -202,6 +202,7 @@
 		</div>
 	</section>
 	<script type="text/javascript">
+	// TODO: Add reset config feature
 		window.$ = window.jQuery = require('jquery');
 		// load core modules first
 		var remote = require('electron').remote,
@@ -249,17 +250,7 @@
 				if (!($.isEmptyObject(settings.user))) {
 					// TODO: Load defaults
 					console.log("settings.user is not empty");
-					for (var config in settings.user) {
-						if (settings.user.hasOwnProperty(config)) {
-							var value = settings.user[config];
-							if ($.type(value) === "boolean") {
-								$("[data-config='" + config + "']").prop('checked', value);
-							} else {
-								$("[data-config='" + config + "']").val(value);
-							}
-						}
-					}
-
+					setConfig(settings.user);
 				}
 				$this.change(function() {
 					var config = this.getAttribute("data-config");
@@ -273,6 +264,18 @@
 			});
 		});
 
+		function setConfig (configObj) {
+			for (var config in configObj) {
+				if (configObj.hasOwnProperty(config)) {
+					var value = configObj[config];
+					if ($.type(value) === "boolean") {
+						$("[data-config='" + config + "']").prop('checked', value);
+					} else {
+						$("[data-config='" + config + "']").val(value);
+					}
+				}
+			}
+		}
 		function navigate(dest) {
 			var URLregex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
 			if (URLregex.test(dest)) {

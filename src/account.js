@@ -32,7 +32,7 @@ Account.prototype.fetchFileList = function(pSize){
 	// Fetch the entire file list for the account
 	console.log("Called fetchFileList");
 	var self = this;
-	var service = google.drive('v3');
+	var service = google.drive('v2');
 	service.files.list({
 		auth: self.oauth,
 		pageSize: pSize || 10,

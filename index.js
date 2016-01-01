@@ -10,7 +10,9 @@ const app = electron.app,
 	shell = require('electron').shell,
 	crypto = require('./src/crypto'),
 	Positioner = require('electron-positioner'),
-	_ = require('lodash');
+	_ = require('lodash'),
+	google = require(`googleapis`),
+	plus = google.plus('v1');
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
 // YOLO$101
@@ -179,8 +181,12 @@ function createVault(callback) {
 	});
 }
 function createSetup(callback) {
-	// var BrowserWindow = require('electron').remote.BrowserWindow;
-	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
+	function getParam(name, url) {
+		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+		var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+			results = regex.exec(url);
+		return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+	}
 	var win = new BrowserWindow({
 		width: 580,
 		height: 420,
@@ -196,7 +202,7 @@ function createSetup(callback) {
 	win.loadURL(global.views.setup);
 	win.openDevTools();
 	ipc.on('initAuth', function (event, type) {
-		console.log('IPCMAIN: initAuth emitted. Creating gAuth...');
+		console.log('IPCMAIN: initAuth emitted. Creating Auth...');
 		// if (type === 'gdrive') {
 		global.gAuth = new OAuth(type, global.paths.gdriveSecret);
 		global.gAuth.authorize(global.mdb, function (authUrl) {
@@ -206,7 +212,7 @@ function createSetup(callback) {
 					'extraHeaders': 'pragma: no-cache\n'
 				});
 			} else {
-				console.log('As already exists, loading home...');
+				console.log('As already exists, loading masterpass...');
 				win.loadURL(`${global.views.setup}?nav_to=masterpass`);
 			}
 		});
@@ -221,13 +227,38 @@ function createSetup(callback) {
 		console.log(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
 		const regex = /http:\/\/localhost/g;
 		if (regex.test(url)) {
-			// win.loadURL(global.views.setup);
 			event.preventDefault();
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
-			console.log('MAIN: url matched, sending to RENDER...');
-			webContents.on('did-finish-load', function () {
-				webContents.send('authResult', url);
-			});
+			// console.log('MAIN: url matched, sending to RENDER...');
+			var err = getParam("error", url);
+			// if error then callback URL is http://localhost/?error=access_denied#
+			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
+			if (!err) {
+				var auth_code = getParam("code", url);
+				console.log(`IPCMAIN: Got the auth_code, ${auth_code}`);
+				console.log("IPCMAIN: Calling callback with the code...");
+				// Send code to call back and redirect
+				// callback(code, function(err, authed) {
+				// 	// body...
+				// });
+
+				// Get auth token from auth code
+				gAuth.getToken(auth_code, function(token) {
+					// store auth token in mdb
+					gAuth.storeToken(token, mdb);
+					console.log(`IPCMAIN: token retrieved and stored: ${token}`);
+					console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
+					// create new account
+				});
+
+				webContents.on('did-finish-load', function () {
+					webContents.send('authResult', null);
+				});
+			} else {
+				webContents.on('did-finish-load', function () {
+					webContents.send('authResult', err);
+				});
+			}
 		}
 	});
 
