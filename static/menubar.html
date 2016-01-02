@@ -19,83 +19,11 @@
 			</a>
 		</div>
 		<header>RECENTLY CHANGED</header>
-		<div class="fileList">
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/word.svg">
-					<div class="cloudType">
-						<img src="images/icons/gdrive.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">Planv2.doc</div>
-					<div class="lastMod">20 min ago</div>
-				</div>
-			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/pdf.svg">
-					<div class="cloudType">
-						<img src="images/icons/dropbox_stroke.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">Goo.pdf</div>
-					<div class="lastMod">2 hours ago.</div>
-				</div>
-			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/vector.svg">
-					<div class="cloudType">
-						<img src="images/icons/gdrive.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">Planv2.psd</div>
-					<div class="lastMod">3 days ago</div>
-				</div>
-			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/pdf.svg">
-					<div class="cloudType">
-						<img src="images/icons/dropbox_stroke.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">Goo.pdf</div>
-					<div class="lastMod">2 hours ago.</div>
-				</div>
-			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/word.svg">
-					<div class="cloudType">
-						<img src="images/icons/gdrive.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">Planv2.doc</div>
-					<div class="lastMod">20 min ago</div>
-				</div>
-			</div>
-			<div class="item">
-				<div class="type">
-					<img class="fileType" src="images/icons/filetypes/word.svg">
-					<div class="cloudType">
-						<img src="images/icons/gdrive.svg"></img>
-					</div>
-				</div>
-				<div class="content">
-					<div class="name">LastD.doc</div>
-					<div class="lastMod">20 min ago</div>
-				</div>
-			</div>
+		<div class="fileList" id="filesList">
 		</div>
 		<footer>
 			<div class="status">
-				<img class="icon left" src="images/icons/status_synced.svg" alt="" />
+				<img class="icon left" src="images/icons/status/synced.svg" />
 				<span>Synced</span>
 			</div>
 			<a class="right navigationLink" data-target="openSettings">
@@ -106,6 +34,20 @@
 			</a>
 		</footer>
 	</section>
+	<script id="file-template" type="text/x-handlebars-template">
+		<div class="item">
+			<div class="type">
+				<img class="fileType" src="images/icons/filetypes/{{fileType}}.svg">
+				<div class="cloudType">
+					<img src="images/icons/{{type}}.svg"></img>
+				</div>
+			</div>
+			<div class="content">
+				<div class="name">{{name}}</div>
+				<div class="lastMod">{{lastMod}}</div>
+			</div>
+		</div>
+	</script>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
 		// load core modules first
@@ -134,6 +76,16 @@
 				});
 			});
 		});
+
+		function addFiles(files) {
+			for (var file in files) {
+				if (files.hasOwnProperty(file)) {
+					var template = Handlebars.compile($("#file-template").html());
+					var file = template(files[file]);
+					$('#filesList').append(file);
+				}
+			}
+		}
 
 		function emittEvent(event) {
 			// send event to main
