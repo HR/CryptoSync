@@ -2,7 +2,7 @@
 <!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 93 612 611.5" enable-background="new 0 93 612 611.5" xml:space="preserve">
+	 viewBox="0 180 612 612" enable-background="new 0 180 612 612" xml:space="preserve">
 <defs  xmlns="http://www.w3.org/1999/xhtml">
 	<style  type="text/css">
 		<![CDATA[
@@ -176,6 +176,10 @@ input.c-pretty-link { border: none; padding: 0px; margin: 0px; font-size: 16px; 
 .c-landing.m-gray { background: rgb(246, 246, 246); }
 .c-landing a { color: rgb(74, 144, 226); }
 .c-landing.m-short { max-width: 48rem; margin: 0px auto; text-align: left; font-size: 18px; }
+.icons-set__icon-data:not(.m-color-icon) .icons-set__icon-title { color: inherit !important; }
+.icons-set__icon:not(.m-color-icon) { background: none !important; }
+.icons-set__icon:hover:not(.m-color-icon) { background: rgb(244, 244, 244) !important; }
+.icon-preview__svg:not(.m-color-icon) { background: none !important; }
 .en-markup-crop-options { top: 18px !important; left: 50% !important; margin-left: -100px !important; width: 200px !important; border: 2px solid rgba(255, 255, 255, 0.380392) !important; border-radius: 4px !important; }
 .en-markup-crop-options div div:first-of-type { margin-left: 0px !important; }
 #elevio-widget-container #elevio-main .article-content a, #elevio-widget-container #elevio-similar li a:hover, #elevio-widget-container .articles-menu li a:hover, #elevio-widget-container .tickets-list li a:hover, #elevio-widget-container .rss-menu li a, #elevio-base-menu .expanded .active, #elevio-base-menu .expanded .active .el-fa { color: rgb(50, 194, 77) !important; }
@@ -183,9 +187,15 @@ input.c-pretty-link { border: none; padding: 0px; margin: 0px; font-size: 16px; 
 #elevio-widget-container .elevio-loader-inner, #elevio-inline .elevio-loader-inner { border-bottom-color: rgb(50, 194, 77) !important; }
 #elevio-widget-container .elevio-body { bottom: 30px; }
 			
+			
 			]]>
 	</style>
 </defs>
-<path fill="#333333" d="M306,93C137.7,93,0,230.7,0,399s137.7,306,306,306s306-137.7,306-306S474.3,93,306,93z M285.1,531.1
-	L158.6,417.1l18.1-20.9L278.2,488l153-236.5l23.6,15.3L285.1,531.1z"/>
+<path fill="#333333" d="M306,180C137.1,180,0,317.1,0,486s137.1,306,306,306s306-137.1,306-306S474.9,180,306,180z M162.7,494.4
+	c-5.1,0-8.4-3.4-8.4-8.4c0-83.5,68.3-151.8,151.8-151.8c44.7,0,85.2,19.4,113,49.7c1.7,2.5,3.4,4.2,5.1,6.7v-56.5
+	c0-4.2,2.5-7.6,6.7-8.4h0.8h0.8c5.1,0,8.4,3.4,8.4,8.4V410v8.4h-8.4h-75.9c-5.1,0-8.4-3.4-8.4-8.4s3.4-8.4,8.4-8.4h54.8
+	c-1.7-1.7-3.4-4.2-5.1-5.9C381,368,345.6,351.1,306,351.1c-74.2,0-134.9,60.7-134.9,134.9C171.1,491.1,167.7,494.4,162.7,494.4z
+	 M306,637.8c-44.7,0-85.2-19.4-113-49.7c-1.7-2.5-3.4-4.2-5.1-6.7v56.5c0,5.1-3.4,8.4-8.4,8.4c-5.1,0-8.4-3.4-8.4-8.4V562v-8.4h8.4
+	h75.9c5.1,0,8.4,3.4,8.4,8.4c0,5.1-3.4,8.4-8.4,8.4h-54.8c1.7,1.7,3.4,4.2,5.1,5.9C231,604,266.4,620.9,306,620.9
+	c74.2,0,134.9-60.7,134.9-134.9c0-4.2,2.5-7.6,6.7-8.4h0.8h0.8c5.1,0,8.4,3.4,8.4,8.4C457.8,569.5,389.5,637.8,306,637.8z"/>
 </svg>
