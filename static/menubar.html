@@ -8,7 +8,6 @@
 </head>
 
 <body>
-	<!-- CS Menubar v1f -->
 	<section id="menubar">
 		<div class="head">
 			<a class="left navigationLink" data-target="openSyncFolder" id="openSyncFolder">
@@ -22,9 +21,7 @@
 		<div class="fileList" id="filesList">
 		</div>
 		<footer>
-			<div class="status">
-				<img class="icon left" src="images/icons/status/encrypting.svg" />
-				<span>Synced & Encrypted</span>
+			<div class="status" id="status">
 			</div>
 			<a class="right navigationLink" data-target="openSettings">
 				<img class="icon" src="images/icons/settings.svg" />
@@ -48,14 +45,20 @@
 			</div>
 		</div>
 	</script>
+	<script id="status-template" type="text/x-handlebars-template">
+		<img class="icon left {{spin}}" src="images/icons/status/{{status}}.svg" />
+		<span>{{statusText}}</span>
+	</script>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
 		// load core modules first
 		var remote = require('electron').remote,
+			Handlebars = require('handlebars'),
 			gAuth = remote.getGlobal('gAuth'),
 			ipcRenderer = require('electron').ipcRenderer,
 			remoteWin = remote.getCurrentWindow(),
 			paths = remote.getGlobal("paths"),
+			status = remote.getGlobal("status"),
 			views = remote.getGlobal("views"),
 			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console"),
@@ -75,7 +78,23 @@
 					if (this.hasAttribute("data-target")) emittEvent(this.getAttribute("data-target"));
 				});
 			});
+			if ($.isEmptyObject(status)) {
+				// TODO: render
+			}
+			updateStatus(
+				{
+					status: "syncing",
+					statusText: "Syncing"
+				}
+			);
 		});
+
+		function updateStatus(status) {
+			status.spin = (status.status === "syncing") ? "spin" : "";
+			var template = Handlebars.compile($("#status-template").html());
+			var statusHTML = template(status);
+			$('#status').html(statusHTML);
+		}
 
 		function addFiles(files) {
 			for (var file in files) {

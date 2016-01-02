@@ -18,6 +18,8 @@
 @ic-size: 1.2rem;
 @win-height: 15rem;
 
+@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+
 section#menubar {
   min-height: 100%;
   position: relative;
@@ -48,6 +50,13 @@ div.fileList {
   width: 100%;
   overflow-y: auto;
 	margin-bottom: @fitem-margin-b;
+}
+
+.spin {
+	width: @ic-size;
+	z-index:0;
+	-webkit-animation:spin 4s linear infinite;
+  animation:spin 4s linear infinite;
 }
 
 div.content,

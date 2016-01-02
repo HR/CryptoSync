@@ -2,7 +2,7 @@
 <!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 177.9 612 612" enable-background="new 0 177.9 612 612" xml:space="preserve">
+	 viewBox="0 180 612 612" enable-background="new 0 180 612 612" xml:space="preserve">
 <defs  xmlns="http://www.w3.org/1999/xhtml">
 	<style  type="text/css">
 		<![CDATA[
@@ -85,8 +85,9 @@ input.m-required, select.m-required, textarea.m-required { outline: 0px; border:
 .c-menu .b-login-item { float: right; margin-left: 1rem; font-weight: 300; }
 .c-menu .b-login-item.m-guest.m-active, .c-menu .b-login-item.m-user.m-active { display: block; }
 .c-menu .b-login-item.m-guest, .c-menu .b-login-item.m-user { display: none; }
+.c-menu .b-login-item .b-counter { display: inline-block; width: 22px; height: 22px; border-radius: 50%; color: rgb(50, 194, 77); line-height: 22px; font-size: 14px; text-align: center; background: rgb(255, 255, 255); }
 .c-menu .b-menu-toggle { display: none; width: 32px; height: 40px; float: right; }
-.c-big-menu { font-weight: 300; line-height: 1.6; transition: all 0.5s ease-in-out; height: 0px; overflow: hidden; width: 100%; position: relative; z-index: 10000; }
+.c-big-menu { font-weight: 300; line-height: 1.6; transition: all 0.5s ease-in-out; height: 0px; overflow: hidden; width: 100%; position: relative; z-index: 10000; box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 20px; }
 .c-big-menu::after, .c-big-menu::before { display: table; content: " "; }
 .c-big-menu::after { clear: both !important; }
 .c-big-menu.active { height: auto; }
@@ -119,6 +120,7 @@ input.m-required, select.m-required, textarea.m-required { outline: 0px; border:
 .c-header.m-color .b-slide.active { opacity: 1; z-index: -1; transition: opacity 6s ease 1s; }
 .c-header .b-title { color: inherit; margin: 2rem auto 0.5rem; font-size: 28px; max-width: 540px; }
 .c-header .b-title.m-big { font-size: 40px; max-width: 710px; }
+.c-header .b-title .b-header-label { position: absolute; z-index: 10; top: 70px; right: 10%; }
 .c-header .b-subtitle { font-size: 20px; max-width: 640px; margin: 0px auto; font-weight: 300; color: rgba(255, 255, 255, 0.701961); }
 .c-header .b-search { position: relative; max-width: 600px; height: 54px; margin: 4rem auto 0px; }
 .c-header .b-search-input { width: 100%; height: 54px; border-radius: 2px; border: none; color: rgb(0, 0, 0); font-size: 24px; padding-right: 60px; background-color: rgb(255, 255, 255); }
@@ -131,7 +133,7 @@ input.m-required, select.m-required, textarea.m-required { outline: 0px; border:
 .c-header .b-search-suggest.active, .c-header .b-search-suggest:hover { background: rgba(0, 0, 0, 0.0470588); }
 .c-header .b-footer { margin-top: 7rem; font-weight: 300; }
 .c-header a { color: inherit; }
-.c-btn { position: relative; height: 42px; line-height: 42px; padding: 0px 1.5rem; color: rgb(255, 255, 255); border: 1px solid rgb(239, 84, 22); font-size: 20px; font-weight: 300; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: all 0.3s ease; background-color: rgb(239, 84, 22); }
+.c-btn { position: relative; height: 42px; line-height: 40px; padding: 0px 1.5rem; color: rgb(255, 255, 255); border: 1px solid rgb(239, 84, 22); font-size: 20px; font-weight: 300; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: all 0.3s ease; background-color: rgb(239, 84, 22); }
 .c-btn.m-block::before, .c-btn::before { content: ""; position: absolute; }
 .c-btn::before { top: -50%; transition: top 0.3s ease; }
 .c-btn:hover { background-color: rgb(240, 72, 72); }
@@ -142,18 +144,18 @@ input.m-required, select.m-required, textarea.m-required { outline: 0px; border:
 .c-btn.m-white { border: 2px solid rgb(255, 255, 255); height: 46px; border-radius: 7px; }
 .c-btn.m-true-white { color: rgb(74, 74, 74); border: 1px solid rgb(74, 74, 74); height: 46px; border-radius: 7px; background-color: rgb(255, 255, 255); }
 .c-btn.m-transparent { color: rgb(74, 74, 74); border: 1px solid rgb(219, 219, 219); background: 0px 0px; }
-.c-btn.m-transparent:hover { border: 1px solid rgb(204, 204, 204); }
+.c-btn.m-transparent:hover { border: 1px solid rgb(204, 204, 204); background-color: transparent; }
 .c-btn.m-gray { color: rgb(255, 255, 255); border: 1px solid rgb(136, 136, 136); border-radius: 4px; background: rgb(136, 136, 136); }
 .c-btn.m-gray:hover { border: 1px solid rgb(132, 132, 132); background-color: rgb(132, 132, 132); }
 .c-btn.m-transparent-white { color: rgb(255, 255, 255); border: 1px solid rgb(255, 255, 255); background: 0px 0px; }
-.c-btn.m-transparent-white:hover { border: 1px solid rgb(238, 238, 238); }
-.c-btn.m-block { padding-top: 28px; }
+.c-btn.m-transparent-white:hover { border: 1px solid rgb(238, 238, 238); background-color: transparent; }
+.c-btn.m-block { padding-top: 32px; }
 .c-btn.m-block::before { width: 28px; height: 28px; border-width: 2px; border-style: solid; border-color: rgb(255, 255, 255) rgba(255, 255, 255, 0.298039) rgba(255, 255, 255, 0.298039); border-radius: 50%; top: 50%; left: 50%; margin-top: -14px; margin-left: -14px; animation: spin 1s linear infinite; }
 body a.c-btn { color: rgb(255, 255, 255); }
 .c-tabs { color: rgb(74, 74, 74); font-size: 16px; font-weight: 400; }
 .c-tabs.m-white { color: rgb(255, 255, 255); }
 input.c-pretty-link { border: none; padding: 0px; margin: 0px; font-size: 16px; line-height: 22px; background: 0px 0px; }
-.c-pretty-link { border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgba(155, 155, 155, 0.34902); transition: border 0.3s ease; color: inherit; }
+.c-pretty-link { border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgba(155, 155, 155, 0.34902); transition: border 0.3s ease; color: inherit; cursor: pointer; }
 .c-pretty-link:hover { border-color: rgb(155, 155, 155); }
 .c-pretty-link.m-white { border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgba(255, 255, 255, 0.4); }
 .c-pretty-link.m-white:hover { border-color: rgb(255, 255, 255); }
@@ -180,129 +182,20 @@ input.c-pretty-link { border: none; padding: 0px; margin: 0px; font-size: 16px; 
 .icon-preview__svg:not(.m-color-icon) { background: none !important; }
 .en-markup-crop-options { top: 18px !important; left: 50% !important; margin-left: -100px !important; width: 200px !important; border: 2px solid rgba(255, 255, 255, 0.380392) !important; border-radius: 4px !important; }
 .en-markup-crop-options div div:first-of-type { margin-left: 0px !important; }
-body #intercom-container .intercom-sheet { width: 400px; }
-body #intercom-container .intercom-sheet-maximized { width: 100%; }
-body.elevio-left #intercom-conversation, body.elevio-left #intercom-conversations, body.elevio-left #intercom-loading { right: auto; left: 0px; }
-body .intercom-sheet-header-minimize-button { display: none; }
-body #intercom-container #intercom-launcher { display: none !important; }
-body #intercom-container #intercom-launcher.intercom-launcher-with-message, body #intercom-container #intercom-launcher.intercom-launcher-with-updated-avatar, body #intercom-container #intercom-launcher.intercom-launcher-with-avatar, body #intercom-container #intercom-launcher.intercom-launcher-with-badge, body #intercom-container #intercom-launcher.intercom-launcher-with-preview { display: block !important; }
-body #intercom-container .intercom-sheet-body { border-left-width: 0px; background-color: rgb(247, 247, 247); }
-body #intercom-container .intercom-sheet-header-button { margin: 0px 8px; }
-body #intercom-container .intercom-sheet-header-conversations-button { margin-left: 17px; }
-body #intercom-container .el-fa { }
-body #intercom-container .intercom-sheet-header-title { font-size: 15px; font-weight: 500; color: rgb(69, 90, 100); }
-body #intercom-container .intercom-sheet-header-title { font-family: Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-body #intercom-container .intercom-sheet-header-minimize-button { display: none; }
-body #intercom-container .intercom-sheet-header-close-button::before { margin-right: 9px; font-size: 26px; line-height: 44px; content: "×" !important; }
-body #intercom-container .intercom-sheet-header-close-button .intercom-sheet-header-button-icon { background-image: none; }
-.st0 { fill: rgb(255, 152, 0); }
-.st1 { fill: rgb(0, 163, 68); }
-.st2 { fill: rgb(21, 101, 192); }
-.st3 { fill: rgb(63, 81, 181); }
-.st4 { fill: rgb(179, 229, 252); }
-.st5 { fill: none; stroke: rgb(244, 67, 54); stroke-width: 4px; stroke-miterlimit: 10; }
-.st6 { fill: rgb(55, 71, 79); }
-.st7 { fill: rgb(244, 67, 54); }
-.st8 { fill: rgb(84, 110, 122); }
-.st9 { fill: rgb(0, 200, 83); }
-.st10 { fill: rgb(156, 204, 101); }
-.st11 { fill: rgb(139, 195, 74); }
-.st12 { fill: rgb(46, 125, 50); }
-.st13 { fill: rgb(56, 142, 60); }
-.st14 { fill: rgb(67, 160, 71); }
-.st15 { fill: rgb(173, 20, 87); }
-.st16 { fill: rgb(233, 30, 99); }
-.st17 { fill: rgb(48, 63, 159); }
-.st18 { fill: rgb(76, 175, 80); }
-.st19 { fill: rgb(255, 87, 34); }
-.st20 { fill: rgb(255, 193, 7); }
-.st21 { fill: rgb(191, 54, 12); }
-.st22 { fill: rgb(255, 138, 101); }
-.st23 { fill: rgb(33, 150, 243); }
-.st24 { fill: rgb(100, 181, 246); }
-.st25 { fill: rgb(178, 235, 242); }
-.st26 { fill: rgb(77, 208, 225); }
-.st27 { fill: rgb(255, 167, 38); }
-.st28 { fill: rgb(255, 183, 77); }
-.st29 { fill: rgb(176, 190, 197); }
-.st30 { fill: rgb(129, 212, 250); }
-.st31 { fill: rgb(128, 222, 234); }
-.st32 { fill: rgb(3, 169, 244); }
-.st33 { fill: rgb(69, 90, 100); }
-.st34 { fill: rgb(138, 81, 0); }
-.st35 { fill: rgb(96, 125, 139); }
-.st36 { fill: rgb(41, 98, 255); }
-.st37 { fill: rgb(204, 134, 30); }
-.st38 { fill: rgb(144, 164, 174); }
-.st39 { fill: rgb(0, 188, 212); }
-.st40 { fill: none; stroke: rgb(63, 81, 181); stroke-width: 4px; stroke-miterlimit: 10; }
-.st41 { fill: rgb(230, 74, 25); }
-.st42 { fill: rgb(239, 108, 0); }
-.st43 { fill: rgb(153, 43, 10); }
-.st44 { fill: rgb(255, 255, 255); }
-.st45 { fill: rgb(211, 47, 47); }
-.st46 { fill: rgb(2, 119, 189); }
-.st47 { fill: rgb(38, 50, 56); }
-.st48 { fill: rgb(121, 85, 72); }
-.st49 { fill: rgb(205, 220, 57); }
-.st50 { fill: rgb(25, 118, 210); }
-.st51 { fill: rgb(248, 187, 208); }
-.st52 { fill: rgb(209, 196, 233); }
-.st53 { fill: rgb(240, 98, 146); }
-.st54 { fill: rgb(103, 58, 183); }
-.st55 { fill: rgb(27, 94, 32); }
-.st56 { fill: rgb(129, 199, 132); }
-.st57 { fill: rgb(239, 154, 154); }
-.st58 { fill: rgb(204, 66, 22); }
-.st59 { fill: rgb(255, 235, 59); }
-.st60 { fill: rgb(255, 204, 128); }
-.st61 { fill: rgb(30, 136, 229); }
-.st62 { fill: rgb(187, 222, 251); }
-.st63 { fill: rgb(70, 156, 16); }
-.st64 { fill: rgb(100, 221, 23); }
-.st65 { fill: rgb(144, 202, 249); }
-.st66 { fill: rgb(66, 165, 245); }
-.st67 { fill: rgb(179, 157, 219); }
-.st68 { fill: rgb(51, 105, 30); }
-.st69 { fill: rgb(204, 255, 144); }
-.st70 { fill: rgb(79, 195, 247); }
-.st71 { fill: rgb(104, 159, 56); }
-.st72 { fill: rgb(198, 255, 0); }
-.st73 { fill: none; stroke: rgb(198, 255, 0); stroke-width: 2px; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10; }
-.st74 { fill: rgb(0, 150, 136); }
-.st75 { fill: rgb(38, 166, 154); }
-.st76 { fill: rgb(0, 137, 123); }
-.st77 { fill: rgb(165, 214, 167); }
-.st78 { fill: rgb(156, 44, 10); }
-.st79 { fill: rgb(224, 247, 250); }
-.st80 { fill: rgb(158, 45, 10); }
-.st81 { fill: rgb(245, 124, 0); }
-.st82 { fill: rgb(0, 77, 64); }
-.st83 { fill: rgb(128, 203, 196); }
-.st84 { fill: rgb(255, 205, 210); }
-.st85 { fill: rgb(149, 117, 205); }
-.st86 { fill: rgb(116, 84, 179); }
-.st87 { fill: none; stroke: rgb(187, 222, 251); stroke-width: 4px; stroke-linecap: round; stroke-miterlimit: 10; }
-.st88 { fill: rgb(209, 95, 0); }
-.st89 { fill: rgb(219, 100, 0); }
-.st90 { fill: rgb(196, 89, 0); }
-.st91 { fill: rgb(159, 168, 218); }
-.st92 { fill: rgb(121, 134, 203); }
-.st93 { fill: rgb(209, 138, 46); }
-.st94 { fill: rgb(255, 171, 64); }
 #elevio-widget-container #elevio-main .article-content a, #elevio-widget-container #elevio-similar li a:hover, #elevio-widget-container .articles-menu li a:hover, #elevio-widget-container .tickets-list li a:hover, #elevio-widget-container .rss-menu li a, #elevio-base-menu .expanded .active, #elevio-base-menu .expanded .active .el-fa { color: rgb(50, 194, 77) !important; }
 #elevio-widget-container #habla_wcsend_input, #elevio-inline { border-color: rgb(50, 194, 77) !important; }
 #elevio-widget-container .elevio-loader-inner, #elevio-inline .elevio-loader-inner { border-bottom-color: rgb(50, 194, 77) !important; }
 #elevio-widget-container .elevio-body { bottom: 30px; }
 			
+			
 			]]>
 	</style>
 </defs>
-<path fill="#333333" d="M474.3,251.3h-1.2c-6.1,1.2-9.8,6.1-9.8,12.2v82c-2.4-3.7-4.9-6.1-7.3-9.8c-40.4-44.1-99.1-72.2-164-72.2
-	c-121.2,0-220.3,99.1-220.3,220.3c0,7.3,4.9,12.2,12.2,12.2c7.3,0,12.2-4.9,12.2-12.2l0,0c0-107.7,88.1-195.8,195.8-195.8
-	c57.5,0,108.9,24.5,145.7,64.9c2.4,2.4,4.9,6.1,7.3,8.6h-79.6c-7.3,0-12.2,4.9-12.2,12.2c0,7.3,4.9,12.2,12.2,12.2l0,0h110.2h12.2
-	v-12.2V263.6c0-7.3-4.9-12.2-12.2-12.2H474.3z M498.8,471.7h-1.2c-6.1,1.2-9.8,6.1-9.8,12.2c0,107.7-88.1,195.8-195.8,195.8
-	c-57.5,0-108.9-24.5-145.7-64.9c-2.4-2.4-4.9-6.1-7.3-8.6h79.6c7.3,0,12.2-4.9,12.2-12.2c0-7.3-4.9-12.2-12.2-12.2l0,0H108.4H96.1
-	v12.2v110.2c0,7.3,4.9,12.2,12.2,12.2s12.2-4.9,12.2-12.2l0,0v-82c2.4,3.7,4.9,6.1,7.3,9.8c40.4,44.1,99.1,72.2,164,72.2
-	c121.2,0,220.3-99.1,220.3-220.3c0-7.3-4.9-12.2-12.2-12.2H498.8z"/>
+<path fill="#333333" d="M306,180C137.1,180,0,317.1,0,486s137.1,306,306,306s306-137.1,306-306S474.9,180,306,180z M162.7,494.4
+	c-5.1,0-8.4-3.4-8.4-8.4c0-83.5,68.3-151.8,151.8-151.8c44.7,0,85.2,19.4,113,49.7c1.7,2.5,3.4,4.2,5.1,6.7v-56.5
+	c0-4.2,2.5-7.6,6.7-8.4h0.8h0.8c5.1,0,8.4,3.4,8.4,8.4V410v8.4h-8.4h-75.9c-5.1,0-8.4-3.4-8.4-8.4s3.4-8.4,8.4-8.4h54.8
+	c-1.7-1.7-3.4-4.2-5.1-5.9C381,368,345.6,351.1,306,351.1c-74.2,0-134.9,60.7-134.9,134.9C171.1,491.1,167.7,494.4,162.7,494.4z
+	 M306,637.8c-44.7,0-85.2-19.4-113-49.7c-1.7-2.5-3.4-4.2-5.1-6.7v56.5c0,5.1-3.4,8.4-8.4,8.4c-5.1,0-8.4-3.4-8.4-8.4V562v-8.4h8.4
+	h75.9c5.1,0,8.4,3.4,8.4,8.4c0,5.1-3.4,8.4-8.4,8.4h-54.8c1.7,1.7,3.4,4.2,5.1,5.9C231,604,266.4,620.9,306,620.9
+	c74.2,0,134.9-60.7,134.9-134.9c0-4.2,2.5-7.6,6.7-8.4h0.8h0.8c5.1,0,8.4,3.4,8.4,8.4C457.8,569.5,389.5,637.8,306,637.8z"/>
 </svg>
