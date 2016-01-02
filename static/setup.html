@@ -176,6 +176,20 @@
 
 		/* Encryption animation */
 		$(window).load(function() {
+			$(document).keydown(function(e) {
+				switch (e.which) {
+					case 39: // right
+						navigate($("#panel-default button").first().data("target"));
+						break;
+					case 37: // left
+						navigate($(".current .back").first().data("target"));
+						break;
+
+					default:
+						return; // exit this handler for other keys
+				}
+				e.preventDefault(); // prevent the default action (scroll / move caret)
+			});
 			/* Variable assignments */
 			authErr = $("div.item.err > div.name").first();
 			errLabel = $('label[for="password"]').first();
@@ -212,6 +226,7 @@
 			});
 
 			/* Encryption animation */
+
 			if (!nav_to) {
 				var speed = 3000;
 				$('.marquee-1').marquee({
@@ -232,6 +247,8 @@
 				setTimeout(function() {
 					$('.marquee-2').addClass("visible");
 				}, speed);
+				$(".marquee").css("position", "relative");
+				$(".banner + .himg").css("margin-top", "-7.5rem");
 			}
 		});
 
@@ -240,12 +257,15 @@
 			var oldSel = $('.panel-container > div.current');
 			var currSel = $("#panel-" + panelID);
 			if (authType) {
-				rconsole.log("authType: " + authType);
+				rconsole.log(`authType: ${authType}`);
 				authErr.hide();
 				initAuth(authType);
 			}
+			// TODO: find cleaner fix for unexpected button styling on panel transform
+			$(".current button").hide();
 			if (oldSel) oldSel.removeClass("current");
 			$("#panel-" + panelID).addClass("current");
+			$(".current button").show();
 		}
 
 		/* Authentication code */
