@@ -46,6 +46,7 @@
     "google-auth-library": "^0.9.7",
     "googleapis": "^2.1.7",
     "gulp-shell": "*",
+    "handlebars": "^4.0.5",
     "jquery": "^2.1.4",
     "less": "*",
     "level-js": "*",

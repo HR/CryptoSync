@@ -629,7 +629,7 @@ app.on('ready', function () {
 				console.log(`ERROR: mdb.get('accounts') failed, ${err}`);
 				return;
 			}
-			console.log(`SUCCESS: accounts FOUND, ${accounts}\n, doing JSON.parse & setting to global.settings.user`);
+			console.log(`SUCCESS: accounts FOUND, ${accounts}...\n, doing JSON.parse & setting to global.settings.user`);
 			global.accounts = JSON.parse(accounts);
 			return;
 		});

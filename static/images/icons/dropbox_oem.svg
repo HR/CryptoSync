@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="db" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="-32 85.6 674.9 633.2" enable-background="new -32 85.6 674.9 633.2" xml:space="preserve">
+<svg version="1.1" id="Ð_xA1_Ð_xBB_Ð_xBE_Ð_xB9__x5F_1"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="6 7.3 36 34.7"
+	 enable-background="new 6 7.3 36 34.7" xml:space="preserve">
 <defs  xmlns="http://www.w3.org/1999/xhtml">
 	<style  type="text/css">
 		<![CDATA[
@@ -199,38 +200,15 @@ body #intercom-container .intercom-sheet-header-close-button .intercom-sheet-hea
 #elevio-widget-container #habla_wcsend_input, #elevio-inline { border-color: rgb(50, 194, 77) !important; }
 #elevio-widget-container .elevio-loader-inner, #elevio-inline .elevio-loader-inner { border-bottom-color: rgb(50, 194, 77) !important; }
 #elevio-widget-container .elevio-body { bottom: 30px; }
-			
 			]]>
 	</style>
 </defs>
 <g>
-	<g>
-		<polygon fill="#1E88E5" points="290.2,212.6 431.1,98.3 627.4,222.3 493.9,331.1 		"/>
-		<path fill="#FFFFFF" d="M431.8,109.3L612,223.2l-119,96.9L306,211.3L431.8,109.3 M430.5,87.2l-10,8.1l-125.8,102l-20.3,16.4
-			l22.5,13.1l187,108.8l10.8,6.3l9.7-7.9l119-96.9l19.4-15.8L621.6,208L441.4,94.1L430.5,87.2L430.5,87.2z"/>
-	</g>
-	<g>
-		<polygon fill="#1E88E5" points="-16.2,421.3 127.1,314.3 321.7,436.7 186,541.8 		"/>
-		<path fill="#FFFFFF" d="M127.5,325.2L306,437.4L185.3,531L0,420.4L127.5,325.2 M126.6,303.4l-9.9,7.4L-10.8,406l-21.6,16.1
-			l23.1,13.8l185.3,110.5l10.5,6.3l9.7-7.5L317,451.7l20.4-15.8l-21.8-13.7L137.1,310L126.6,303.4L126.6,303.4z"/>
-	</g>
-	<g>
-		<polygon fill="#1E88E5" points="-15.7,227.7 186,98.2 321.1,212.4 127.1,336.2 		"/>
-		<path fill="#FFFFFF" d="M185.3,109.3l120.7,102L127.5,325.2L0,228.3L185.3,109.3 M186.8,87l-11.2,7.2l-185.3,119l-21.7,13.9
-			l20.5,15.6l127.5,96.9l10,7.6l10.6-6.8l178.5-113.9l20.6-13.1l-18.7-15.8l-120.7-102L186.8,87L186.8,87z"/>
-	</g>
-	<g>
-		<polygon fill="#1E88E5" points="290.2,436.7 493.8,309 627.4,421.7 427.8,541.8 		"/>
-		<path fill="#FFFFFF" d="M493,320.1l119,100.3L428.4,531L306,437.4L493,320.1 M494.6,297.9l-11.1,7l-187,117.3l-22,13.8l20.6,15.8
-			l122.4,93.5l9.7,7.4l10.5-6.3l183.6-110.5l21.6-13l-19.2-16.2l-119-100.3L494.6,297.9L494.6,297.9z"/>
-	</g>
-	<g>
-		<polygon fill="#1E88E5" points="110,580 110,515.2 172.9,552.1 187.8,560.8 201.8,549.4 306,470.4 413.5,551 425.8,560.9 
-			440.8,552.1 502,515 502,581.7 306,710 		"/>
-		<path fill="#FFFFFF" d="M306,481.6l102,76.5l17,13.6l20.4-11.9L493,531v45.9L306,699.2L119,575.1V531l49.3,28.9l20.4,11.9
-			l18.7-15.3L306,481.6 M305.9,459.1l-10.8,8.2l-98.6,74.8l-0.3,0.2l-0.3,0.2l-9,7.4l-9.6-5.6l-49.3-28.9L101,499.5V531v44.2v9.7
-			l8,5.3l187,124.1l9.9,6.6l9.9-6.5l187-122.4l8.1-5.3v-9.7V531v-32l-27.3,16.6l-47.5,28.8l-9.6,5.6l-7.4-5.9l-0.2-0.2l-0.2-0.2
-			l-102-76.5L305.9,459.1L305.9,459.1z"/>
-	</g>
+	<polygon fill="#1E88E5" points="42,14 31.4,7.3 24,13.3 35,19.7 	"/>
+	<polygon fill="#1E88E5" points="6,25.6 16.9,32.1 24,26.6 13.5,20 	"/>
+	<polygon fill="#1E88E5" points="16.9,7.3 6,14.3 13.5,20 24,13.3 	"/>
+	<polygon fill="#1E88E5" points="24,26.6 31.2,32.1 42,25.6 35,19.7 	"/>
+	<polygon fill="#1E88E5" points="32.2,33.8 31,34.5 30,33.7 24,29.2 18.2,33.6 17.1,34.5 15.9,33.8 13,32.1 13,34.7 24,42 35,34.8 
+		35,32.1 	"/>
 </g>
 </svg>
