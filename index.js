@@ -168,9 +168,9 @@ function Cryptobar(callback) {
 }
 
 function createVault(callback) {
-	const win = new BrowserWindow({
+	let win = new BrowserWindow({
 		width: 800,
-		height: 600,
+		height: 400,
 		center: true,
 		titleBarStyle: 'hidden-inset'
 	});

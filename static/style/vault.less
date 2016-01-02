@@ -18,7 +18,7 @@ to add "..." to overflow text
 @import (less) "mixins.less";
 @lighter: #fefefe;
 /*@light * 1.1111*/
-@accounts-txt-width: 6rem;
+@accounts-txt-width: 5rem;
 @border-width: 2px;
 @side-margin: 0.8rem;
 @name-fsize: 1rem;
@@ -30,7 +30,7 @@ to add "..." to overflow text
 @ic-size: 1.4rem;
 @profile-size: 2.2rem;
 @name-fsize: 0.8rem;
-@win-height: 300px;
+@win-height: 100%;
 
 h3 {
 	margin: 0.5rem 0rem;
@@ -105,6 +105,7 @@ div.segment {
 
 div.row:last-child {
 	border: none !important;
+	margin-bottom: 4rem;
 }
 
 div.row {
@@ -115,7 +116,7 @@ div#accounts {
 	flex: 1;
 	width: 100%;
 	.selected {
-	 background-color: @lighter;
+	 border-left: 2px solid @orange_d;
 	}
 	.row {
 		align-items:	center;
@@ -188,7 +189,7 @@ div.table {
 }
 
 	.selected {
-		background-color: @lighter;
+		border-left: 2px solid @orange_d;
 	}
 	.row {
 		flex-direction: column;

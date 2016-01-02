@@ -186,7 +186,7 @@
 			</div>
 			<div class="content">
 				<div class="name">{{name}}</div>
-				<div class="lastMod">{{email}}</div>
+				<div class="email">{{email}}</div>
 				<div class="qouta">5.76GB / 15GB -> TO IMPLEMENT</div>
 			</div>
 			<img src="images/icons/remove.svg" data-action="remove{{constructor.name}}" class="icon remove right" />
@@ -210,14 +210,6 @@
 			webContents = remoteWin.webContents;
 		userSettings = {};
 
-		var context = {
-			type: "gdrive",
-			name: "Crypto Sync",
-			email: "crypto.sync.app@gmail.com",
-			profileImg: "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"
-		}
-		// var html = template(accounts.cryptosync_drive);
-
 		/* Network change event */
 		function updateOnlineStatus() {
 			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
@@ -231,9 +223,9 @@
 				if (accounts.hasOwnProperty(account)) {
 					var template = Handlebars.compile($("#account-template").html());
 					var account = template(accounts[account]);
+					$('#accountsList').append(account);
 				}
 			}
-			$('#accountsList').append(account);
 			// attach click listners
 			$(document).on("click", "#resetMasterPass", function() {
 				ipcRenderer.send("resetMasterPass");

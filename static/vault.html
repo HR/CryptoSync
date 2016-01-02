@@ -11,37 +11,16 @@
 	<section id="vault">
 		<header class="top">
 			<img src="images/icons/CryptoSyncVault.svg" class="icon centre" alt="">
-			<a class="right"><img src="images/icons/folder.svg" class="icon" alt="" /></a>
-			<a class="left"><img src="images/icons/settings.svg" class="icon" alt="" /></a>
+			<a class="right">
+				<img src="images/icons/folder.svg" class="icon" alt="" />
+			</a>
+			<a class="left">
+				<img src="images/icons/settings.svg" class="icon" alt="" />
+			</a>
 		</header>
 		<div class="main">
 			<div class="segment" id="accounts">
-				<div class="table">
-					<div class="row selected">
-						<div class="type">
-							<div class="profile"></div>
-							<div class="cloudType">
-								<img src="images/icons/gdrive.svg"></img>
-							</div>
-						</div>
-						<div class="content">
-							<div class="name">Nikola Tesla</div>
-							<div class="email">nikola.tesla.scientist@gmail.com</div>
-						</div>
-
-					</div>
-					<div class="row">
-						<div class="type">
-							<div class="profile"></div>
-							<div class="cloudType">
-								<img src="images/icons/dropbox.svg"></img>
-							</div>
-						</div>
-						<div class="content">
-							<div class="name">Nikola Tesla (Никола Тесла)</div>
-							<div class="email">nikola@tesla.org</div>
-						</div>
-					</div>
+				<div class="table" id="accountsList">
 				</div>
 			</div>
 			<div class="segment" id="files">
@@ -111,18 +90,26 @@
 							<td>Checksum</td>
 							<td>
 								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
-								<a data-action="clip"><img src="images/icons/clippy.svg" alt="" /></a>
+								<a data-action="clip">
+									<img src="images/icons/clippy.svg" alt="" />
+								</a>
 							</td>
 						</tr>
 						<tr>
 							<td>Shares</td>
 							<td>
 								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
-								<a data-action="clip"><img src="images/icons/clippy.svg" alt="" /></a>
+								<a data-action="clip">
+									<img src="images/icons/clippy.svg" alt="" />
+								</a>
 								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
-								<a data-action="clip"><img src="images/icons/clippy.svg" alt="" /></a>
+								<a data-action="clip">
+									<img src="images/icons/clippy.svg" alt="" />
+								</a>
 								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
-								<a data-action="clip"><img src="images/icons/clippy.svg" alt="" /></a>
+								<a data-action="clip">
+									<img src="images/icons/clippy.svg" alt="" />
+								</a>
 							</td>
 						</tr>
 						<tr>
@@ -134,19 +121,46 @@
 					</table>
 				</div>
 				<footer>
-					<a class="right"><img src="images/icons/trashcan.svg" alt="" /></a>
+					<a class="right">
+						<img src="images/icons/trashcan.svg" alt="" />
+					</a>
 				</footer>
 			</div>
 		</div>
 	</section>
+	<script id="account-template" type="text/x-handlebars-template">
+		<div class="row selected">
+			<div class="type">
+				<div class="profile" style="background:
+    url(data:image/gif;base64,{{profileImg}})
+    no-repeat
+    center center;"></div>
+				<div class="cloudType">
+					<img src="images/icons/{{type}}.svg"></img>
+				</div>
+			</div>
+			<div class="content">
+				<div class="name">{{name}}</div>
+				<div class="email">{{email}}</div>
+			</div>
+		</div>
+	</script>
+	<script id="file-template" type="text/x-handlebars-template">
+		<div class="row">
+			<div class="name">{{name}}</div>
+			<div class="lastMod">{{lastMod}}</div>
+		</div>
+	</script>
 	<script type="text/javascript">
 		window.$ = window.jQuery = require('jquery');
 		// load core modules first
 		var remote = require('electron').remote,
 			ipcRenderer = require('electron').ipcRenderer,
-			remoteWin = remote.getCurrentWindow(),
+			accounts = remote.getGlobal("accounts"),
+			Handlebars = require('handlebars'),
 			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console"),
+			remoteWin = remote.getCurrentWindow(),
 			webContents = remoteWin.webContents;
 
 		/* Network change event */
@@ -157,10 +171,15 @@
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
 
-		/* Encryption animation */
 		$(window).load(function() {
-			/* Navigation */
-
+			/* Render accounts */
+			for (var account in accounts) {
+				if (accounts.hasOwnProperty(account)) {
+					var template = Handlebars.compile($("#account-template").html());
+					var account = template(accounts[account]);
+					$('#accountsList').append(account);
+				}
+			}
 		});
 	</script>
 </body>
