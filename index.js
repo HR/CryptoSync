@@ -4,11 +4,14 @@ const app = electron.app,
 	BrowserWindow = electron.BrowserWindow,
 	ipc = electron.ipcMain,
 	Tray = electron.Tray,
-	OAuth = require('./src/OAuth'),
+	shell = electron.shell,
 	fs = require('fs-plus'),
+	https = require('https'),
+	base64 = require('base64-stream'),
 	Db = require('./src/Db'),
-	shell = require('electron').shell,
 	crypto = require('./src/crypto'),
+	OAuth = require('./src/OAuth'),
+	Account = require('./src/Account'),
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
 	google = require(`googleapis`),
@@ -20,7 +23,6 @@ const app = electron.app,
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
 global.gAuth = null;
-global.accounts = {};
 global.paths = {
 	home: `${fs.getHomeDirectory()}/CryptoSync`,
 	mdb: `${app.getPath('userData')}/mdb`,
@@ -180,12 +182,23 @@ function createVault(callback) {
 		if (callback) callback();
 	});
 }
+
 function createSetup(callback) {
 	function getParam(name, url) {
 		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
 		var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
 			results = regex.exec(url);
 		return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+	}
+
+	function streamToString(stream, cb) {
+		const chunks = [];
+		stream.on('data', (chunk) => {
+			chunks.push(chunk);
+		});
+		stream.on('end', () => {
+			cb(chunks.join(''));
+		});
 	}
 	var win = new BrowserWindow({
 		width: 580,
@@ -243,12 +256,38 @@ function createSetup(callback) {
 				// });
 
 				// Get auth token from auth code
-				gAuth.getToken(auth_code, function(token) {
+				gAuth.getToken(auth_code, function (token) {
 					// store auth token in mdb
 					gAuth.storeToken(token, mdb);
 					console.log(`IPCMAIN: token retrieved and stored: ${token}`);
 					console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
 					// create new account
+					plus.people.get({
+						userId: 'me',
+						auth: gAuth.oauth2Client
+					}, function (err, response) {
+						// handle err and response
+						if (err) {
+							console.log(`IPCMAIN: plus.people.get error, ${err}`);
+						} else {
+							console.log(`IPCMAIN: plus.people.get response:`);
+							console.log(`\nemail: ${response.emails[0].value}\nname: ${response.displayName}\nimage:${response.image.url}\n`);
+							// TODO:
+							let accName = `${response.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
+							console.log(accName);
+							https.get(response.image.url, function (res) {
+								if (res.statusCode === 200) {
+									let stream = res.pipe(base64.encode());
+									streamToString(stream, (profileImgB64) => {
+										console.log(`SUCCESS: https.get(response.image.url) retrieved response.image.url and converted into ${profileImgB64.substr(0, 20)}...`);
+										global.accounts[accName] = new Account("gdrive", response.displayName, response.emails[0].value, profileImgB64,gAuth);
+									});
+								} else {
+									console.log(`ERROR: https.get(response.image.url) failed to retrieve response.image.url, res code is ${res.statusCode}`);
+								}
+							});
+						}
+					});
 				});
 
 				webContents.on('did-finish-load', function () {
@@ -286,6 +325,7 @@ function createSetup(callback) {
 		}
 	});
 }
+
 function createSettings(callback) {
 	let win = new BrowserWindow({
 		width: 800,
@@ -296,7 +336,7 @@ function createSettings(callback) {
 	win.openDevTools();
 	ipc.on('resetMasterPass', function (event, type) {
 		console.log('IPCMAIN: resetMasterPass emitted. Creating masterPassPrompt...');
-		masterPassPrompt(true, function(newMPset) {
+		masterPassPrompt(true, function (newMPset) {
 			// if (newMPset) then new new MP was set otherwise it wasn't
 			// TODO: show password was set successfully
 			console.log(`MAIN: masterPassPrompt, newMPset finished? ${newMPset}`);
@@ -510,24 +550,26 @@ app.on('will-quit', () => {
 	console.log('APP: will-quit event emitted');
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
+	global.mdb.put('accounts', JSON.stringify(global.accounts), function (err) {
+		if (err) {
+			console.log(`ERROR: mdb.put('accounts') failed, ${err}`);
+			// I/O or other error, pass it up the callback
+		}
+		console.log(`SUCCESS: mdb.put('accounts')`);
+	});
 	if (!(_.isEmpty(global.settings.user))) {
 		console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
-		let userConfig = JSON.stringify(global.settings.user);
-		global.mdb.put('userConfig', userConfig, function (err) {
+		global.mdb.put('userConfig', JSON.stringify(global.settings.user), function (err) {
 			if (err) {
 				console.log(`ERROR: mdb.put('userConfig') failed, ${err}`);
 				// I/O or other error, pass it up the callback
 			}
 			console.log(`SUCCESS: mdb.put('userConfig')`);
-			console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
-			// global.vault.close();
-			global.mdb.close();
 		});
-	} else {
-		console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
-		// global.vault.close();
-		global.mdb.close();
 	}
+	console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
+	// global.vault.close();
+	global.mdb.close();
 });
 
 // app.on('activate', function(win) {
@@ -547,6 +589,11 @@ app.on('ready', function () {
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		global.mdb = new Db(global.paths.mdb);
+		// global.mdb.del('gdrive-token', function (err) {
+		// 	if (err) console.log(`Error retrieving gdrive-token, ${err}`);
+		// 	console.log("deleted gdrive-token");
+		// });
+		global.accounts = {};
 		createSetup(function (err) {
 			if (err) {
 				console.log(err);
@@ -571,6 +618,21 @@ app.on('ready', function () {
 		console.log('Normal run. Creating Menubar...');
 		// TODO: Implement masterPassPrompt function
 		global.mdb = new Db(global.paths.mdb);
+		global.mdb.get('accounts', function (err, accounts) {
+			if (err) {
+				if (err.notFound) {
+					console.log(`ERROR: accounts NOT FOUND, declaring global.accounts = {}...`);
+					global.accounts = {};
+					return;
+				}
+				// I/O or other error, pass it up the callback
+				console.log(`ERROR: mdb.get('accounts') failed, ${err}`);
+				return;
+			}
+			console.log(`SUCCESS: accounts FOUND, ${accounts}\n, doing JSON.parse & setting to global.settings.user`);
+			global.accounts = JSON.parse(accounts);
+			return;
+		});
 		global.mdb.get('userConfig', function (err, userConfig) {
 			if (err) {
 				if (err.notFound) {

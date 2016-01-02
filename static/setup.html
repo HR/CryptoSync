@@ -177,9 +177,10 @@
 		/* Encryption animation */
 		$(window).load(function() {
 			/* Variable assignments */
-			var authErr = $("div.item.err > div.name").first(),
+			authErr = $("div.item.err > div.name").first();
 			errLabel = $('label[for="password"]').first();
 			/* Navigation */
+			authErr.hide();
 			errLabel.hide();
 			$(".navigationLink").each(function(index) {
 				$(this).click(function() {
@@ -262,7 +263,7 @@
 		}
 
 		ipcRenderer.on("authResult", function(event, err) {
-			rconsole.log(`IPCRENDER: authResult emitted,\n URL: ${url}\n`);
+			rconsole.log(`IPCRENDER: authResult emitted`);
 			// handle authResult
 			if (!err) {
 				// SUCCESS
