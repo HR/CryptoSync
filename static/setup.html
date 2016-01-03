@@ -211,7 +211,7 @@
 				var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
 					MasterPass = $("input#name").val();
 				if (MPregex.test(MasterPass)) {
-					errLabel.hide()
+					errLabel.hide();
 					ipcRenderer.send("setMasterPass", MasterPass);
 				} else if (!MasterPass) {
 					errLabel.text("please enter a masterpass".toLocaleUpperCase());
@@ -252,7 +252,7 @@
 			}
 		});
 
-
+		/* Helper functions */
 		function navigate(panelID, authType) {
 			var oldSel = $('.panel-container > div.current');
 			var currSel = $("#panel-" + panelID);
@@ -268,7 +268,7 @@
 			$(".current button").show();
 		}
 
-		/* Authentication code */
+		/* Authentication code retrieval */
 		function getParam(name, url) {
 			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
 			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
@@ -282,6 +282,7 @@
 			ipcRenderer.send("initAuth", authType);
 		}
 
+		/* Event listeners */
 		ipcRenderer.on("authResult", function(event, err) {
 			rconsole.log(`IPCRENDER: authResult emitted`);
 			// handle authResult

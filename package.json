@@ -67,6 +67,7 @@
     "electron-packager": "*",
     "electron-prebuilt": "*",
     "electron-rebuild": "*",
+    "eslint-plugin-html": "^1.1.0",
     "gulp": "*",
     "gulp-shell": "*",
     "xo": "^0.11.2"

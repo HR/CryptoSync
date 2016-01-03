@@ -53,24 +53,19 @@
 		window.$ = window.jQuery = require('jquery');
 		// load core modules first
 		var remote = require('electron').remote,
-			Handlebars = require('handlebars'),
-			gAuth = remote.getGlobal('gAuth'),
 			ipcRenderer = require('electron').ipcRenderer,
 			remoteWin = remote.getCurrentWindow(),
-			paths = remote.getGlobal("paths"),
+			webContents = remoteWin.webContents
+			Handlebars = require('handlebars'),
+			gAuth = remote.getGlobal('gAuth'),
 			status = remote.getGlobal("status"),
-			views = remote.getGlobal("views"),
 			mdb = remote.getGlobal("mdb"),
-			rconsole = remote.getGlobal("console"),
-			webContents = remoteWin.webContents;
+			rconsole = remote.getGlobal("console");
 
-		/* Network change event */
-		function updateOnlineStatus() {
-			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
-		};
 		$(window).on('online', updateOnlineStatus);
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
+
 		$(window).load(function() {
 			// attach click listners
 			$(".navigationLink").each(function(index) {
@@ -89,6 +84,7 @@
 			);
 		});
 
+		/* Helper functions */
 		function updateStatus(status) {
 			status.spin = (status.status === "syncing") ? "spin" : "";
 			var template = Handlebars.compile($("#status-template").html());
@@ -106,11 +102,23 @@
 			}
 		}
 
+		/* Event emitters  */
 		function emittEvent(event) {
 			// send event to main
 			rconsole.log("RENDER: " + event + " event emitted");
 			ipcRenderer.send(event);
 		}
+
+		// Network change event
+		function updateOnlineStatus() {
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
+
+		/* Event listeners */
+		ipcRenderer.on("statusChange", function(event, status) {
+			rconsole.log("IPCRENDER: statusChange emitted");
+			updateStatus(status)
+		});
 	</script>
 </body>
 

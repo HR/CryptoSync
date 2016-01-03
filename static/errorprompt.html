@@ -20,6 +20,8 @@
 		// TODO: style all of this
 		var ipcRenderer = require('electron').ipcRenderer;
 		window.$ = window.jQuery = require('jquery');
+
+		/* Event listeners */
 		ipcRenderer.on("error", function(event, error) {
 			$("h1").text(error);
 		});

@@ -24,6 +24,7 @@ const app = electron.app,
 global.MasterPass = require('./src/MasterPass');
 global.gAuth = null;
 global.status = null;
+global.state = {};
 global.paths = {
 	home: `${fs.getHomeDirectory()}/CryptoSync`,
 	mdb: `${app.getPath('userData')}/mdb`,
@@ -551,13 +552,16 @@ app.on('will-quit', () => {
 	console.log('APP: will-quit event emitted');
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
-	global.mdb.put('accounts', JSON.stringify(global.accounts), function (err) {
-		if (err) {
-			console.log(`ERROR: mdb.put('accounts') failed, ${err}`);
-			// I/O or other error, pass it up the callback
-		}
-		console.log(`SUCCESS: mdb.put('accounts')`);
-	});
+	if (global.accounts[Object.keys(global.accounts)[0]].changed) {
+		console.log(`APP.ON('will-quit'): ${global.accounts[Object.keys(global.accounts)[0]]} was changed`);
+		global.mdb.put('accounts', JSON.stringify(global.accounts), function (err) {
+			if (err) {
+				console.log(`ERROR: mdb.put('accounts') failed, ${err}`);
+				// I/O or other error, pass it up the callback
+			}
+			console.log(`SUCCESS: mdb.put('accounts')`);
+		});
+	}
 	if (!(_.isEmpty(global.settings.user))) {
 		console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
 		global.mdb.put('userConfig', JSON.stringify(global.settings.user), function (err) {
@@ -630,8 +634,9 @@ app.on('ready', function () {
 				console.log(`ERROR: mdb.get('accounts') failed, ${err}`);
 				return;
 			}
-			console.log(`SUCCESS: accounts FOUND, ${accounts}...\n, doing JSON.parse & setting to global.settings.user`);
+			console.log(`SUCCESS: accounts FOUND, ${accounts}...\n, doing JSON.parse to accounts`);
 			global.accounts = JSON.parse(accounts);
+			global.accounts[Object.keys(global.accounts)[0]].changed = false;
 			return;
 		});
 		global.mdb.get('userConfig', function (err, userConfig) {

@@ -1,4 +1,3 @@
-<!doctype html>
 <html>
 
 <head>
@@ -206,17 +205,13 @@
 			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console"),
 			shell = require('shell'),
-			prr = require('prr'),
 			webContents = remoteWin.webContents;
 		userSettings = {};
 
-		/* Network change event */
-		function updateOnlineStatus() {
-			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
-		};
 		$(window).on('online', updateOnlineStatus);
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
+
 		$(window).load(function() {
 			//Compile and render template code
 			for (var account in accounts) {
@@ -265,6 +260,19 @@
 			});
 		});
 
+		/* Helper functions */
+		function navigate(dest) {
+			var URLregex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
+			if (URLregex.test(dest)) {
+				shell.openExternal(dest);
+				return;
+			}
+			var oldSel = $('.panel-container > div.current');
+			var currSel = $("#panel-" + dest);
+			if (oldSel) oldSel.removeClass("current");
+			$("#panel-" + dest).addClass("current");
+		}
+
 		function setConfig(configObj) {
 			for (var config in configObj) {
 				if (configObj.hasOwnProperty(config)) {
@@ -278,17 +286,11 @@
 			}
 		}
 
-		function navigate(dest) {
-			var URLregex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi;
-			if (URLregex.test(dest)) {
-				shell.openExternal(dest);
-				return;
-			}
-			var oldSel = $('.panel-container > div.current');
-			var currSel = $("#panel-" + dest);
-			if (oldSel) oldSel.removeClass("current");
-			$("#panel-" + dest).addClass("current");
-		}
+		/* Event emitters */
+		function updateOnlineStatus() {
+			// Emitt network change event
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
 	</script>
 </body>
 

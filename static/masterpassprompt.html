@@ -93,9 +93,6 @@
 			nav_to = getParam("nav_to", window.document.URL);
 		window.$ = window.jQuery = require('jquery');
 
-		function updateOnlineStatus() {
-			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
-		};
 		$(window).on('online', updateOnlineStatus);
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
@@ -122,6 +119,7 @@
 			});
 		});
 
+		/* Helper functions */
 		function getParam(name, url) {
 			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
 			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
@@ -160,6 +158,11 @@
 			}
 		}
 
+		function updateOnlineStatus() {
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
+
+		/* Event listeners */
 		ipcRenderer.on('checkMasterPassResult', function(event, result) {
 			rconsole.log(`IPCRENDER checkMasterPassResult emitted`);
 			if (result.err) {

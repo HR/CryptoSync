@@ -163,10 +163,6 @@
 			remoteWin = remote.getCurrentWindow(),
 			webContents = remoteWin.webContents;
 
-		/* Network change event */
-		function updateOnlineStatus() {
-			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
-		};
 		$(window).on('online', updateOnlineStatus);
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
@@ -181,6 +177,12 @@
 				}
 			}
 		});
+
+		/* Helper functions */
+		// Network change event
+		function updateOnlineStatus() {
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
 	</script>
 </body>
 
