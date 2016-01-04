@@ -129,7 +129,7 @@
 		</div>
 	</section>
 	<script id="account-template" type="text/x-handlebars-template">
-		<div class="row selected">
+		<div class="row">
 			<div class="type">
 				<div class="profile" style="background:
     url(data:image/gif;base64,{{profileImg}})
@@ -171,9 +171,10 @@
 			/* Render accounts */
 			for (var account in accounts) {
 				if (accounts.hasOwnProperty(account)) {
-					var template = Handlebars.compile($("#account-template").html());
+ 					var template = Handlebars.compile($("#account-template").html());
 					var account = template(accounts[account]);
 					$('#accountsList').append(account);
+					$('#accountsList').find('.row').first().addClass( "selected" );
 				}
 			}
 		});

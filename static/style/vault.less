@@ -149,17 +149,16 @@ div#accounts {
 		right: -(@profile-size * 0.1);
 	}
 	.cloudType > img {
-		height: @profile-size * 0.5;
+		height: @profile-size * 0.4;
 		width: auto;
 	}
 	.profile {
 		width:@profile-size;
 		height:@profile-size;
 		margin: 0px;
-		border-radius: 50%; /*don't forget prefixes*/
-		background-position: center center;
-		background-image: url("http://www.cgarena.com/gallery/3d/details/fullimages/characters/image_50b878cf581ab.jpg");
-		background-size: cover;
+		border-radius: 50%;
+		background-position: center center !important;
+		background-size: @profile-size @profile-size !important;
 	}
 	.content, .type {
 		display: inline-block;
@@ -182,12 +181,11 @@ div#files {
 
 	}
 
-div.table {
-	width:100%;
-	max-height: @win-height;
-	overflow-y: auto;
-}
-
+	div.table {
+		width:100%;
+		max-height: @win-height;
+		overflow-y: auto;
+	}
 	.selected {
 		border-left: 2px solid @orange_d;
 	}
@@ -204,6 +202,8 @@ div.table {
 	.lastMod {
 		font-size: 0.6rem;
 	}
+
+
 	input[type=text] {
 		width: 94%;
 		margin: 0.2rem 0rem 0.2rem 0.2rem;
@@ -219,7 +219,6 @@ div.table {
 			content: "Search files\A";
 		}
 	}
-
 }
 
 div#info {
