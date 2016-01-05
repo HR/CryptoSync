@@ -3,7 +3,6 @@
    Menubar styles
    ==========================================================================
 */
-
 @import (less) "mixins.less";
 
 /* theme colors */
@@ -17,131 +16,113 @@
 @lastMod-fsize: 0.6rem;
 @ic-size: 1.2rem;
 @win-height: 15rem;
-
-@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
-
-section#menubar {
-  min-height: 100%;
-  position: relative;
-  background-color: @white;
-	overflow: hidden;
+@keyframes spin {
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform        : rotate(360deg);
+  }
 }
-
+section#menubar {
+  min-height      : 100%;
+  position        : relative;
+  background-color: @white;
+  overflow        : hidden;
+}
 header {
-  clear: both;
-  padding: @spacing04 0rem @spacing04 @side-margin;
-  margin: 0px;
-  font-size: @header-fsize;
-  border-top: 1px solid @light;
+  clear        : both;
+  padding      : @spacing04 0 @spacing04 @side-margin;
+  margin       : 0;
+  font-size    : @header-fsize;
+  border-top   : 1px solid @light;
   border-bottom: 1px solid @light;
 }
-
 .left {
-   -webkit-align-self: flex-start;
-   align-self: flex-start !important;
+  -webkit-align-self: flex-start;
+  align-self        : flex-start !important;
 }
-
 .right {
-   margin-left: auto !important;
+  margin-left: auto !important;
 }
-
 div.fileList {
-  height: @win-height - @fitem-margin-b;
-  width: 100%;
-  overflow-y: auto;
-	margin-bottom: @fitem-margin-b;
+  height       : @win-height - @fitem-margin-b;
+  width        : 100%;
+  overflow-y   : auto;
+  margin-bottom: @fitem-margin-b;
 }
-
 .spin {
-	width: @ic-size;
-	z-index:0;
-	-webkit-animation:spin 4s linear infinite;
-  animation:spin 4s linear infinite;
+  width            : @ic-size;
+  z-index          : 0;
+  -webkit-animation: spin 4s linear infinite;
+  animation        : spin 4s linear infinite;
 }
-
 div.content,
 div.type {
-  display: inline-block;
+  display : inline-block;
   position: relative;
 }
-
 div.content {
   vertical-align: top;
-  margin-left: @spacing-ic-txt;
+  margin-left   : @spacing-ic-txt;
 }
-
 div.name {
   font-size: @name-fsize;
 }
-
 div.lastMod {
   font-size: @lastMod-fsize;
 }
-
 div.cloudType {
   position: absolute;
-  bottom: -1px;
-  right: -4px;
+  bottom  : -1px;
+  right   : -4px;
 }
-
 div.cloudType > img {
-  height: 0.8rem;
-	width: auto;
+  height : 0.8rem;
+  width  : auto;
   opacity: 1;
 }
-
 img.fileType {
-  width: 1.4rem;
+  width       : 1.4rem;
   padding-left: @side-margin;
-  margin: 0px;
+  margin      : 0;
 }
-
 div.item {
   border-top: 1px solid @light;
-  padding: @spacing04 0rem @spacing04 0rem;
+  padding   : @spacing04 0;
 }
-
 div.status {
-  display: flex;
-  display: -webkit-flex;
-  align-items:  center;
-  left: 0;
-  bottom: 0;
+  display    : flex;
+  display    : -webkit-flex;
+  align-items: center;
+  left       : 0;
+  bottom     : 0;
 }
-
-
 div.status > span {
   font-size: 0.9rem;
 }
-
 div.head {
-  display: flex;
-  display: -webkit-flex;
-  align-items:  center;
+  display    : flex;
+  display    : -webkit-flex;
+  align-items: center;
 }
-
 div.status > img {
   margin-right: @spacing-ic-txt !important;
 }
-
 footer {
-	display: flex;
-	clear: both;
-	position: absolute;
-	border-top: 1px solid @light;
-	width: 100%;
-	padding-bottom: 0;
-	background-color: @white;
-	bottom: 0;
-	left: 0;
+  display         : flex;
+  clear           : both;
+  position        : absolute;
+  border-top      : 1px solid @light;
+  width           : 100%;
+  padding-bottom  : 0;
+  background-color: @white;
+  bottom          : 0;
+  left            : 0;
 }
-
 img.icon {
-  height: @ic-size;
+  height : @ic-size;
   display: inline;
-  margin: @tb-margin @side-margin;
+  margin : @tb-margin @side-margin;
 }
-
 div.item:first-child {
   border-top: none !important;
 }

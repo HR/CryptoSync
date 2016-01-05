@@ -282,7 +282,7 @@ function createSetup(callback) {
 									let stream = res.pipe(base64.encode());
 									streamToString(stream, (profileImgB64) => {
 										console.log(`SUCCESS: https.get(response.image.url) retrieved response.image.url and converted into ${profileImgB64.substr(0, 20)}...`);
-										global.accounts[accName] = new Account("gdrive", response.displayName, response.emails[0].value, profileImgB64,gAuth);
+										global.accounts[accName] = new Account("gdrive", response.displayName, response.emails[0].value, profileImgB64, gAuth);
 									});
 								} else {
 									console.log(`ERROR: https.get(response.image.url) failed to retrieve response.image.url, res code is ${res.statusCode}`);
