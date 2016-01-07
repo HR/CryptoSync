@@ -619,7 +619,6 @@ app.on('ready', function () {
 		});
 	} else {
 		// start menubar
-		// console.log('Normal run. Creating MasterPass prompt...');
 		console.log('Normal run. Creating Menubar...');
 		// TODO: Implement masterPassPrompt function
 		global.mdb = new Db(global.paths.mdb);

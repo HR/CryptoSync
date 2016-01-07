@@ -2,6 +2,7 @@
 
 > A cross-platform end-to-end encryption cloud sync client
 
+Crypto.Sync an end-to-end encryption cloud synchronisation client that simply manages the encryption of your cloud data for you.
 
 ## Dev
 
@@ -21,9 +22,9 @@ $ npm start
 $ npm run build
 ```
 
-Builds the app for OS X, Linux, and Windows, using [electron-packager](https://github.com/maxogden/electron-packager).
+Builds the app for OS X, Linux*, and Windows*.
 
-
+\*(not tested yet)
 ## License
 
 MIT © [Habib Rehman](http://git.io/HR)
