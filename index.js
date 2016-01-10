@@ -7,7 +7,9 @@ const app = electron.app,
 	shell = electron.shell,
 	fs = require('fs-plus'),
 	https = require('https'),
+	moment = require('moment'),
 	base64 = require('base64-stream'),
+	path = require('path'),
 	Db = require('./src/Db'),
 	crypto = require('./src/crypto'),
 	OAuth = require('./src/OAuth'),
@@ -24,7 +26,7 @@ const app = electron.app,
 global.MasterPass = require('./src/MasterPass');
 global.gAuth = null;
 global.status = null;
-global.state = {};
+global.stats = {};
 global.paths = {
 	home: `${fs.getHomeDirectory()}/CryptoSync`,
 	mdb: `${app.getPath('userData')}/mdb`,
@@ -75,12 +77,24 @@ global.views = {
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')();
 
+// TODO: override console.log to prepend the currently being executeded script's name for debug purposes
+// (function () {
+// 	if (console.log) {
+// 		var old = console.log;
+// 		console.log = function () {
+// 			Array.prototype.unshift.call(arguments, `${path.basename(__filename)}: `);
+// 			old.apply(this, arguments);
+// 		};
+// 	}
+// })();
+
 // prevent the following from being garbage collected
 let Menubar;
 /**
  * Window constructors
  **/
 
+// Menubar window
 function Cryptobar(callback) {
 	function click(e, bounds) {
 		if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) {
@@ -242,6 +256,7 @@ function createSetup(callback) {
 		console.log(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
 		const regex = /http:\/\/localhost/g;
 		if (regex.test(url)) {
+			console.log("localhost URL matches");
 			event.preventDefault();
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
 			// console.log('MAIN: url matched, sending to RENDER...');
@@ -425,6 +440,7 @@ function masterPassPrompt(reset, callback) {
 	return win;
 }
 
+// TODO: replace with dialog.showErrorBox(title, content) for native dialog?
 function createErrorPrompt(err, callback) {
 	var win = new BrowserWindow({
 		width: 240,
@@ -552,8 +568,9 @@ app.on('will-quit', () => {
 	console.log('APP: will-quit event emitted');
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
-	if (global.accounts[Object.keys(global.accounts)[0]].changed) {
-		console.log(`APP.ON('will-quit'): ${global.accounts[Object.keys(global.accounts)[0]]} was changed`);
+	// if (global.accounts[Object.keys(global.accounts)[0]].changed) {
+	console.log(`APP.ON('will-quit'): ${global.accounts[Object.keys(global.accounts)[0]]} was changed`);
+	if (!(_.isEmpty(global.accounts))) {
 		global.mdb.put('accounts', JSON.stringify(global.accounts), function (err) {
 			if (err) {
 				console.log(`ERROR: mdb.put('accounts') failed, ${err}`);
@@ -562,6 +579,7 @@ app.on('will-quit', () => {
 			console.log(`SUCCESS: mdb.put('accounts')`);
 		});
 	}
+	// }
 	if (!(_.isEmpty(global.settings.user))) {
 		console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
 		global.mdb.put('userConfig', JSON.stringify(global.settings.user), function (err) {
@@ -587,17 +605,17 @@ app.on('will-quit', () => {
 app.on('ready', function () {
 	// TODO: Wrap all this into init();
 	// let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
-	if (false) {
+	if (true) {
 		// TODO: Do more extensive FIRST RUN check
 		console.log('First run. Creating Setup wizard...');
 		// Setup();
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		global.mdb = new Db(global.paths.mdb);
-		// global.mdb.del('gdrive-token', function (err) {
-		// 	if (err) console.log(`Error retrieving gdrive-token, ${err}`);
-		// 	console.log("deleted gdrive-token");
-		// });
+		global.mdb.del('gdrive-token', function (err) {
+			if (err) console.log(`Error retrieving gdrive-token, ${err}`);
+			console.log("deleted gdrive-token");
+		});
 		global.accounts = {};
 		createSetup(function (err) {
 			if (err) {
@@ -622,6 +640,13 @@ app.on('ready', function () {
 		console.log('Normal run. Creating Menubar...');
 		// TODO: Implement masterPassPrompt function
 		global.mdb = new Db(global.paths.mdb);
+
+		/* TODO: Implement all objects to restore from persistent storage as a routine to be run on start
+		 * TODO: Convert into a Promise so that RestoreAllObj.then([set all config vars]).then(Cryptobar(...))
+		 * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
+		 */
+
+		// Restore accounts object from DB
 		global.mdb.get('accounts', function (err, accounts) {
 			if (err) {
 				if (err.notFound) {
@@ -635,9 +660,10 @@ app.on('ready', function () {
 			}
 			console.log(`SUCCESS: accounts FOUND, ${accounts}...\n, doing JSON.parse to accounts`);
 			global.accounts = JSON.parse(accounts);
-			global.accounts[Object.keys(global.accounts)[0]].changed = false;
+			// global.accounts[Object.keys(global.accounts)[0]].changed = false;
 			return;
 		});
+		// Restore userConfig object from DB
 		global.mdb.get('userConfig', function (err, userConfig) {
 			if (err) {
 				if (err.notFound) {
@@ -652,6 +678,11 @@ app.on('ready', function () {
 			global.settings.user = JSON.parse(userConfig);
 			return;
 		});
+		// Set initial stats
+		global.stats.startTime = moment().format();
+		global.stats.time = moment();
+
+		// Start menubar
 		Cryptobar(function (result) {
 			// body...
 		});

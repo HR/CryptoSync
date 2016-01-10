@@ -4,7 +4,6 @@
  * Establish a authorised OAuth 2 client
  ******************************/
 
-
 /* TODO:
  * - Add auth
  */
@@ -37,7 +36,7 @@ OAuth.prototype.authorize = function (mdb, callback) {
 		}
 		// Authorize a client with the loaded credentials, then call the
 		// Drive API.
-		console.log(`Got credentials file content: \n ${content} \n`);
+		console.log(`Got credentials file content`);
 		console.log(`Is gdrive: ${self.isGDrive}`);
 		if (self.isGDrive) {
 			// Google Drive Auth
