@@ -13,10 +13,7 @@ const fs = require(`fs`),
 	google = require(`googleapis`),
 	googleAuth = require(`google-auth-library`),
 	request = require(`request`),
-	SCOPES = [`https://www.googleapis.com/auth/drive`,
-		`https://www.googleapis.com/auth/userinfo.email`,
-		`https://www.googleapis.com/auth/userinfo.profile`
-	];
+	SCOPES = [`https://www.googleapis.com/auth/drive`];
 
 
 function OAuth(type, secretPath) {
