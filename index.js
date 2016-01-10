@@ -8,21 +8,20 @@ const app = electron.app,
 	fs = require('fs-plus'),
 	https = require('https'),
 	base64 = require('base64-stream'),
-	moment = require('moment'),
 	Db = require('./src/Db'),
 	crypto = require('./src/crypto'),
 	OAuth = require('./src/OAuth'),
 	Account = require('./src/Account'),
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
-	google = require(`googleapis`);
+	google = require(`googleapis`),
+	plus = google.plus('v1');
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
 // YOLO$101
 
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
-global.stats = {};
 global.gAuth = null;
 global.status = null;
 global.state = {};
@@ -265,8 +264,8 @@ function createSetup(callback) {
 					console.log(`IPCMAIN: token retrieved and stored: ${token}`);
 					console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
 					// create new account
-					drive.about.get({
-						fields: "user",
+					plus.people.get({
+						userId: 'me',
 						auth: gAuth.oauth2Client
 					}, function (err, response) {
 						// handle err and response
@@ -553,16 +552,16 @@ app.on('will-quit', () => {
 	console.log('APP: will-quit event emitted');
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
-	// save if changed
-
-	console.log(`APP.ON('will-quit'): ${global.accounts[Object.keys(global.accounts)[0]]} was changed`);
-	global.mdb.put('accounts', JSON.stringify(global.accounts), function (err) {
-		if (err) {
-			console.log(`ERROR: mdb.put('accounts') failed, ${err}`);
-			// I/O or other error, pass it up the callback
-		}
-		console.log(`SUCCESS: mdb.put('accounts')`);
-	});
+	if (global.accounts[Object.keys(global.accounts)[0]].changed) {
+		console.log(`APP.ON('will-quit'): ${global.accounts[Object.keys(global.accounts)[0]]} was changed`);
+		global.mdb.put('accounts', JSON.stringify(global.accounts), function (err) {
+			if (err) {
+				console.log(`ERROR: mdb.put('accounts') failed, ${err}`);
+				// I/O or other error, pass it up the callback
+			}
+			console.log(`SUCCESS: mdb.put('accounts')`);
+		});
+	}
 	if (!(_.isEmpty(global.settings.user))) {
 		console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
 		global.mdb.put('userConfig', JSON.stringify(global.settings.user), function (err) {
@@ -636,22 +635,7 @@ app.on('ready', function () {
 			}
 			console.log(`SUCCESS: accounts FOUND, ${accounts}...\n, doing JSON.parse to accounts`);
 			global.accounts = JSON.parse(accounts);
-			var firstAcc = Object.keys(global.accounts)[0];
-			console.log(`firstAcc ${firstAcc}`);
-			// global.accounts[firstAcc].changed = false;
-			// TODO: Change from plus to drive get info
-			global.drive = google.drive({
-				version: 'v3',
-				auth: global.accounts[firstAcc].oauth.oauth2Client
-			});
-			// global.drive.about.get(function (err, response) {
-			// 	if (err) {
-			// 		console.log(`MAIN-READY: err occured, ${err}`);
-			// 		return;
-			// 	}
-			// 	console.log(`MAIN-READY: response, \n ${JSON.stringify(response)}\n`);
-			// 	return;
-			// });
+			global.accounts[Object.keys(global.accounts)[0]].changed = false;
 			return;
 		});
 		global.mdb.get('userConfig', function (err, userConfig) {
@@ -668,8 +652,6 @@ app.on('ready', function () {
 			global.settings.user = JSON.parse(userConfig);
 			return;
 		});
-		global.stats.startTime = moment().format();
-		global.stats.time = moment();
 		Cryptobar(function (result) {
 			// body...
 		});

@@ -7,4 +7,3 @@ node_modules
 .Debug
 dev
 src/elements/*.js
-*.py
