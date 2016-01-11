@@ -20,7 +20,6 @@ const app = electron.app,
 	plus = google.plus('v1');
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
-// YOLO$101
 
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
@@ -267,10 +266,8 @@ function createSetup(callback) {
 				var auth_code = getParam("code", url);
 				console.log(`IPCMAIN: Got the auth_code, ${auth_code}`);
 				console.log("IPCMAIN: Calling callback with the code...");
+
 				// Send code to call back and redirect
-				// callback(code, function(err, authed) {
-				// 	// body...
-				// });
 
 				// Get auth token from auth code
 				gAuth.getToken(auth_code, function (token) {
@@ -368,8 +365,6 @@ function createSettings(callback) {
 }
 
 function masterPassPrompt(reset, callback) {
-	// var BrowserWindow = electron.remote.BrowserWindow;
-	// BrowserWindow.addDevToolsExtension('../devTools/react-devtools/shells/chrome');
 	let win = new BrowserWindow({
 		width: 500, // 300
 		height: 435,
@@ -533,18 +528,6 @@ function init() {
 	// Decrypt db (the Vault) and get ready for use
 	// open mdb
 	global.vault = new Db(global.paths.vault, MasterPass);
-}
-
-/**
- * Event handlers
- **/
-
-function onClosed() {
-	// dereference the window
-	// for multiple windows store them in an array
-	// TODO: encrypt the vault before dumping on fs
-	console.log('win.closed event emitted;\n Calling on onClosed');
-	win = null;
 }
 
 /**
