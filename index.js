@@ -16,8 +16,7 @@ const app = electron.app,
 	Account = require('./src/Account'),
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
-	google = require(`googleapis`),
-	plus = google.plus('v1');
+	google = require(`googleapis`);
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
 
@@ -89,6 +88,8 @@ require('electron-debug')();
 
 // prevent the following from being garbage collected
 let Menubar;
+let drive;
+
 /**
  * Window constructors
  **/
@@ -251,12 +252,11 @@ function createSetup(callback) {
 		console.log('createSetup UNRESPONSIVE');
 	});
 
-	webContents.on('will-navigate', function (event, url) {
-		console.log(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
+	webContents.on('did-navigate', function (event, url) {
+		console.log(`IPCMAIN: did-navigate emitted,\n URL: ${url}`);
 		const regex = /http:\/\/localhost/g;
 		if (regex.test(url)) {
 			console.log("localhost URL matches");
-			event.preventDefault();
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
 			// console.log('MAIN: url matched, sending to RENDER...');
 			var err = getParam("error", url);
@@ -276,31 +276,40 @@ function createSetup(callback) {
 					console.log(`IPCMAIN: token retrieved and stored: ${token}`);
 					console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
 					// create new account
-					plus.people.get({
-						userId: 'me',
+					drive = google.drive({
+						version: 'v3',
 						auth: gAuth.oauth2Client
-					}, function (err, response) {
-						// handle err and response
+					});
+					drive.about.get({
+						"fields": "storageQuota,user"
+					}, function (err, res) {
 						if (err) {
-							console.log(`IPCMAIN: plus.people.get error, ${err}`);
+							console.log(`IPCMAIN: drive.about.get, ERR occured, ${err}`);
+							return;
 						} else {
-							console.log(`IPCMAIN: plus.people.get response:`);
-							console.log(`\nemail: ${response.emails[0].value}\nname: ${response.displayName}\nimage:${response.image.url}\n`);
+							console.log(`IPCMAIN: drive.about.get, RES:`);
+							console.log(`\nemail: ${res.user.emailAddress}\nname: ${res.user.displayName}\nimage:${res.user.photoLink}\n`);
 							// TODO:
-							let accName = `${response.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
-							console.log(accName);
-							https.get(response.image.url, function (res) {
-								if (res.statusCode === 200) {
-									let stream = res.pipe(base64.encode());
+							let accName = `${res.user.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
+							console.log(`Accounts object key, accName = ${accName}`);
+							https.get(res.user.photoLink, function (pfres) {
+								if (pfres.statusCode === 200) {
+									let stream = pfres.pipe(base64.encode());
 									streamToString(stream, (profileImgB64) => {
-										console.log(`SUCCESS: https.get(response.image.url) retrieved response.image.url and converted into ${profileImgB64.substr(0, 20)}...`);
-										global.accounts[accName] = new Account("gdrive", response.displayName, response.emails[0].value, profileImgB64, gAuth);
+										console.log(`SUCCESS: https.get(res.user.photoLink) retrieved res.user.photoLink and converted into ${profileImgB64.substr(0, 20)}...`);
+										global.accounts[accName] = new Account("gdrive", res.user.displayName, res.user.emailAddress, profileImgB64, {
+											"limit": res.storageQuota.limit,
+											"usage": res.storageQuota.usage,
+											"usageInDrive": res.storageQuota.usageInDrive,
+											"usageInDriveTrash": res.storageQuota.usageInDriveTrash
+										}, gAuth);
 									});
 								} else {
-									console.log(`ERROR: https.get(response.image.url) failed to retrieve response.image.url, res code is ${res.statusCode}`);
+									console.log(`ERROR: https.get(res.user.photoLink) failed to retrieve res.user.photoLink, pfres code is ${pfres.statusCode}`);
 								}
 							});
 						}
+						return;
 					});
 				});
 
@@ -313,6 +322,9 @@ function createSetup(callback) {
 				});
 			}
 		}
+	});
+	webContents.on('will-navigate', function (event, url) {
+		console.log(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
 	});
 
 	ipc.on('setMasterPass', function (event, masterpass) {

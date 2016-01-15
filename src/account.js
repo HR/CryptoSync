@@ -19,11 +19,12 @@ const dropbox = require(`dropbox`),
 	 * @param {qouta}:string the qouta of the authenticated user
 	 * @param {oauth}:object the authenticated oauth2Client
 	 */
-function Account(type, name, email, profileImg, oauth) {
+function Account(type, name, email, profileImg, quota, oauth) {
 	this.type = type;
 	this.name = name;
 	this.email = email;
 	this.profileImg = profileImg;
+	this.quota = quota;
 	this.oauth = oauth;
 	// TODO: Implement qouta functionality
 	// this.qouta = qouta;
