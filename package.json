@@ -70,6 +70,7 @@
     "eslint-plugin-html": "^1.1.0",
     "gulp": "*",
     "gulp-shell": "*",
+    "jasmine-core": "^2.4.1",
     "xo": "^0.11.2"
   }
 }
