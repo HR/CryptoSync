@@ -186,7 +186,7 @@
 			<div class="content">
 				<div class="name">{{name}}</div>
 				<div class="email">{{email}}</div>
-				<div class="qouta">5.76GB / 15GB -> TO IMPLEMENT</div>
+				<div class="qouta">{{usage}} / {{limit}}</div>
 			</div>
 			<img src="images/icons/remove.svg" data-action="remove{{constructor.name}}" class="icon remove right" />
 		</div>
@@ -212,12 +212,28 @@
 		$(window).on('offline', updateOnlineStatus);
 		updateOnlineStatus();
 
+		function formatBytes(bytes, precision) {
+			if (bytes == 0) return '0 byte';
+			if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '-';
+			if (typeof precision === 'undefined') precision = 1;
+			var units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'],
+				number = Math.floor(Math.log(bytes) / Math.log(1024));
+			return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) + ' ' + units[number];
+		}
+
 		$(window).load(function() {
 			//Compile and render template code
 			for (var account in accounts) {
 				if (accounts.hasOwnProperty(account)) {
 					var template = Handlebars.compile($("#account-template").html());
-					var account = template(accounts[account]);
+					var account = template({
+						type: accounts[account].type,
+						name: accounts[account].name,
+						profileImg: accounts[account].profileImg,
+						email: accounts[account].email,
+						usage: formatBytes(accounts[account].quota.usage, 2),
+						limit: formatBytes(accounts[account].quota.limit, 0)
+					});
 					$('#accountsList').append(account);
 				}
 			}

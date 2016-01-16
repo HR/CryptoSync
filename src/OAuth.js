@@ -117,7 +117,7 @@ OAuth.prototype.getToken = function (auth_code, callback) {
 		this.oauth2Client.getToken(auth_code, function (err, token) {
 			if (err) {
 				console.log(`Error while trying to retrieve access token ${err}`);
-				return;
+				throw err;
 			}
 			console.log(`Got the ACCESS_TOKEN: ${token}`);
 			self.oauth2Client.credentials = token;
@@ -125,7 +125,7 @@ OAuth.prototype.getToken = function (auth_code, callback) {
 		});
 	} else {
 		// Drobpox
-		console.log(`Drobpox getToken`);
+		console.log(`Drobpox getToken TO IMPLEMENT`);
 	}
 };
 

@@ -254,7 +254,7 @@ function createSetup(callback) {
 
 	webContents.on('did-navigate', function (event, url) {
 		console.log(`IPCMAIN: did-navigate emitted,\n URL: ${url}`);
-		const regex = /http:\/\/localhost/g;
+		const regex = /^http:\/\/localhost/g;
 		if (regex.test(url)) {
 			console.log("localhost URL matches");
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
@@ -600,7 +600,7 @@ app.on('will-quit', () => {
 app.on('ready', function () {
 	// TODO: Wrap all this into init();
 	// let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
-	if (true) {
+	if (false) {
 		// TODO: Do more extensive FIRST RUN check
 		console.log('First run. Creating Setup wizard...');
 		// Setup();
@@ -628,7 +628,10 @@ app.on('ready', function () {
 				// throw err;
 			}
 			console.log('MAIN createSetup successfully completed. Starting menubar...');
-			// let mainWindow = createMenubar();
+			// Cryptobar(function (result) {
+			//
+			// });
+			app.quit();
 		});
 	} else {
 		// start menubar
@@ -655,7 +658,6 @@ app.on('ready', function () {
 			}
 			console.log(`SUCCESS: accounts FOUND, ${accounts}...\n, doing JSON.parse to accounts`);
 			global.accounts = JSON.parse(accounts);
-			// global.accounts[Object.keys(global.accounts)[0]].changed = false;
 			return;
 		});
 		// Restore userConfig object from DB

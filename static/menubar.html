@@ -55,10 +55,11 @@
 		var remote = require('electron').remote,
 			ipcRenderer = require('electron').ipcRenderer,
 			remoteWin = remote.getCurrentWindow(),
-			webContents = remoteWin.webContents
+			webContents = remoteWin.webContents,
 			Handlebars = require('handlebars'),
 			gAuth = remote.getGlobal('gAuth'),
 			status = remote.getGlobal("status"),
+			accounts = remote.getGlobal("accounts"),
 			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console");
 
@@ -117,7 +118,7 @@
 		/* Event listeners */
 		ipcRenderer.on("statusChange", function(event, status) {
 			rconsole.log("IPCRENDER: statusChange emitted");
-			updateStatus(status)
+			updateStatus(status);
 		});
 	</script>
 </body>
