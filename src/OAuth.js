@@ -5,7 +5,7 @@
  ******************************/
 
 /* TODO:
- * - Add auth
+ * - REWRITE MODULE TO SUPPORT MULTIPLE ACCOUNTS
  */
 const fs = require(`fs`),
 	dropbox = require(`dropbox`),

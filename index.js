@@ -22,6 +22,7 @@ const app = electron.app,
 
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
+// TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth = null;
 global.status = null;
 global.stats = {};
@@ -352,6 +353,138 @@ function createSetup(callback) {
 	});
 }
 
+function addAccountPrompt(callback) {
+	function getParam(name, url) {
+		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+		var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+			results = regex.exec(url);
+		return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+	}
+
+	function streamToString(stream, cb) {
+		const chunks = [];
+		stream.on('data', (chunk) => {
+			chunks.push(chunk);
+		});
+		stream.on('end', () => {
+			cb(chunks.join(''));
+		});
+	}
+	var win = new BrowserWindow({
+		width: 580,
+		height: 420,
+		center: true,
+		show: true,
+		titleBarStyle: 'hidden-inset'
+			// width: 400,
+			// height: 460
+			// resizable: false,
+	});
+	let webContents = win.webContents;
+	win.loadURL(global.views.setup);
+	win.openDevTools();
+	ipc.on('initAuth', function (event, type) {
+		console.log('IPCMAIN: initAuth emitted. Creating Auth...');
+		// if (type === 'gdrive') {
+		global.gAuth = new OAuth(type, global.paths.gdriveSecret);
+		// TODO: rewrite the authorize function
+		global.gAuth.authorize(global.mdb, function (authUrl) {
+			if (authUrl) {
+				console.log(`Loading authUrl... ${authUrl}`);
+				win.loadURL(authUrl, {
+					'extraHeaders': 'pragma: no-cache\n'
+				});
+			} else {
+				console.log('As already exists, loading masterpass...');
+				win.loadURL(`${global.views.setup}?nav_to=masterpass`);
+			}
+		});
+		// }
+	});
+
+	win.on('unresponsive', function (event) {
+		console.log('addAccountPrompt UNRESPONSIVE');
+	});
+
+	webContents.on('did-navigate', function (event, url) {
+		console.log(`IPCMAIN: did-navigate emitted,\n URL: ${url}`);
+		const regex = /^http:\/\/localhost/g;
+		if (regex.test(url)) {
+			console.log("localhost URL matches");
+			win.loadURL(`${global.views.setup}?nav_to=auth`);
+			// console.log('MAIN: url matched, sending to RENDER...');
+			var err = getParam("error", url);
+			// if error then callback URL is http://localhost/?error=access_denied#
+			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
+			if (!err) {
+				var auth_code = getParam("code", url);
+				console.log(`IPCMAIN: Got the auth_code, ${auth_code}`);
+				console.log("IPCMAIN: Calling callback with the code...");
+
+				// Send code to call back and redirect
+
+				// Get auth token from auth code
+				gAuth.getToken(auth_code, function (token) {
+					// store auth token in mdb
+					gAuth.storeToken(token, mdb);
+					console.log(`IPCMAIN: token retrieved and stored: ${token}`);
+					console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
+					// create new account
+					drive = google.drive({
+						version: 'v3',
+						auth: gAuth.oauth2Client
+					});
+					drive.about.get({
+						"fields": "storageQuota,user"
+					}, function (err, res) {
+						if (err) {
+							console.log(`IPCMAIN: drive.about.get, ERR occured, ${err}`);
+							return;
+						} else {
+							console.log(`IPCMAIN: drive.about.get, RES:`);
+							console.log(`\nemail: ${res.user.emailAddress}\nname: ${res.user.displayName}\nimage:${res.user.photoLink}\n`);
+							// TODO:
+							let accName = `${res.user.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
+							console.log(`Accounts object key, accName = ${accName}`);
+							https.get(res.user.photoLink, function (pfres) {
+								if (pfres.statusCode === 200) {
+									let stream = pfres.pipe(base64.encode());
+									streamToString(stream, (profileImgB64) => {
+										console.log(`SUCCESS: https.get(res.user.photoLink) retrieved res.user.photoLink and converted into ${profileImgB64.substr(0, 20)}...`);
+										global.accounts[accName] = new Account("gdrive", res.user.displayName, res.user.emailAddress, profileImgB64, {
+											"limit": res.storageQuota.limit,
+											"usage": res.storageQuota.usage,
+											"usageInDrive": res.storageQuota.usageInDrive,
+											"usageInDriveTrash": res.storageQuota.usageInDriveTrash
+										}, gAuth);
+									});
+								} else {
+									console.log(`ERROR: https.get(res.user.photoLink) failed to retrieve res.user.photoLink, pfres code is ${pfres.statusCode}`);
+									callback('ERROR: https.get(res.user.photoLink) failed to retrieve res.user.photoLink');
+								}
+							});
+						}
+					});
+				});
+
+			} else {
+				// TODO: close window and display error in settings
+				callback(err);
+			}
+		}
+	});
+	webContents.on('will-navigate', function (event, url) {
+		console.log(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
+	});
+
+	win.on('closed', function () {
+		console.log('IPCMAIN: win.closed event emitted for setupWindow.');
+		win = null;
+		callback('ERROR: Cancelled the account adding flow');
+	});
+}
+
+
 function createSettings(callback) {
 	let win = new BrowserWindow({
 		width: 800,
@@ -368,6 +501,25 @@ function createSettings(callback) {
 			console.log(`MAIN: masterPassPrompt, newMPset finished? ${newMPset}`);
 			return;
 		});
+	});
+	ipc.on('removeAccount', function (event, account) {
+		console.log(`IPCMAIN: removeAccount emitted. Creating removing ${account}...`);
+		// TODO: IMPLEMENT ACCOUNT REMOVAL ROUTINE
+		if (_.unset(global.accounts, account)) {
+			// deleted
+			// reload window to update
+			win.loadURL(global.views.settings);
+			// TODO: update SYNC Objs
+			// TODO: decide whether to do setup is all accounts removed
+			// if (Object.keys(global.accounts).length === 0) {
+			// 	// Create Setup
+			//
+			// } else {
+			//
+			// }
+		} else {
+			// not deleted
+		}
 	});
 	win.on('closed', function () {
 		console.log('win.closed event emitted for createSettings.');

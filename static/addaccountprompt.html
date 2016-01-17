@@ -1,0 +1,134 @@
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Add a Cloud Service Account</title>
+	<link rel="stylesheet" href="style/setup.css" charset="utf-8">
+	<!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
+</head>
+
+<body>
+	<!-- CS Setup UI v1f -->
+	<section id="addaccountprompt">
+		<div class="panel-container">
+			<div id="panel-accounts">
+				<section class="accounts">
+					<header>
+						<div class="banner">
+							<img class="himg" src="images/icons/csp_accounts.svg" alt="" />
+						</div>
+						<h1>Add a Cloud Service Account</h1>
+					</header>
+					<div class="list">
+						<div class="item">
+							<a class="navigationLink csp" data-target="auth" data-auth="gdrive">
+								<img src="images/icons/gdrive.svg" />
+								<div class="name">Google Drive</div>
+								<img src="images/icons/foward.svg" alt="" class="icon right" />
+							</a>
+						</div>
+						<div class="item">
+							<a class="navigationLink csp" data-target="auth" data-auth="dropbox">
+								<img src="images/icons/dropbox.svg" />
+								<div class="name">Dropbox</div>
+								<img src="images/icons/foward.svg" alt="" class="icon right" />
+							</a>
+						</div>
+						<div class="item err">
+							<div class="name"></div>
+						</div>
+					</div>
+				</section>
+				<footer>
+					<a href="#" class="back navigationLink" data-target="default">
+						<img src="images/icons/back.svg" alt="" />
+					</a>
+				</footer>
+			</div>
+			<div id="panel-auth">
+				<header class="minimal">
+					<div class="banner">
+						<svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+							<circle class="path" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
+						</svg>
+					</div>
+					<h1>Authorising...</h1>
+				</header>
+			</div>
+		</div>
+	</section>
+	<script type="text/javascript">
+		// TODO: encapsulate all of this (anonymous function) to mitigate global var space pollution
+		window.$ = window.jQuery = require('jquery');
+		// load core modules first
+		var remote = require('electron').remote,
+			gAuth = remote.getGlobal('gAuth'),
+			ipcRenderer = require('electron').ipcRenderer,
+			remoteWin = remote.getCurrentWindow(),
+			mdb = remote.getGlobal("mdb"),
+			rconsole = remote.getGlobal("console"),
+			accounts = remote.getGlobal("accounts"),
+			webContents = remoteWin.webContents,
+			nav_to = getParam("nav_to", window.document.URL),
+			authErr,
+			errLabel;
+
+		/* Network change event */
+		function updateOnlineStatus() {
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
+		$(window).on('online', updateOnlineStatus);
+		$(window).on('offline', updateOnlineStatus);
+		updateOnlineStatus();
+
+		/* Encryption animation */
+		$(window).load(function() {
+			/* Variable assignments */
+			authErr = $("div.item.err > div.name").first();
+			errLabel = $('label[for="password"]').first();
+			/* Navigation */
+			authErr.hide();
+			errLabel.hide();
+			$(".navigationLink").each(function(index) {
+				$(this).click(function() {
+					if (this.hasAttribute("data-auth")) navigate(this.getAttribute("data-target"), this.getAttribute("data-auth"));
+					navigate(this.getAttribute("data-target"));
+				});
+			});
+
+			navigate((nav_to) ? nav_to : "default");
+		});
+
+		/* Helper functions */
+		function navigate(panelID, authType) {
+			var oldSel = $('.panel-container > div.current');
+			var currSel = $("#panel-" + panelID);
+			if (authType) {
+				rconsole.log(`authType: ${authType}`);
+				authErr.hide();
+				initAuth(authType);
+			}
+			// TODO: find cleaner fix for unexpected button styling on panel transform
+			$(".current button").hide();
+			if (oldSel) oldSel.removeClass("current");
+			$("#panel-" + panelID).addClass("current");
+			$(".current button").show();
+		}
+
+		/* Authentication code retrieval */
+		function getParam(name, url) {
+			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+				results = regex.exec(url);
+			return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		}
+
+		function initAuth(authType) {
+			// sendAuth event to main
+			navigate("auth");
+			ipcRenderer.send("initAuth", authType);
+		}
+	</script>
+</body>
+
+</html>

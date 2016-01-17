@@ -155,7 +155,7 @@
 							</a>
 						</div>
 						<div class="item">
-							<a class="navigationLink" data-action="checkUpdates">
+							<a class="navigationLink" data-action="check-updates">
 								<img src="images/icons/package.svg" alt="" class="icon" />
 								<div class="name">
 									Check for Updates
@@ -188,7 +188,7 @@
 				<div class="email">{{email}}</div>
 				<div class="qouta">{{usage}} / {{limit}}</div>
 			</div>
-			<img src="images/icons/remove.svg" data-action="remove{{constructor.name}}" class="icon remove right" />
+			<img src="images/icons/remove.svg" data-action="remove-{{account}}" class="icon remove right" />
 		</div>
 	</script>
 	<script type="text/javascript">
@@ -215,7 +215,7 @@
 		function formatBytes(bytes, precision) {
 			if (bytes == 0) return '0 byte';
 			if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '-';
-			if (typeof precision === 'undefined') precision = 1;
+			if (typeof precision === 'undefined') precision = 0;
 			var units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'],
 				number = Math.floor(Math.log(bytes) / Math.log(1024));
 			return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) + ' ' + units[number];
@@ -227,12 +227,13 @@
 				if (accounts.hasOwnProperty(account)) {
 					var template = Handlebars.compile($("#account-template").html());
 					var account = template({
+						account: account,
 						type: accounts[account].type,
 						name: accounts[account].name,
 						profileImg: accounts[account].profileImg,
 						email: accounts[account].email,
 						usage: formatBytes(accounts[account].quota.usage, 2),
-						limit: formatBytes(accounts[account].quota.limit, 0)
+						limit: formatBytes(accounts[account].quota.limit)
 					});
 					$('#accountsList').append(account);
 				}
@@ -245,13 +246,19 @@
 				$(this).click(function() {
 					var target = this.getAttribute("data-target"),
 						action = this.getAttribute("data-action");
-					$(".active").first().removeClass("active");
-					$("a[data-target='" + target + "']").addClass("active");
 					if (action) {
 						// TODO: Action (i.e. check for updates/open updater)
-						console.log(`${this} has data-action attr`);
-						ipcRenderer.send(action);
+						console.log(`${this} has data-action attr of ${action}`);
+						let r = /^remove-/g;
+						if (r.test(action)) {
+							ipcRenderer.send('removeAccount', action.replace(r,''));
+						} else {
+							ipcRenderer.send(action);
+						}
 						return;
+					} else {
+						$(".active").first().removeClass("active");
+						$("a[data-target='" + target + "']").addClass("active");
 					}
 					navigate(target);
 				});
