@@ -146,6 +146,7 @@ function Cryptobar(callback) {
 	let cachedBounds;
 	const winPosition = (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter';
 	const positioner = new Positioner(win);
+	// TODO: Change icon based on mode (dark || light) on OSX and set default to light
 	Menubar = new Tray('static/images/mb/trayic_light.png');
 	Menubar.on('click', click)
 		.on('double-click', click);
@@ -230,7 +231,7 @@ function createSetup(callback) {
 	let setupComplete = false;
 	let webContents = win.webContents;
 	win.loadURL(global.views.setup);
-	win.openDevTools();
+	//win.openDevTools();
 	ipc.on('initAuth', function (event, type) {
 		console.log('IPCMAIN: initAuth emitted. Creating Auth...');
 		// if (type === 'gdrive') {

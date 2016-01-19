@@ -222,7 +222,8 @@
 			/* Encryption animation */
 
 			if (!nav_to) {
-				var speed = 3000;
+				var speed = 4500;
+				var offseted = speed * 0.6;
 				$('.marquee-1').marquee({
 					direction: 'right',
 					gap: 0,
@@ -235,12 +236,12 @@
 					gap: 0,
 					duplicated: true,
 					duration: speed,
-					delayBeforeStart: speed
+					delayBeforeStart: offseted
 				});
 
 				setTimeout(function() {
 					$('.marquee-2').addClass("visible");
-				}, speed);
+				}, offseted);
 				$(".marquee").css("position", "relative");
 				$(".banner + .himg").css("margin-top", "-7.5rem");
 			}
