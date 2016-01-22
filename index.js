@@ -760,10 +760,10 @@ app.on('ready', function () {
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		global.mdb = new Db(global.paths.mdb);
-		global.mdb.del('gdrive-token', function (err) {
-			if (err) console.log(`Error retrieving gdrive-token, ${err}`);
-			console.log("deleted gdrive-token");
-		});
+		// global.mdb.del('gdrive-token', function (err) {
+		// 	if (err) console.log(`Error retrieving gdrive-token, ${err}`);
+		// 	console.log("deleted gdrive-token");
+		// });
 		global.accounts = {};
 		createSetup(function (err) {
 			if (err) {
