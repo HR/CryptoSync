@@ -349,29 +349,34 @@ function createSetup(callback) {
 					});
 				};
 
-				var fetchFolderItems = function (folderId, recursive) {
+				// TODO: Implement recursive function
+				var fetchFolderItems = function (folderId, recursive, callback) {
 					global.drive.files.list({
-						q: `'${folderId}' in parents and trashed = false`,
+						q: `'${folderId}' in parents`,
+						orderBy: 'folder',
 						fields: 'files(fullFileExtension,id,md5Checksum,mimeType,modifiedTime,name,ownedByMe,parents,properties,size,webContentLink,webViewLink),nextPageToken',
-						spaces: 'drive'
+						spaces: 'drive',
+						pageSize: 1000
 					}, function (err, res) {
 						if (err) {
-							reject(err);
+							callback(err);
 						} else {
 							if (recursive) {
 								console.log('Recursive fetch started...');
 								res.files.forEach(function (file) {
 									if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 										console.log('Iteration folder: ', file.name, file.id, file.mimeType);
-										fetchFolderItems(file);
+										return fetchFolderItems(file, true);
+									} else {
+										console.log('File: ', file.name, file.id, file.mimeType);
 									}
 								});
 							}
 							if (res.nextPageToken) {
 								console.log("Page token", res.nextPageToken);
-								pageFn(res.nextPageToken, pageFn, callback);
+								pageFn(res.nextPageToken, pageFn, callback(null, res.files));
 							} else {
-								resolve();
+								callback(null, res.files);
 							}
 						}
 					});
@@ -392,28 +397,44 @@ function createSetup(callback) {
 								console.log(`query is going to be >> 'root' in parents and trashed = false`);
 								global.drive.files.list({
 									q: `'root' in parents and trashed = false`,
+									orderBy: 'folder',
 									fields: 'files(fullFileExtension,id,md5Checksum,mimeType,modifiedTime,name,ownedByMe,parents,properties,size,webContentLink,webViewLink),nextPageToken',
-									spaces: 'drive'
+									spaces: 'drive',
+									pageSize: 1000
 								}, function (err, res) {
 									if (err) {
 										reject(err);
 									} else {
-										res.files.forEach(function (file) {
-											if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
-
+										res.files.forEach(function (item) {
+											if (_.isEqual("application/vnd.google-apps.folder", item.mimeType)) {
+												console.log(`Calling fetchFolderItems with item.id = ${item.id} for ${item.name}`);
+												fetchFolderItems(item.id, false, function (err, fires) {
+													if (err) {
+														console.log(`err  =  ${err}`);
+														reject(err);
+													} else {
+														console.log(`fires  =  ${fires}`);
+														res.files[item] = [res.files[item], fires];
+													}
+												});
 											}
-											console.log('Found file: ', file.name, file.id, file.mimeType);
+											console.log('Found item: ', item.name, item.id, item.mimeType);
 										});
-										if (res.nextPageToken) {
-											console.log("Page token", res.nextPageToken);
-											pageFn(res.nextPageToken, pageFn, resolve());
-										} else {
-											resolve();
-										}
+
+										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met)
+										// if (res.nextPageToken) {
+										// 	console.log("Page token", res.nextPageToken);
+										// 	pageFn(res.nextPageToken, pageFn, resolve(res.files));
+										// } else {
+										// 	resolve(res.files);
+										// }
 									}
 								});
 							}
 						);
+					})
+					.then(function (files) {
+						console.log(JSON.stringify(files));
 					})
 					.catch(function (error) {
 						console.log(`PROMISE ERR: `, error);
