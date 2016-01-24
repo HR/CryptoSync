@@ -294,7 +294,7 @@ function createSetup(callback) {
 
 				var getAccountInfo = function () {
 					return new Promise(function (resolve, reject) {
-						console.log('\t PROMISE: getAccountInfo');
+						console.log('PROMISE: getAccountInfo');
 						global.drive.about.get({
 							"fields": "storageQuota,user"
 						}, function (err, res) {
@@ -312,7 +312,7 @@ function createSetup(callback) {
 				};
 
 				var getPhoto = function (res) {
-					console.log('\t PROMISE: getPhoto');
+					console.log('PROMISE: getPhoto');
 					return new Promise(
 						function (resolve, reject) {
 							https.get(res.user.photoLink, function (pfres) {
@@ -332,9 +332,9 @@ function createSetup(callback) {
 				};
 
 				var setAccountInfo = function (param) {
-					console.log('\t PROMISE: setAccountInfo');
+					console.log('PROMISE: setAccountInfo');
 					let profileImgB64 = param[0],
-							res = param[1];
+						res = param[1];
 					return new Promise(function (resolve, reject) {
 						let accName = `${res.user.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
 						console.log(`Accounts object key, accName = ${accName}`);
@@ -346,28 +346,23 @@ function createSetup(callback) {
 							"usageInDriveTrash": res.storageQuota.usageInDriveTrash
 						}, gAuth);
 						resolve();
-						// 	if (_.isObject(global.accounts[accName])) {
-						// 		resolve();
-						// 	} else {
-						// 		reject(`${accName} not set`);
-						// 	}
 					});
 				};
 
 				// Get auth token from auth code
 				gAuth.getToken(auth_code)
-				.then(storeToken)
-				.then(InitDrive)
-				.then(getAccountInfo)
-				.then(getPhoto)
-				.then(setAccountInfo)
-				.then(function () {
-					// get all drive files and start downloading them
-					console.log("PROMISE GET DRIVE FILES");
-				})
-				.catch(function (error) {
-					console.log(`PROMISE ERR: `, error);
-				});
+					.then(storeToken)
+					.then(InitDrive)
+					.then(getAccountInfo)
+					.then(getPhoto)
+					.then(setAccountInfo)
+					.then(function () {
+						// get all drive files and start downloading them
+						console.log("PROMISE GET DRIVE FILES");
+					})
+					.catch(function (error) {
+						console.log(`PROMISE ERR: `, error);
+					});
 
 				webContents.on('did-finish-load', function () {
 					webContents.send('authResult', null);
