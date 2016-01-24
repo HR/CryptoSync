@@ -219,19 +219,19 @@ function createSetup(callback) {
 		});
 	}
 	var win = new BrowserWindow({
-		width: 580,
+		width: 640,
 		height: 420,
 		center: true,
 		show: true,
 		titleBarStyle: 'hidden-inset'
-			// width: 400,
-			// height: 460
+			// width: 580,
+			// height: 420
 			// resizable: false,
 	});
 	let setupComplete = false;
 	let webContents = win.webContents;
 	win.loadURL(global.views.setup);
-	//win.openDevTools();
+	win.openDevTools();
 	ipc.on('initAuth', function (event, type) {
 		console.log('IPCMAIN: initAuth emitted. Creating Auth...');
 		// if (type === 'gdrive') {
@@ -271,6 +271,24 @@ function createSetup(callback) {
 
 				// Send code to call back and redirect
 
+				var getPhoto = function (photoLink) {
+					return new Promise(
+						function (resolve, reject) {
+							https.get(photoLink, function (pfres) {
+								if (pfres.statusCode === 200) {
+									let stream = pfres.pipe(base64.encode());
+									streamToString(stream, (profileImgB64) => {
+										console.log(`SUCCESS: https.get(res.user.photoLink) retrieved res.user.photoLink and converted into ${profileImgB64.substr(0, 20)}...`);
+										resolve(profileImgB64);
+									});
+								} else {
+									reject(`ERROR: https.get(res.user.photoLink) failed to retrieve res.user.photoLink, pfres code is ${pfres.statusCode}`);
+								}
+							});
+						}
+					);
+				};
+
 				// Get auth token from auth code
 				gAuth.getToken(auth_code, function (token) {
 					// store auth token in mdb
@@ -294,23 +312,19 @@ function createSetup(callback) {
 							// TODO:
 							let accName = `${res.user.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
 							console.log(`Accounts object key, accName = ${accName}`);
-							https.get(res.user.photoLink, function (pfres) {
-								if (pfres.statusCode === 200) {
-									let stream = pfres.pipe(base64.encode());
-									streamToString(stream, (profileImgB64) => {
-										console.log(`SUCCESS: https.get(res.user.photoLink) retrieved res.user.photoLink and converted into ${profileImgB64.substr(0, 20)}...`);
-										global.accounts[accName] = new Account("gdrive", res.user.displayName, res.user.emailAddress, profileImgB64, {
-											"limit": res.storageQuota.limit,
-											"usage": res.storageQuota.usage,
-											"usageInDrive": res.storageQuota.usageInDrive,
-											"usageInDriveTrash": res.storageQuota.usageInDriveTrash
-										}, gAuth);
-									});
-								} else {
-									console.log(`ERROR: https.get(res.user.photoLink) failed to retrieve res.user.photoLink, pfres code is ${pfres.statusCode}`);
-								}
+
+							getPhoto(res.user.photoLink).then(function (profileImgB64) {
+								global.accounts[accName] = new Account("gdrive", res.user.displayName, res.user.emailAddress, profileImgB64, {
+									"limit": res.storageQuota.limit,
+									"usage": res.storageQuota.usage,
+									"usageInDrive": res.storageQuota.usageInDrive,
+									"usageInDriveTrash": res.storageQuota.usageInDriveTrash
+								}, gAuth);
+							}).catch(function (error) {
+								console.log(`PROMISE ERR: `, error);
 							});
 						}
+
 						return;
 					});
 				});
@@ -760,10 +774,10 @@ app.on('ready', function () {
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		global.mdb = new Db(global.paths.mdb);
-		// global.mdb.del('gdrive-token', function (err) {
-		// 	if (err) console.log(`Error retrieving gdrive-token, ${err}`);
-		// 	console.log("deleted gdrive-token");
-		// });
+		global.mdb.del('gdrive-token', function (err) {
+			if (err) console.log(`Error retrieving gdrive-token, ${err}`);
+			console.log("deleted gdrive-token");
+		});
 		global.accounts = {};
 		createSetup(function (err) {
 			if (err) {

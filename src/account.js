@@ -9,16 +9,16 @@ const dropbox = require(`dropbox`),
 	googleAuth = require(`google-auth-library`),
 	request = require(`request`);
 
-	/**
-	 * Constructor
-	 *
-	 * @param {type}:string the cloud service provider
-	 * @param {name}:string the name of the authenticated user
-	 * @param {email}:string the email of the authenticated user
-	 * @param {profileImg}:string base64 encoded profile image
-	 * @param {qouta}:string the qouta of the authenticated user
-	 * @param {oauth}:object the authenticated oauth2Client
-	 */
+/**
+ * Constructor
+ *
+ * @param {type}:string the cloud service provider
+ * @param {name}:string the name of the authenticated user
+ * @param {email}:string the email of the authenticated user
+ * @param {profileImg}:string base64 encoded profile image
+ * @param {qouta}:string the qouta of the authenticated user
+ * @param {oauth}:object the authenticated oauth2Client
+ */
 function Account(type, name, email, profileImg, quota, oauth) {
 	this.type = type;
 	this.name = name;
@@ -30,7 +30,7 @@ function Account(type, name, email, profileImg, quota, oauth) {
 	// this.qouta = qouta;
 }
 
-Account.prototype.fetchFileList = function(pSize){
+Account.prototype.fetchFileList = function (pSize) {
 	// Fetch the entire file list for the account
 	console.log("Called fetchFileList");
 	var self = this;
@@ -54,7 +54,38 @@ Account.prototype.fetchFileList = function(pSize){
 				console.log(`%s (%s)`, file.name, file.id);
 			}
 		}
-		});
+	});
 };
+
+// var fetchPage = function (pageToken, pageFn, callback) {
+// 	drive.files.list({
+// 		q: "mimeType='image/jpeg'",
+// 		fields: 'nextPageToken, files(id, name)',
+// 		spaces: 'drive',
+// 		pageToken: pageToken
+// 	}, function (err, res) {
+// 		if (err) {
+// 			callback(err);
+// 		} else {
+// 			res.files.forEach(function (file) {
+// 				console.log('Found file: ', file.name, file.id);
+// 			});
+// 			if (res.nextPageToken) {
+// 				console.log("Page token", res.nextPageToken);
+// 				pageFn(res.nextPageToken, pageFn, callback);
+// 			} else {
+// 				callback();
+// 			}
+// 		}
+// 	});
+// };
+// fetchPage(null, fetchPage, function (err) {
+// 	if (err) {
+// 		// Handle error
+// 		console.log(err);
+// 	} else {
+// 		// All pages fetched
+// 	}
+// });
 
 module.exports = Account;
