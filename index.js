@@ -17,6 +17,8 @@ const app = electron.app,
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
 	google = require(`googleapis`);
+
+// TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
 
@@ -270,16 +272,56 @@ function createSetup(callback) {
 				console.log("IPCMAIN: Calling callback with the code...");
 
 				// Send code to call back and redirect
+				var storeToken = function (token) {
+					// store auth token in mdb
+					return new Promise(function (resolve, reject) {
+						gAuth.storeToken(token, mdb);
+						console.log(`IPCMAIN: token retrieved and stored: ${token}`);
+						console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
+						resolve(gAuth);
+					});
+				};
+				var InitDrive = function (gAuth) {
+					// store auth token in mdb
+					return new Promise(function (resolve, reject) {
+						global.drive = google.drive({
+							version: 'v3',
+							auth: gAuth.oauth2Client
+						});
+						resolve();
+					});
+				};
 
-				var getPhoto = function (photoLink) {
+				var getAccountInfo = function () {
+					return new Promise(function (resolve, reject) {
+						console.log('\t PROMISE: getAccountInfo');
+						global.drive.about.get({
+							"fields": "storageQuota,user"
+						}, function (err, res) {
+							if (err) {
+								console.log(`IPCMAIN: drive.about.get, ERR occured, ${err}`);
+								reject(err);
+							} else {
+								console.log(`IPCMAIN: drive.about.get, RES:`);
+								console.log(`\nemail: ${res.user.emailAddress}\nname: ${res.user.displayName}\nimage:${res.user.photoLink}\n`);
+								// get the account photo and convert to base64
+								resolve(res);
+							}
+						});
+					});
+				};
+
+				var getPhoto = function (res) {
+					console.log('\t PROMISE: getPhoto');
 					return new Promise(
 						function (resolve, reject) {
-							https.get(photoLink, function (pfres) {
+							https.get(res.user.photoLink, function (pfres) {
 								if (pfres.statusCode === 200) {
 									let stream = pfres.pipe(base64.encode());
 									streamToString(stream, (profileImgB64) => {
 										console.log(`SUCCESS: https.get(res.user.photoLink) retrieved res.user.photoLink and converted into ${profileImgB64.substr(0, 20)}...`);
-										resolve(profileImgB64);
+										// Now set the account info
+										resolve([profileImgB64, res]);
 									});
 								} else {
 									reject(`ERROR: https.get(res.user.photoLink) failed to retrieve res.user.photoLink, pfres code is ${pfres.statusCode}`);
@@ -289,44 +331,42 @@ function createSetup(callback) {
 					);
 				};
 
+				var setAccountInfo = function (param) {
+					console.log('\t PROMISE: setAccountInfo');
+					let profileImgB64 = param[0],
+							res = param[1];
+					return new Promise(function (resolve, reject) {
+						let accName = `${res.user.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
+						console.log(`Accounts object key, accName = ${accName}`);
+						// Add account to global acc obj
+						global.accounts[accName] = new Account("gdrive", res.user.displayName, res.user.emailAddress, profileImgB64, {
+							"limit": res.storageQuota.limit,
+							"usage": res.storageQuota.usage,
+							"usageInDrive": res.storageQuota.usageInDrive,
+							"usageInDriveTrash": res.storageQuota.usageInDriveTrash
+						}, gAuth);
+						resolve();
+						// 	if (_.isObject(global.accounts[accName])) {
+						// 		resolve();
+						// 	} else {
+						// 		reject(`${accName} not set`);
+						// 	}
+					});
+				};
+
 				// Get auth token from auth code
-				gAuth.getToken(auth_code, function (token) {
-					// store auth token in mdb
-					gAuth.storeToken(token, mdb);
-					console.log(`IPCMAIN: token retrieved and stored: ${token}`);
-					console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
-					// create new account
-					drive = google.drive({
-						version: 'v3',
-						auth: gAuth.oauth2Client
-					});
-					drive.about.get({
-						"fields": "storageQuota,user"
-					}, function (err, res) {
-						if (err) {
-							console.log(`IPCMAIN: drive.about.get, ERR occured, ${err}`);
-							return;
-						} else {
-							console.log(`IPCMAIN: drive.about.get, RES:`);
-							console.log(`\nemail: ${res.user.emailAddress}\nname: ${res.user.displayName}\nimage:${res.user.photoLink}\n`);
-							// TODO:
-							let accName = `${res.user.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
-							console.log(`Accounts object key, accName = ${accName}`);
-
-							getPhoto(res.user.photoLink).then(function (profileImgB64) {
-								global.accounts[accName] = new Account("gdrive", res.user.displayName, res.user.emailAddress, profileImgB64, {
-									"limit": res.storageQuota.limit,
-									"usage": res.storageQuota.usage,
-									"usageInDrive": res.storageQuota.usageInDrive,
-									"usageInDriveTrash": res.storageQuota.usageInDriveTrash
-								}, gAuth);
-							}).catch(function (error) {
-								console.log(`PROMISE ERR: `, error);
-							});
-						}
-
-						return;
-					});
+				gAuth.getToken(auth_code)
+				.then(storeToken)
+				.then(InitDrive)
+				.then(getAccountInfo)
+				.then(getPhoto)
+				.then(setAccountInfo)
+				.then(function () {
+					// get all drive files and start downloading them
+					console.log("PROMISE GET DRIVE FILES");
+				})
+				.catch(function (error) {
+					console.log(`PROMISE ERR: `, error);
 				});
 
 				webContents.on('did-finish-load', function () {

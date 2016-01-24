@@ -109,24 +109,27 @@ function getNewToken(self, callback) {
 	}
 }
 
-OAuth.prototype.getToken = function (auth_code, callback) {
+OAuth.prototype.getToken = function (auth_code) {
 	var self = this;
-	if (this.isGDrive) {
+	return new Promise(function (resolve, reject) {
+		// if (this.isGDrive) {
 		// Google Drive
 		console.log(`gDrive getToken`);
-		this.oauth2Client.getToken(auth_code, function (err, token) {
+		self.oauth2Client.getToken(auth_code, function (err, token) {
 			if (err) {
 				console.log(`Error while trying to retrieve access token ${err}`);
+				reject(`Error while trying to retrieve access token ${err}`);
 				throw err;
 			}
 			console.log(`Got the ACCESS_TOKEN: ${token}`);
 			self.oauth2Client.credentials = token;
-			callback(token);
+			resolve(token);
 		});
-	} else {
-		// Drobpox
-		console.log(`Drobpox getToken TO IMPLEMENT`);
-	}
+	});
+	// } else {
+	// 	// Drobpox
+	// 	console.log(`Drobpox getToken TO IMPLEMENT`);
+	// }
 };
 
 /**
