@@ -345,7 +345,35 @@ function createSetup(callback) {
 							"usageInDrive": res.storageQuota.usageInDrive,
 							"usageInDriveTrash": res.storageQuota.usageInDriveTrash
 						}, gAuth);
-						resolve();
+						resolve(res.user.emailAddress);
+					});
+				};
+
+				var fetchFolderItems = function (folderId, recursive) {
+					global.drive.files.list({
+						q: `'${folderId}' in parents and trashed = false`,
+						fields: 'files(fullFileExtension,id,md5Checksum,mimeType,modifiedTime,name,ownedByMe,parents,properties,size,webContentLink,webViewLink),nextPageToken',
+						spaces: 'drive'
+					}, function (err, res) {
+						if (err) {
+							reject(err);
+						} else {
+							if (recursive) {
+								console.log('Recursive fetch started...');
+								res.files.forEach(function (file) {
+									if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
+										console.log('Iteration folder: ', file.name, file.id, file.mimeType);
+										fetchFolderItems(file);
+									}
+								});
+							}
+							if (res.nextPageToken) {
+								console.log("Page token", res.nextPageToken);
+								pageFn(res.nextPageToken, pageFn, callback);
+							} else {
+								resolve();
+							}
+						}
 					});
 				};
 
@@ -356,9 +384,36 @@ function createSetup(callback) {
 					.then(getAccountInfo)
 					.then(getPhoto)
 					.then(setAccountInfo)
-					.then(function () {
+					.then(function (email) {
 						// get all drive files and start downloading them
-						console.log("PROMISE GET DRIVE FILES");
+						return new Promise(
+							function (resolve, reject) {
+								console.log('PROMISE: getPhoto');
+								console.log(`query is going to be >> 'root' in parents and trashed = false`);
+								global.drive.files.list({
+									q: `'root' in parents and trashed = false`,
+									fields: 'files(fullFileExtension,id,md5Checksum,mimeType,modifiedTime,name,ownedByMe,parents,properties,size,webContentLink,webViewLink),nextPageToken',
+									spaces: 'drive'
+								}, function (err, res) {
+									if (err) {
+										reject(err);
+									} else {
+										res.files.forEach(function (file) {
+											if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
+
+											}
+											console.log('Found file: ', file.name, file.id, file.mimeType);
+										});
+										if (res.nextPageToken) {
+											console.log("Page token", res.nextPageToken);
+											pageFn(res.nextPageToken, pageFn, resolve());
+										} else {
+											resolve();
+										}
+									}
+								});
+							}
+						);
 					})
 					.catch(function (error) {
 						console.log(`PROMISE ERR: `, error);
