@@ -1,8 +1,13 @@
 # Crypto.Sync
 
 > A cross-platform end-to-end encryption cloud sync client
+![alt tag](CryptoSyncBanner.gif?raw=true "Crypto.Sync application banner")
 
 Crypto.Sync an end-to-end encryption cloud synchronisation client that simply manages the encryption of your cloud data for you.
+
+## Status
+Crypto.Sync is currently in **pre-Alpha** so use at your own risk.
+Almost all of the UI has been implemented but the core functionality is still a work in progress.
 
 ## Dev
 
@@ -25,6 +30,26 @@ $ npm run build
 Builds the app for OS X, Linux*, and Windows*.
 
 \*(not tested yet)
-## License
 
-MIT © [Habib Rehman](http://git.io/HR)
+## License
+The MIT License (MIT)
+
+Copyright (c) Habib Rehman (https://git.io/HR)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished TODO so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
