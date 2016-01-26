@@ -1,6 +1,7 @@
 # Crypto.Sync
 
 > A cross-platform end-to-end encryption cloud sync client
+
 ![alt tag](CryptoSyncBanner.gif?raw=true "Crypto.Sync application banner")
 
 Crypto.Sync an end-to-end encryption cloud synchronisation client that simply manages the encryption of your cloud data for you.
