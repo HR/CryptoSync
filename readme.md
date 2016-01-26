@@ -11,6 +11,7 @@ Almost all of the UI has been implemented but the core functionality is still a 
 
 ## Dev
 
+### Install (dependencies)
 ```
 $ npm install
 ```
