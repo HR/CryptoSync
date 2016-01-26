@@ -1,4 +1,4 @@
-![alt tag](CryptoSyncBanner.gif?raw=true "Crypto.Sync application banner")
+![alt tag](CryptoSync_Banner.gif?raw=true "Crypto.Sync application banner")
 
 # Crypto.Sync
 
