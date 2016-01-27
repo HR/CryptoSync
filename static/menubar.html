@@ -54,13 +54,9 @@
 		// load core modules first
 		var remote = require('electron').remote,
 			ipcRenderer = require('electron').ipcRenderer,
-			remoteWin = remote.getCurrentWindow(),
-			webContents = remoteWin.webContents,
 			Handlebars = require('handlebars'),
-			gAuth = remote.getGlobal('gAuth'),
 			status = remote.getGlobal("status"),
-			accounts = remote.getGlobal("accounts"),
-			mdb = remote.getGlobal("mdb"),
+			accounts = remote.getGlobal("accounts"), // TODO: check if necessary
 			rconsole = remote.getGlobal("console");
 
 		$(window).on('online', updateOnlineStatus);

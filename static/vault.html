@@ -159,9 +159,7 @@
 			accounts = remote.getGlobal("accounts"),
 			Handlebars = require('handlebars'),
 			mdb = remote.getGlobal("mdb"),
-			rconsole = remote.getGlobal("console"),
-			remoteWin = remote.getCurrentWindow(),
-			webContents = remoteWin.webContents;
+			rconsole = remote.getGlobal("console");
 
 		$(window).on('online', updateOnlineStatus);
 		$(window).on('offline', updateOnlineStatus);

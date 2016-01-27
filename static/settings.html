@@ -196,16 +196,12 @@
 		window.$ = window.jQuery = require('jquery');
 		// load core modules first
 		var remote = require('electron').remote,
-			gAuth = remote.getGlobal('gAuth'),
 			accounts = remote.getGlobal("accounts"),
 			Handlebars = require('handlebars'),
 			ipcRenderer = require('electron').ipcRenderer,
-			remoteWin = remote.getCurrentWindow(),
 			settings = remote.getGlobal("settings"),
-			mdb = remote.getGlobal("mdb"),
 			rconsole = remote.getGlobal("console"),
-			shell = require('shell'),
-			webContents = remoteWin.webContents;
+			shell = require('shell');
 		userSettings = {};
 
 		$(window).on('online', updateOnlineStatus);

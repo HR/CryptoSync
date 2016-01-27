@@ -4,8 +4,7 @@
  * User accounts
  ******************************/
 
-const dropbox = require(`dropbox`),
-	google = require(`googleapis`),
+const google = require(`googleapis`),
 	googleAuth = require(`google-auth-library`),
 	request = require(`request`);
 
