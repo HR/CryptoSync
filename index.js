@@ -917,7 +917,6 @@ app.on('ready', function () {
 		// TODO: Implement masterPassPrompt function
 
 		/* TODO: Implement all objects to restore from persistent storage as a routine to be run on start
-		 * TODO: Convert into a Promise so that RestoreAllObj.then([set all config vars]).then(Cryptobar(...))
 		 * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
 		 */
 
