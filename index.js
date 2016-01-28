@@ -81,7 +81,7 @@ require('electron-debug')();
 // TODO: override console.log to prepend the currently being executeded script's name for debug purposes
 // (function () {
 // 	if (console.log) {
-// 		var old = console.log;
+// 		let old = console.log;
 // 		console.log = function () {
 // 			Array.prototype.unshift.call(arguments, `${path.basename(__filename)}: `);
 // 			old.apply(this, arguments);
@@ -206,7 +206,7 @@ function createVault(callback) {
 function createSetup(callback) {
 	function getParam(name, url) {
 		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-		var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+		let regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
 			results = regex.exec(url);
 		return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 	}
@@ -220,7 +220,7 @@ function createSetup(callback) {
 			cb(chunks.join(''));
 		});
 	}
-	var win = new BrowserWindow({
+	let win = new BrowserWindow({
 		width: 640,
 		height: 420,
 		center: true,
@@ -263,16 +263,16 @@ function createSetup(callback) {
 			console.log("localhost URL matches");
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
 			// console.log('MAIN: url matched, sending to RENDER...');
-			var err = getParam("error", url);
+			let err = getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#
 			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
 			if (!err) {
-				var auth_code = getParam("code", url);
+				let auth_code = getParam("code", url);
 				console.log(`IPCMAIN: Got the auth_code, ${auth_code}`);
 				console.log("IPCMAIN: Calling callback with the code...");
 
 				// Send code to call back and redirect
-				var storeToken = function (token) {
+				let storeToken = function (token) {
 					// store auth token in mdb
 					return new Promise(function (resolve, reject) {
 						gAuth.storeToken(token, mdb);
@@ -281,7 +281,7 @@ function createSetup(callback) {
 						resolve(gAuth);
 					});
 				};
-				var InitDrive = function (gAuth) {
+				let InitDrive = function (gAuth) {
 					// store auth token in mdb
 					return new Promise(function (resolve, reject) {
 						global.drive = google.drive({
@@ -292,7 +292,7 @@ function createSetup(callback) {
 					});
 				};
 
-				var getAccountInfo = function () {
+				let getAccountInfo = function () {
 					return new Promise(function (resolve, reject) {
 						console.log('PROMISE: getAccountInfo');
 						global.drive.about.get({
@@ -311,7 +311,7 @@ function createSetup(callback) {
 					});
 				};
 
-				var getPhoto = function (res) {
+				let getPhoto = function (res) {
 					console.log('PROMISE: getPhoto');
 					return new Promise(
 						function (resolve, reject) {
@@ -331,7 +331,7 @@ function createSetup(callback) {
 					);
 				};
 
-				var setAccountInfo = function (param) {
+				let setAccountInfo = function (param) {
 					console.log('PROMISE: setAccountInfo');
 					let profileImgB64 = param[0],
 						res = param[1];
@@ -482,7 +482,7 @@ function createSetup(callback) {
 function addAccountPrompt(callback) {
 	function getParam(name, url) {
 		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-		var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+		let regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
 			results = regex.exec(url);
 		return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 	}
@@ -496,7 +496,7 @@ function addAccountPrompt(callback) {
 			cb(chunks.join(''));
 		});
 	}
-	var win = new BrowserWindow({
+	let win = new BrowserWindow({
 		width: 580,
 		height: 420,
 		center: true,
@@ -539,11 +539,11 @@ function addAccountPrompt(callback) {
 			console.log("localhost URL matches");
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
 			// console.log('MAIN: url matched, sending to RENDER...');
-			var err = getParam("error", url);
+			let err = getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#
 			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
 			if (!err) {
-				var auth_code = getParam("code", url);
+				let auth_code = getParam("code", url);
 				console.log(`IPCMAIN: Got the auth_code, ${auth_code}`);
 				console.log("IPCMAIN: Calling callback with the code...");
 
@@ -727,14 +727,14 @@ function masterPassPrompt(reset, callback) {
 
 // TODO: replace with dialog.showErrorBox(title, content) for native dialog?
 function createErrorPrompt(err, callback) {
-	var win = new BrowserWindow({
+	let win = new BrowserWindow({
 		width: 240,
 		height: 120,
 		center: true,
 		titleBarStyle: 'hidden-inset',
 		show: true
 	});
-	var webContents = win.webContents;
+	let webContents = win.webContents;
 	let res;
 	win.loadURL(global.views.errorprompt);
 	console.log(`ERROR PROMPT: the error is ${err}`);
@@ -855,12 +855,12 @@ app.on('will-quit', () => {
 	// }
 	if (!(_.isEmpty(global.settings.user))) {
 		console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
-		global.mdb.put('userConfig', JSON.stringify(global.settings.user), function (err) {
+		global.mdb.put('settings.user', JSON.stringify(global.settings.user), function (err) {
 			if (err) {
-				console.log(`ERROR: mdb.put('userConfig') failed, ${err}`);
+				console.log(`ERROR: mdb.put('settings.user') failed, ${err}`);
 				// I/O or other error, pass it up the callback
 			}
-			console.log(`SUCCESS: mdb.put('userConfig')`);
+			console.log(`SUCCESS: mdb.put('settings.user')`);
 		});
 	}
 	console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
@@ -915,52 +915,67 @@ app.on('ready', function () {
 		// start menubar
 		console.log('Normal run. Creating Menubar...');
 		// TODO: Implement masterPassPrompt function
-		global.mdb = new Db(global.paths.mdb);
 
 		/* TODO: Implement all objects to restore from persistent storage as a routine to be run on start
 		 * TODO: Convert into a Promise so that RestoreAllObj.then([set all config vars]).then(Cryptobar(...))
 		 * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
 		 */
 
-		// Restore accounts object from DB
-		global.mdb.get('accounts', function (err, accounts) {
-			if (err) {
-				if (err.notFound) {
-					console.log(`ERROR: accounts NOT FOUND, declaring global.accounts = {}...`);
-					global.accounts = {};
-					return;
-				}
-				// I/O or other error, pass it up the callback
-				console.log(`ERROR: mdb.get('accounts') failed, ${err}`);
-				return;
-			}
-			console.log(`SUCCESS: accounts FOUND, ${accounts}...\n, doing JSON.parse to accounts`);
-			global.accounts = JSON.parse(accounts);
-			return;
-		});
-		// Restore userConfig object from DB
-		global.mdb.get('userConfig', function (err, userConfig) {
-			if (err) {
-				if (err.notFound) {
-					console.log(`ERROR: userConfig NOT FOUND, ...`);
-					return;
-				}
-				// I/O or other error, pass it up the callback
-				console.log(`ERROR: mdb.get('userConfig') failed, ${err}`);
-				return;
-			}
-			console.log(`SUCCESS: userConfig FOUND, ${userConfig}\n, doing JSON.parse & setting to global.settings.user`);
-			global.settings.user = JSON.parse(userConfig);
-			return;
-		});
-		// Set initial stats
-		global.stats.startTime = moment().format();
-		global.stats.time = moment();
+		let Init = function () {
+	 		console.log(`INITIALISATION PROMISE`);
+	 		return new Promise(function (resolve, reject) {
+				global.mdb = new Db(global.paths.mdb);
+				resolve();
+	 		});
+	 	};
 
-		// Start menubar
-		Cryptobar(function (result) {
-			// body...
+		// Restore accounts object from DB promise
+		let restoreGlobalObj = function (objName) {
+			console.log(`PROMISE: restoreGlobalObj for ${objName}`);
+			return new Promise(function (resolve, reject) {
+				global.mdb.get(objName, function (err, obj) {
+					if (err) {
+						if (err.notFound) {
+							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
+							reject(err);
+						} else {
+							// I/O or other error, pass it up the callback
+							console.log(`ERROR: mdb.get('${objName}') FAILED`);
+							reject(err);
+						}
+					} else {
+						console.log(`SUCCESS: ${objName} FOUND`);
+						if (/\./g.test(objName)) {
+							let nobj = objName.split('.');
+							global[nobj[0]][nobj[1]] = JSON.parse(obj);
+							resolve();
+						} else {
+							global[objName] = JSON.parse(obj);
+							resolve();
+						}
+					}
+				});
+			});
+		};
+
+		Init()
+		.then(restoreGlobalObj('accounts'))
+		.then(restoreGlobalObj('settings.user'))
+		.then(function () {
+			// Set initial stats
+			global.stats.startTime = moment().format();
+			global.stats.time = moment();
+		})
+		.then(
+			// Start menubar
+			Cryptobar(function (result) {
+				// body...
+			})
+		)
+		.catch(function (error) {
+			console.log(`PROMISE ERR: `, error);
 		});
+
 		// if (!global.MasterPass.get()) {
 		// 	masterPassPrompt(null, function(err) {
 		// 		if (err) {

@@ -192,6 +192,7 @@
 		</div>
 	</script>
 	<script type="text/javascript">
+	'use strict';
 		// TODO: Add reset config feature
 		window.$ = window.jQuery = require('jquery');
 		// load core modules first
@@ -201,8 +202,8 @@
 			ipcRenderer = require('electron').ipcRenderer,
 			settings = remote.getGlobal("settings"),
 			rconsole = remote.getGlobal("console"),
-			shell = require('shell');
-		userSettings = {};
+			shell = require('shell'),
+			userSettings = {};
 
 		$(window).on('online', updateOnlineStatus);
 		$(window).on('offline', updateOnlineStatus);
