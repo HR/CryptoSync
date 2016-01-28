@@ -805,12 +805,12 @@ function checkMasterPass(masterpass, callback) {
 function Setup() {
 	// Guide user through setting up a MPhash and connecting to cloud services
 	// TODO: transform into Async using a Promise
-	fs.makeTreeSync(global.paths.home);
-	fs.makeTreeSync(global.paths.mdb);
-	fs.makeTreeSync(global.paths.vault);
-	global.mdb = new Db(global.paths.mdb);
-	// Setup routine
-	return createSetup();
+	return new Promise(function (resolve, reject) {
+		fs.makeTreeSync(global.paths.home);
+		fs.makeTreeSync(global.paths.mdb);
+		fs.makeTreeSync(global.paths.vault);
+		resolve();
+	});
 }
 
 function init() {
@@ -882,34 +882,48 @@ app.on('ready', function () {
 		// TODO: Do more extensive FIRST RUN check
 		console.log('First run. Creating Setup wizard...');
 		// Setup();
+		let Init = function () {
+	 		console.log(`INITIALISATION PROMISE`);
+	 		return new Promise(function (resolve, reject) {
+				global.mdb = new Db(global.paths.mdb);
+				global.accounts = {};
+				resolve();
+	 		});
+	 	};
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
-		global.mdb = new Db(global.paths.mdb);
-		global.mdb.del('gdrive-token', function (err) {
-			if (err) console.log(`Error retrieving gdrive-token, ${err}`);
-			console.log("deleted gdrive-token");
-		});
-		global.accounts = {};
-		createSetup(function (err) {
-			if (err) {
-				console.log(err);
-				createErrorPrompt(err, function (response) {
-					console.log(`ERRPROMT response: ${response}`);
-					if (response === 'retry') {
-						// TODO: new createSetup
-						createSetup(null);
-					} else {
-						// TODO: add persistent flag of firstRun = false
-						app.quit();
-					}
-				});
-				// throw err;
-			}
-			console.log('MAIN createSetup successfully completed. Starting menubar...');
-			// Cryptobar(function (result) {
-			//
-			// });
-			app.quit();
+		Init()
+		.then(
+			global.mdb.del('gdrive-token', function (err) {
+				if (err) console.log(`Error retrieving gdrive-token, ${err}`);
+				console.log("deleted gdrive-token");
+			})
+		)
+		.then(
+			createSetup(function (err) {
+				if (err) {
+					console.log(err);
+					createErrorPrompt(err, function (response) {
+						console.log(`ERRPROMT response: ${response}`);
+						if (response === 'retry') {
+							// TODO: new createSetup
+							createSetup(null);
+						} else {
+							// TODO: add persistent flag of firstRun = false
+							app.quit();
+						}
+					});
+					// throw err;
+				}
+				console.log('MAIN createSetup successfully completed. Starting menubar...');
+				// Cryptobar(function (result) {
+				//
+				// });
+				app.quit();
+			})
+		)
+		.catch(function (error) {
+			console.log(`PROMISE ERR: `, error);
 		});
 	} else {
 		// start menubar
