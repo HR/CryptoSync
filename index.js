@@ -421,13 +421,14 @@ function createSetup(callback) {
 											console.log('Found item: ', item.name, item.id, item.mimeType);
 										});
 
+
 										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met)
-										// if (res.nextPageToken) {
-										// 	console.log("Page token", res.nextPageToken);
-										// 	pageFn(res.nextPageToken, pageFn, resolve(res.files));
-										// } else {
-										// 	resolve(res.files);
-										// }
+										if (res.nextPageToken) {
+											console.log("Page token", res.nextPageToken);
+											pageFn(res.nextPageToken, pageFn, resolve(res.files));
+										} else {
+											resolve(res.files);
+										}
 									}
 								});
 							}
@@ -550,48 +551,9 @@ function addAccountPrompt(callback) {
 				// Send code to call back and redirect
 
 				// Get auth token from auth code
-				gAuth.getToken(auth_code, function (token) {
-					// store auth token in mdb
-					gAuth.storeToken(token, mdb);
-					console.log(`IPCMAIN: token retrieved and stored: ${token}`);
-					console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
-					// create new account
-					drive = google.drive({
-						version: 'v3',
-						auth: gAuth.oauth2Client
-					});
-					drive.about.get({
-						"fields": "storageQuota,user"
-					}, function (err, res) {
-						if (err) {
-							console.log(`IPCMAIN: drive.about.get, ERR occured, ${err}`);
-							return;
-						} else {
-							console.log(`IPCMAIN: drive.about.get, RES:`);
-							console.log(`\nemail: ${res.user.emailAddress}\nname: ${res.user.displayName}\nimage:${res.user.photoLink}\n`);
-							// TODO:
-							let accName = `${res.user.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
-							console.log(`Accounts object key, accName = ${accName}`);
-							https.get(res.user.photoLink, function (pfres) {
-								if (pfres.statusCode === 200) {
-									let stream = pfres.pipe(base64.encode());
-									streamToString(stream, (profileImgB64) => {
-										console.log(`SUCCESS: https.get(res.user.photoLink) retrieved res.user.photoLink and converted into ${profileImgB64.substr(0, 20)}...`);
-										global.accounts[accName] = new Account("gdrive", res.user.displayName, res.user.emailAddress, profileImgB64, {
-											"limit": res.storageQuota.limit,
-											"usage": res.storageQuota.usage,
-											"usageInDrive": res.storageQuota.usageInDrive,
-											"usageInDriveTrash": res.storageQuota.usageInDriveTrash
-										}, gAuth);
-									});
-								} else {
-									console.log(`ERROR: https.get(res.user.photoLink) failed to retrieve res.user.photoLink, pfres code is ${pfres.statusCode}`);
-									callback('ERROR: https.get(res.user.photoLink) failed to retrieve res.user.photoLink');
-								}
-							});
-						}
-					});
-				});
+				/*
+				 * TODO: ADD FINAL ACCOUNTS CODE
+				 */
 
 			} else {
 				// TODO: close window and display error in settings
@@ -813,13 +775,6 @@ function Setup() {
 	});
 }
 
-function init() {
-	// Prompt
-	// Decrypt db (the Vault) and get ready for use
-	// open mdb
-	global.vault = new Db(global.paths.vault, MasterPass);
-}
-
 /**
  * Event handlers
  **/
@@ -838,11 +793,11 @@ app.on('quit', () => {
 	console.log('APP: quit event emitted');
 });
 app.on('will-quit', () => {
-	console.log('APP: will-quit event emitted');
+	console.log(`APP.ON('will-quit'): will-quit event emitted`);
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
 	// if (global.accounts[Object.keys(global.accounts)[0]].changed) {
-	console.log(`APP.ON('will-quit'): ${global.accounts[Object.keys(global.accounts)[0]]} was changed`);
+	// TODO: Promisify
 	if (!(_.isEmpty(global.accounts))) {
 		global.mdb.put('accounts', JSON.stringify(global.accounts), function (err) {
 			if (err) {
@@ -935,6 +890,9 @@ app.on('ready', function () {
 		 */
 
 		let Init = function () {
+			// Prompt MP
+			// Decrypt db (the Vault) and get ready for use
+			// open mdb
 	 		console.log(`INITIALISATION PROMISE`);
 	 		return new Promise(function (resolve, reject) {
 				global.mdb = new Db(global.paths.mdb);
