@@ -350,7 +350,7 @@ function createSetup(callback) {
 				};
 
 				// TODO: Implement recursive function
-				var fetchFolderItems = function (folderId, recursive, callback) {
+				function fetchFolderItems (folderId, recursive, callback) {
 					global.drive.files.list({
 						q: `'${folderId}' in parents`,
 						orderBy: 'folder',
@@ -359,22 +359,22 @@ function createSetup(callback) {
 						pageSize: 1000
 					}, function (err, res) {
 						if (err) {
-							callback(err);
+							callback(err, null);
 						} else {
+							if (res.nextPageToken) {
+								console.log("Page token", res.nextPageToken);
+								pageFn(res.nextPageToken, pageFn, callback(null, res.files)); // TODO: replace callback; HANdLE THIS
+							}
 							if (recursive) {
 								console.log('Recursive fetch started...');
 								res.files.forEach(function (file) {
 									if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 										console.log('Iteration folder: ', file.name, file.id, file.mimeType);
-										return fetchFolderItems(file, true);
+										return fetchFolderItems(file, true, callback);
 									} else {
 										console.log('File: ', file.name, file.id, file.mimeType);
 									}
 								});
-							}
-							if (res.nextPageToken) {
-								console.log("Page token", res.nextPageToken);
-								pageFn(res.nextPageToken, pageFn, callback(null, res.files));
 							} else {
 								callback(null, res.files);
 							}
@@ -393,6 +393,7 @@ function createSetup(callback) {
 						// get all drive files and start downloading them
 						return new Promise(
 							function (resolve, reject) {
+								let fs = {};
 								console.log('PROMISE: getPhoto');
 								console.log(`query is going to be >> 'root' in parents and trashed = false`);
 								global.drive.files.list({
@@ -414,7 +415,6 @@ function createSetup(callback) {
 														reject(err);
 													} else {
 														console.log(`fires  =  ${fires}`);
-														res.files[item] = [res.files[item], fires];
 													}
 												});
 											}
