@@ -393,8 +393,9 @@ function createSetup(callback) {
 						// get all drive files and start downloading them
 						return new Promise(
 							function (resolve, reject) {
-								let fs = {};
-								console.log('PROMISE: getPhoto');
+								let fBtree = {};
+								// TODO: Implement Btree for file directory structure
+								console.log('PROMISE: getAllFiles');
 								console.log(`query is going to be >> 'root' in parents and trashed = false`);
 								global.drive.files.list({
 									q: `'root' in parents and trashed = false`,
@@ -407,6 +408,7 @@ function createSetup(callback) {
 										reject(err);
 									} else {
 										res.files.forEach(function (item) {
+											fBtree[item] = item;
 											if (_.isEqual("application/vnd.google-apps.folder", item.mimeType)) {
 												console.log(`Calling fetchFolderItems with item.id = ${item.id} for ${item.name}`);
 												fetchFolderItems(item.id, false, function (err, fires) {
