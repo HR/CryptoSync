@@ -29,7 +29,7 @@ $ npm start
 $ npm run build
 ```
 
-Builds the app for OS X, Linux*, and Windows*.
+Builds the app for OS X, Linux *, and Windows *.
 
 \*(not tested yet)
 
