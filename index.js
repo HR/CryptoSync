@@ -18,6 +18,8 @@ const app = electron.app,
 	_ = require('lodash'),
 	google = require(`googleapis`);
 
+const SETUPTEST = true; // ? Setup : Menubar
+
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
@@ -835,7 +837,7 @@ app.on('will-quit', () => {
 app.on('ready', function () {
 	// TODO: Wrap all this into init();
 	// let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
-	if (true) {
+	if (SETUPTEST) {
 		// TODO: Do more extensive FIRST RUN check
 		console.log('First run. Creating Setup wizard...');
 		// Setup();
