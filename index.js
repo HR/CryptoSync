@@ -18,7 +18,7 @@ const app = electron.app,
 	_ = require('lodash'),
 	google = require(`googleapis`);
 
-const SETUPTEST = true; // ? Setup : Menubar
+const SETUPTEST = false; // ? Setup : Menubar
 
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later

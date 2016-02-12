@@ -64,6 +64,7 @@
     "xo": "^0.11.2"
   },
   "devDependencies": {
+    "chromedriver": "^2.21.2",
     "electron-packager": "*",
     "electron-prebuilt": "*",
     "electron-rebuild": "*",
@@ -71,6 +72,7 @@
     "gulp": "*",
     "gulp-shell": "*",
     "jasmine-core": "^2.4.1",
+    "selenium-webdriver": "^2.48.2",
     "xo": "^0.11.2"
   }
 }
