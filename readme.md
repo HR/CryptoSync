@@ -1,6 +1,6 @@
 ![alt tag](CryptoSync_Banner.gif?raw=true "Crypto.Sync application banner")
 
-# Crypto.Sync [![Build Status](https://travis-ci.org/HR/CryptoSync.svg?branch=master)](https://travis-ci.org/HR/CryptoSync)
+# Crypto.Sync [![Build Status](https://travis-ci.org/HR/CryptoSync.svg?branch=master)](https://travis-ci.org/HR/CryptoSync) [![Coverage Status](https://coveralls.io/repos/github/HR/CryptoSync/badge.svg?branch=master)](https://coveralls.io/github/HR/CryptoSync?branch=master)
 
 > A cross-platform end-to-end encryption cloud sync client
 
