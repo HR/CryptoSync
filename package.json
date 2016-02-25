@@ -71,8 +71,11 @@
     "eslint-plugin-html": "^1.1.0",
     "gulp": "*",
     "gulp-shell": "*",
+    "jasmine": "^2.4.1",
     "jasmine-core": "^2.4.1",
+    "jshint": "^2.9.1",
     "selenium-webdriver": "^2.48.2",
+    "webdriverio": "^4.0.3",
     "xo": "^0.11.2"
   }
 }

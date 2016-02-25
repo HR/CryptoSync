@@ -8,6 +8,15 @@ gulp.task('default', shell.task([
 	'node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
 ]));
 
+gulp.task('driver', shell.task([
+	// Run chromedriver
+	'./node_modules/chromedriver/bin/chromedriver'
+]));
+
+gulp.task('test', shell.task([
+	// Run test stuff
+]));
+
 gulp.task('watch', function() {
 	gulp.watch(['./static/**/*', './*.js'], ['run']);
 });
