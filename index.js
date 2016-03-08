@@ -353,6 +353,7 @@ function createSetup(callback) {
 
 				// TODO: Implement recursive function
 				function fetchFolderItems (folderId, recursive, callback) {
+					const driveFolderMimeType = "application/vnd.google-apps.folder";
 					global.drive.files.list({
 						q: `'${folderId}' in parents`,
 						orderBy: 'folder',
@@ -370,7 +371,7 @@ function createSetup(callback) {
 							if (recursive) {
 								console.log('Recursive fetch started...');
 								res.files.forEach(function (file) {
-									if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
+									if (_.isEqual(driveFolderMimeType, file.mimeType)) {
 										console.log('Iteration folder: ', file.name, file.id, file.mimeType);
 										return fetchFolderItems(file, true, callback);
 									} else {
