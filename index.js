@@ -388,12 +388,10 @@ function createSetup(callback) {
 								let file = res.files[i];
 								if (!_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 									console.log(`root/${folderId}/  ${file.name} ${file.id}`);
-									fsusuBtree[file.id] = file;
-									if (res.files.length === i) {
-										callback(null, fsusuBtree);
-									}
+									fsusuBtree[file.id.split('-')[1]] = file;
 								}
 							}
+							callback(null, fsusuBtree);
 						}
 					});
 				};
@@ -436,17 +434,18 @@ function createSetup(callback) {
 													if (err) {
 														reject(err);
 													} else {
-														fBtree[file.id] = fsuBtree;
+														console.log(JSON.stringify(fsuBtree));
+														fBtree[file.id.split('-')[1]] = fsuBtree;
 													}
 												});
 											} else {
 												console.log('root/ %s (%s)', file.name, file.id);
-												fBtree[file.id] = file;
+												fBtree[file.id.split('-')[1]] = file;
 											}
 										}
+										resolve(fBtree);
 									}
 									// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met)
-
 								});
 							}
 						);

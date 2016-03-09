@@ -22,6 +22,7 @@ let defaults = {
  *
  *	TODO:
  *	- Implement bitcoin blockchain as source of randomness (in iv generation)
+ * - rewrite as promises
  */
 
 exports.encrypt = function (ptext, password, mp, callback) {
