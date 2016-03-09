@@ -352,13 +352,8 @@ function createSetup(callback) {
 				};
 
 				// TODO: Implement recursive function
-<<<<<<< HEAD
 				function fetchFolderItems(folderId, recursive, callback, fsuBtree) {
 					let fsuBtree = fsuBtree || {};
-=======
-				function fetchFolderItems (folderId, recursive, callback) {
-					const driveFolderMimeType = "application/vnd.google-apps.folder";
->>>>>>> aacc6138d8a215d46ce082a522705c2a27e31c11
 					global.drive.files.list({
 						q: `'${folderId}' in parents`,
 						orderBy: 'folder',
@@ -374,7 +369,6 @@ function createSetup(callback) {
 							// 	pageFn(res.nextPageToken, pageFn, callback(null, res.files)); // TODO: replace callback; HANdLE THIS
 							// }
 							if (recursive) {
-<<<<<<< HEAD
 								console.log('Recursive fetch...');
 								for (var i = 0; i < res.files.length; i++) {
 									let file = res.files[i];
@@ -383,13 +377,6 @@ function createSetup(callback) {
 										fetchFolderItems(file, true, callback, fsuBtree);
 									} else if (res.files.length === i) {
 										return fetchFolderItems(file, true, callback, fsuBtree);
-=======
-								console.log('Recursive fetch started...');
-								res.files.forEach(function (file) {
-									if (_.isEqual(driveFolderMimeType, file.mimeType)) {
-										console.log('Iteration folder: ', file.name, file.id, file.mimeType);
-										return fetchFolderItems(file, true, callback);
->>>>>>> aacc6138d8a215d46ce082a522705c2a27e31c11
 									} else {
 										fsuBtree[file.id] = file;
 									}
