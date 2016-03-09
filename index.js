@@ -18,7 +18,7 @@ const app = electron.app,
 	_ = require('lodash'),
 	google = require(`googleapis`);
 
-const SETUPTEST = false; // ? Setup : Menubar
+const SETUPTEST = true; // ? Setup : Menubar
 
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
@@ -27,8 +27,8 @@ const SETUPTEST = false; // ? Setup : Menubar
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
-global.gAuth = null;
-global.status = null;
+global.gAuth;
+global.state;
 global.stats = {};
 global.paths = {
 	home: `${fs.getHomeDirectory()}/CryptoSync`,
@@ -352,11 +352,11 @@ function createSetup(callback) {
 				};
 
 				// TODO: Implement recursive function
-				function fetchFolderItems(folderId, recursive, callback, fsuBtree) {
-					let fsuBtree = fsuBtree || {};
+				function fetchFolderItems(folderId, recursive, callback) {
+					let fsusuBtree = {};
 					global.drive.files.list({
 						q: `'${folderId}' in parents`,
-						orderBy: 'folder',
+						orderBy: 'folder desc',
 						fields: 'files(fullFileExtension,id,md5Checksum,mimeType,modifiedTime,name,ownedByMe,parents,properties,size,webContentLink,webViewLink),nextPageToken',
 						spaces: 'drive',
 						pageSize: 1000
@@ -368,21 +368,31 @@ function createSetup(callback) {
 							// 	console.log("Page token", res.nextPageToken);
 							// 	pageFn(res.nextPageToken, pageFn, callback(null, res.files)); // TODO: replace callback; HANdLE THIS
 							// }
-							if (recursive) {
-								console.log('Recursive fetch...');
-								for (var i = 0; i < res.files.length; i++) {
-									let file = res.files[i];
-									if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
-										console.log('Iteration folder: ', file.name, file.id);
-										fetchFolderItems(file, true, callback, fsuBtree);
-									} else if (res.files.length === i) {
-										return fetchFolderItems(file, true, callback, fsuBtree);
-									} else {
-										fsuBtree[file.id] = file;
+							// if (recursive) {
+							// 	console.log('Recursive fetch...');
+							// 	for (var i = 0; i < res.files.length; i++) {
+							// 		let file = res.files[i];
+							// 		if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
+							// 			console.log('Iteration folder: ', file.name, file.id);
+							// 			fetchFolderItems(file, true, callback, fsuBtree);
+							// 			if (res.files.length === i) {
+							// 				// return the retrieved file list (fsuBtree) to callee
+							// 				return fetchFolderItems(file, true, callback, fsuBtree);
+							// 			}
+							// 		} else {
+							// 			fsuBtree[file.id] = file;
+							// 		}
+							// 	};
+							// } else { // do one Iteration and ignore folders}
+							for (var i = 0; i < res.files.length; i++) {
+								let file = res.files[i];
+								if (!_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
+									console.log(`root/${folderId}/  ${file.name} ${file.id}`);
+									fsusuBtree[file.id] = file;
+									if (res.files.length === i) {
+										callback(null, fsusuBtree);
 									}
-								};
-							} else {
-								callback(null, res.files);
+								}
 							}
 						}
 					});
@@ -412,37 +422,38 @@ function createSetup(callback) {
 								}, function (err, res) {
 									if (err) {
 										reject(err);
+									}
+
+									if (res.files.length == 0) {
+										console.log('No files found.');
 									} else {
-										if (res.files.length == 0) {
-											console.log('No files found.');
-										} else {
-											console.log('Files:');
-											for (var i = 0; i < res.files.length; i++) {
-												var file = res.files[i];
-												console.log('%s (%s)', file.name, file.id);
-												if (!_.isEqual("application/vnd.google-apps.folder", item.mimeType)) {
-													console.log('Folder found. Calling fetchFolderItems...');
-													fetchFolderItems(file, true, function(err, fsuBtree){
-														if (err) {
-															reject(err);
-														} else {
-															fBtree[file.id] = fsuBtree;
-														}
-													});
-												} else {
-													fBtree[file.id] = file;
-												}
+										console.log('Google Drive files (depth 2):');
+										for (var i = 0; i < res.files.length; i++) {
+											var file = res.files[i];
+											if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
+												console.log(`Folder ${file.name} found. Calling fetchFolderItems...`);
+												fetchFolderItems(file.id, true, function (err, fsuBtree) {
+													if (err) {
+														reject(err);
+													} else {
+														fBtree[file.id] = fsuBtree;
+													}
+												});
+											} else {
+												console.log('root/ %s (%s)', file.name, file.id);
+												fBtree[file.id] = file;
 											}
 										}
-										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met)
-										global.status.tosync = fBtree;
 									}
+									// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met)
+
 								});
 							}
 						);
 					})
-					.then(function (files) {
-						console.log(JSON.stringify(files));
+					.then(function (fBtree) {
+						console.log(JSON.stringify(fBtree));
+						global.tosync = fBtree;
 					})
 					.catch(function (error) {
 						console.log(`PROMISE ERR: `, error);
