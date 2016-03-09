@@ -352,7 +352,8 @@ function createSetup(callback) {
 				};
 
 				// TODO: Implement recursive function
-				function fetchFolderItems (folderId, recursive, callback) {
+				function fetchFolderItems(folderId, recursive, callback, fsuBtree) {
+					let fsuBtree = fsuBtree || {};
 					global.drive.files.list({
 						q: `'${folderId}' in parents`,
 						orderBy: 'folder',
@@ -363,20 +364,23 @@ function createSetup(callback) {
 						if (err) {
 							callback(err, null);
 						} else {
-							if (res.nextPageToken) {
-								console.log("Page token", res.nextPageToken);
-								pageFn(res.nextPageToken, pageFn, callback(null, res.files)); // TODO: replace callback; HANdLE THIS
-							}
+							// if (res.nextPageToken) {
+							// 	console.log("Page token", res.nextPageToken);
+							// 	pageFn(res.nextPageToken, pageFn, callback(null, res.files)); // TODO: replace callback; HANdLE THIS
+							// }
 							if (recursive) {
-								console.log('Recursive fetch started...');
-								res.files.forEach(function (file) {
+								console.log('Recursive fetch...');
+								for (var i = 0; i < res.files.length; i++) {
+									let file = res.files[i];
 									if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
-										console.log('Iteration folder: ', file.name, file.id, file.mimeType);
-										return fetchFolderItems(file, true, callback);
+										console.log('Iteration folder: ', file.name, file.id);
+										fetchFolderItems(file, true, callback, fsuBtree);
+									} else if (res.files.length === i) {
+										return fetchFolderItems(file, true, callback, fsuBtree);
 									} else {
-										console.log('File: ', file.name, file.id, file.mimeType);
+										fsuBtree[file.id] = file;
 									}
-								});
+								};
 							} else {
 								callback(null, res.files);
 							}
@@ -401,7 +405,7 @@ function createSetup(callback) {
 								console.log(`query is going to be >> 'root' in parents and trashed = false`);
 								global.drive.files.list({
 									q: `'root' in parents and trashed = false`,
-									orderBy: 'folder',
+									orderBy: 'folder desc',
 									fields: 'files(fullFileExtension,id,md5Checksum,mimeType,modifiedTime,name,ownedByMe,parents,properties,size,webContentLink,webViewLink),nextPageToken',
 									spaces: 'drive',
 									pageSize: 1000
@@ -409,30 +413,29 @@ function createSetup(callback) {
 									if (err) {
 										reject(err);
 									} else {
-										res.files.forEach(function (item) {
-											fBtree[item] = item;
-											if (_.isEqual("application/vnd.google-apps.folder", item.mimeType)) {
-												console.log(`Calling fetchFolderItems with item.id = ${item.id} for ${item.name}`);
-												fetchFolderItems(item.id, false, function (err, fires) {
-													if (err) {
-														console.log(`err  =  ${err}`);
-														reject(err);
-													} else {
-														console.log(`fires  =  ${fires}`);
-													}
-												});
-											}
-											console.log('Found item: ', item.name, item.id, item.mimeType);
-										});
-
-
-										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met)
-										if (res.nextPageToken) {
-											console.log("Page token", res.nextPageToken);
-											pageFn(res.nextPageToken, pageFn, resolve(res.files));
+										if (res.files.length == 0) {
+											console.log('No files found.');
 										} else {
-											resolve(res.files);
+											console.log('Files:');
+											for (var i = 0; i < res.files.length; i++) {
+												var file = res.files[i];
+												console.log('%s (%s)', file.name, file.id);
+												if (!_.isEqual("application/vnd.google-apps.folder", item.mimeType)) {
+													console.log('Folder found. Calling fetchFolderItems...');
+													fetchFolderItems(file, true, function(err, fsuBtree){
+														if (err) {
+															reject(err);
+														} else {
+															fBtree[file.id] = fsuBtree;
+														}
+													});
+												} else {
+													fBtree[file.id] = file;
+												}
+											}
 										}
+										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met)
+										global.status.tosync = fBtree;
 									}
 								});
 							}
@@ -842,48 +845,48 @@ app.on('ready', function () {
 		console.log('First run. Creating Setup wizard...');
 		// Setup();
 		let Init = function () {
-	 		console.log(`INITIALISATION PROMISE`);
-	 		return new Promise(function (resolve, reject) {
+			console.log(`INITIALISATION PROMISE`);
+			return new Promise(function (resolve, reject) {
 				global.mdb = new Db(global.paths.mdb);
 				global.accounts = {};
 				resolve();
-	 		});
-	 	};
+			});
+		};
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		Init()
-		.then(
-			global.mdb.del('gdrive-token', function (err) {
-				if (err) console.log(`Error retrieving gdrive-token, ${err}`);
-				console.log("deleted gdrive-token");
-			})
-		)
-		.then(
-			createSetup(function (err) {
-				if (err) {
-					console.log(err);
-					createErrorPrompt(err, function (response) {
-						console.log(`ERRPROMT response: ${response}`);
-						if (response === 'retry') {
-							// TODO: new createSetup
-							createSetup(null);
-						} else {
-							// TODO: add persistent flag of firstRun = false
-							app.quit();
-						}
-					});
-					// throw err;
-				}
-				console.log('MAIN createSetup successfully completed. Starting menubar...');
-				// Cryptobar(function (result) {
-				//
-				// });
-				app.quit();
-			})
-		)
-		.catch(function (error) {
-			console.log(`PROMISE ERR: `, error);
-		});
+			.then(
+				global.mdb.del('gdrive-token', function (err) {
+					if (err) console.log(`Error retrieving gdrive-token, ${err}`);
+					console.log("deleted gdrive-token");
+				})
+			)
+			.then(
+				createSetup(function (err) {
+					if (err) {
+						console.log(err);
+						createErrorPrompt(err, function (response) {
+							console.log(`ERRPROMT response: ${response}`);
+							if (response === 'retry') {
+								// TODO: new createSetup
+								createSetup(null);
+							} else {
+								// TODO: add persistent flag of firstRun = false
+								app.quit();
+							}
+						});
+						// throw err;
+					}
+					console.log('MAIN createSetup successfully completed. Starting menubar...');
+					// Cryptobar(function (result) {
+					//
+					// });
+					app.quit();
+				})
+			)
+			.catch(function (error) {
+				console.log(`PROMISE ERR: `, error);
+			});
 	} else {
 		// start menubar
 		console.log('Normal run. Creating Menubar...');
@@ -897,12 +900,12 @@ app.on('ready', function () {
 			// Prompt MP
 			// Decrypt db (the Vault) and get ready for use
 			// open mdb
-	 		console.log(`INITIALISATION PROMISE`);
-	 		return new Promise(function (resolve, reject) {
+			console.log(`INITIALISATION PROMISE`);
+			return new Promise(function (resolve, reject) {
 				global.mdb = new Db(global.paths.mdb);
 				resolve();
-	 		});
-	 	};
+			});
+		};
 
 		// Restore accounts object from DB promise
 		let restoreGlobalObj = function (objName) {
@@ -934,22 +937,22 @@ app.on('ready', function () {
 		};
 
 		Init()
-		.then(restoreGlobalObj('accounts'))
-		.then(restoreGlobalObj('settings.user'))
-		.then(function () {
-			// Set initial stats
-			global.stats.startTime = moment().format();
-			global.stats.time = moment();
-		})
-		.then(
-			// Start menubar
-			Cryptobar(function (result) {
-				// body...
+			.then(restoreGlobalObj('accounts'))
+			.then(restoreGlobalObj('settings.user'))
+			.then(function () {
+				// Set initial stats
+				global.stats.startTime = moment().format();
+				global.stats.time = moment();
 			})
-		)
-		.catch(function (error) {
-			console.log(`PROMISE ERR: `, error);
-		});
+			.then(
+				// Start menubar
+				Cryptobar(function (result) {
+					// body...
+				})
+			)
+			.catch(function (error) {
+				console.log(`PROMISE ERR: `, error);
+			});
 
 		// if (!global.MasterPass.get()) {
 		// 	masterPassPrompt(null, function(err) {
