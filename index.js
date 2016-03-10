@@ -16,7 +16,8 @@ const app = electron.app,
 	Account = require('./src/Account'),
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
-	google = require(`googleapis`);
+	google = require(`googleapis`),
+	async = require('async');
 
 const SETUPTEST = true; // ? Setup : Menubar
 
@@ -352,8 +353,8 @@ function createSetup(callback) {
 				};
 
 				// TODO: Implement recursive function
-				function fetchFolderItems(folderId, recursive, callback) {
-					let fsusuBtree = {};
+				function fetchFolderItems(folderId, callback) {
+					let fsuBtree = {};
 					global.drive.files.list({
 						q: `'${folderId}' in parents`,
 						orderBy: 'folder desc',
@@ -388,10 +389,10 @@ function createSetup(callback) {
 								let file = res.files[i];
 								if (!_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 									console.log(`root/${folderId}/  ${file.name} ${file.id}`);
-									fsusuBtree[file.id.split('-')[1]] = file;
+									fsuBtree[file.id.split('-')[1]] = file;
 								}
 							}
-							callback(null, fsusuBtree);
+							callback(null, fsuBtree, folderId);
 						}
 					});
 				};
@@ -421,7 +422,6 @@ function createSetup(callback) {
 									if (err) {
 										reject(err);
 									}
-
 									if (res.files.length == 0) {
 										console.log('No files found.');
 									} else {
@@ -430,12 +430,14 @@ function createSetup(callback) {
 											var file = res.files[i];
 											if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 												console.log(`Folder ${file.name} found. Calling fetchFolderItems...`);
-												fetchFolderItems(file.id, true, function (err, fsuBtree) {
+												fetchFolderItems(file.id, function (err, fsuBtree, folderId) {
+													console.log(`\n-- CALLBACK CALLED -- for ${folderId}`);
 													if (err) {
 														reject(err);
 													} else {
-														console.log(JSON.stringify(fsuBtree));
-														fBtree[file.id.split('-')[1]] = fsuBtree;
+														// console.log(`Post-callback ${JSON.stringify(fsuBtree)}`);
+														fBtree[folderId.split('-')[1]] = fsuBtree;
+														console.log(`\nlength: ${res.files.length}, i: ${i}, folderId: ${folderId}`);
 													}
 												});
 											} else {
@@ -443,15 +445,18 @@ function createSetup(callback) {
 												fBtree[file.id.split('-')[1]] = file;
 											}
 										}
-										resolve(fBtree);
+										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met
+										setTimeout(function () {
+											resolve(fBtree);
+										}, 4500);
 									}
-									// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met)
 								});
 							}
 						);
 					})
 					.then(function (fBtree) {
-						console.log(JSON.stringify(fBtree));
+						console.log(`\n-- RESOLVED fBtree --\n`);
+						// console.log(`.then ${JSON.stringify(fBtree)}`);
 						global.tosync = fBtree;
 					})
 					.catch(function (error) {
