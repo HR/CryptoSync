@@ -30,6 +30,13 @@ global.MasterPass = require('./src/MasterPass');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
 global.state = {};
+/* Global state
+ has three queues:
+ - toget: files to download (incl. updated ones)
+ - toencrypt: files to encrypt
+ - toput: files to upload (/update)
+*/
+
 global.stats = {};
 global.paths = {
 	home: `${fs.getHomeDirectory()}/CryptoSync`,
@@ -96,6 +103,12 @@ require('electron-debug')();
 let Menubar;
 let drive;
 
+function Sync() {
+	if (!_.isEmpty(global.state.toget)) {
+
+	}
+}
+
 /**
  * Window constructors
  **/
@@ -140,6 +153,8 @@ function Cryptobar(callback) {
 		// emitt after-hide
 	}
 
+	Sync();
+
 	let win = new BrowserWindow({
 		width: 500, // 290
 		height: 312,
@@ -157,7 +172,6 @@ function Cryptobar(callback) {
 		.on('double-click', click);
 
 	win.on('blur', hideWindow);
-
 	win.loadURL(global.views.menubar);
 	win.openDevTools();
 
@@ -456,8 +470,8 @@ function createSetup(callback) {
 						);
 					})
 					.then(function (fBtree) {
-						console.log(`\n THEN saving file tree (fBtree) to global.state.tosync`);
-						global.state.tosync = fBtree;
+						console.log(`\n THEN saving file tree (fBtree) to global.state.toget`);
+						global.state.toget = fBtree;
 					})
 					.then((value) => {})
 					.catch(function (error) {
@@ -889,12 +903,12 @@ app.on('ready', function () {
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		Init()
-			.then(
-				global.mdb.del('gdrive-token', function (err) {
-					if (err) console.log(`Error retrieving gdrive-token, ${err}`);
-					console.log("deleted gdrive-token");
-				})
-			)
+			// .then(
+			// 	global.mdb.del('gdrive-token', function (err) {
+			// 		if (err) console.log(`Error retrieving gdrive-token, ${err}`);
+			// 		console.log("deleted gdrive-token");
+			// 	})
+			// )
 			.then(
 				createSetup(function (err) {
 					if (err) {
@@ -981,6 +995,7 @@ app.on('ready', function () {
 				global.stats.time = moment();
 			})
 			.then(
+				// TODO: start sync daemon
 				// Start menubar
 				Cryptobar(function (result) {
 					// body...
