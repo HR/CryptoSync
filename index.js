@@ -19,7 +19,7 @@ const app = electron.app,
 	google = require(`googleapis`),
 	async = require('async');
 
-const SETUPTEST = true; // ? Setup : Menubar
+const SETUPTEST = false; // ? Setup : Menubar
 
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
@@ -29,7 +29,7 @@ const SETUPTEST = true; // ? Setup : Menubar
 global.MasterPass = require('./src/MasterPass');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
-global.state;
+global.state = {};
 global.stats = {};
 global.paths = {
 	home: `${fs.getHomeDirectory()}/CryptoSync`,
@@ -406,6 +406,7 @@ function createSetup(callback) {
 					.then(setAccountInfo)
 					.then(function (email) {
 						// get all drive files and start downloading them
+						console.log(`PROMISE for retrieving all of ${email} files`);
 						return new Promise(
 							function (resolve, reject) {
 								let fBtree = {};
@@ -431,7 +432,7 @@ function createSetup(callback) {
 											if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 												console.log(`Folder ${file.name} found. Calling fetchFolderItems...`);
 												fetchFolderItems(file.id, function (err, fsuBtree, folderId) {
-													console.log(`\n-- CALLBACK CALLED -- for ${folderId}`);
+													console.log(`fetchFolderItems CALLBACK for ${folderId}`);
 													if (err) {
 														reject(err);
 													} else {
@@ -448,17 +449,17 @@ function createSetup(callback) {
 										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met
 										setTimeout(function () {
 											resolve(fBtree);
-										}, 4500);
+										}, 2500);
 									}
 								});
 							}
 						);
 					})
 					.then(function (fBtree) {
-						console.log(`\n-- RESOLVED fBtree --\n`);
-						// console.log(`.then ${JSON.stringify(fBtree)}`);
-						global.tosync = fBtree;
+						console.log(`\n THEN saving file tree (fBtree) to global.state.tosync`);
+						global.state.tosync = fBtree;
 					})
+					.then((value) => {})
 					.catch(function (error) {
 						console.log(`PROMISE ERR: `, error);
 					});
@@ -489,6 +490,7 @@ function createSetup(callback) {
 		console.log('IPCMAIN: done emitted, setup complete. Closing this window and opening menubar...');
 		setupComplete = true;
 		win.close();
+		// TODO: restart the application in default mode
 	});
 
 	win.on('closed', function () {
@@ -820,37 +822,54 @@ app.on('will-quit', () => {
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
 	// if (global.accounts[Object.keys(global.accounts)[0]].changed) {
 	// TODO: Promisify
-	if (!(_.isEmpty(global.accounts))) {
-		global.mdb.put('accounts', JSON.stringify(global.accounts), function (err) {
-			if (err) {
-				console.log(`ERROR: mdb.put('accounts') failed, ${err}`);
-				// I/O or other error, pass it up the callback
+	var saveGlobalObj = function (objName) {
+		console.log(`PROMISE: saveGlobalObj for ${objName}`);
+		return new Promise(function (resolve, reject) {
+			if (!(_.isEmpty(global[objName]))) {
+				global.mdb.put(objName, JSON.stringify(global[objName]), function (err) {
+					if (err) {
+						console.log(`ERROR: mdb.put('${objName}') failed, ${err}`);
+						// I/O or other error, pass it up the callback
+						reject(err);
+					}
+					console.log(`SUCCESS: mdb.put('${objName}')`);
+					resolve();
+				});
+			} else {
+				console.log('Nothing to save; empty.');
+				resolve();
 			}
-			console.log(`SUCCESS: mdb.put('accounts')`);
 		});
-	}
-	// }
-	if (!(_.isEmpty(global.settings.user))) {
-		console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
-		global.mdb.put('settings.user', JSON.stringify(global.settings.user), function (err) {
-			if (err) {
-				console.log(`ERROR: mdb.put('settings.user') failed, ${err}`);
-				// I/O or other error, pass it up the callback
+	};
+
+	saveGlobalObj('accounts')
+		.then(saveGlobalObj('state'))
+		.then(function () {
+			if (!(_.isEmpty(global.settings.user))) {
+				console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
+				global.mdb.put('settings.user', JSON.stringify(global.settings.user), function (err) {
+					if (err) {
+						console.log(`ERROR: mdb.put('settings.user') failed, ${err}`);
+						// I/O or other error, pass it up the callback
+					}
+					console.log(`SUCCESS: mdb.put('settings.user')`);
+				});
 			}
-			console.log(`SUCCESS: mdb.put('settings.user')`);
+			console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
+			// global.vault.close();
+			global.mdb.close();
+		}).catch(function (error) {
+			console.log(`PROMISE ERR: `, error);
 		});
-	}
-	console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
-	// global.vault.close();
-	global.mdb.close();
 });
 
-// app.on('activate', function(win) {
-// 	console.log('activate event emitted');
-// 	if (!win) {
-// 		win = createMainWindow();
-// 	}
-// });
+
+app.on('activate', function (win) {
+	console.log('activate event emitted');
+	// 	if (!win) {
+	// 		win = createMainWindow();
+	// 	}
+});
 
 app.on('ready', function () {
 	// TODO: Wrap all this into init();
@@ -938,6 +957,7 @@ app.on('ready', function () {
 						}
 					} else {
 						console.log(`SUCCESS: ${objName} FOUND`);
+						// Sub-obj restore
 						if (/\./g.test(objName)) {
 							let nobj = objName.split('.');
 							global[nobj[0]][nobj[1]] = JSON.parse(obj);
@@ -954,6 +974,7 @@ app.on('ready', function () {
 		Init()
 			.then(restoreGlobalObj('accounts'))
 			.then(restoreGlobalObj('settings.user'))
+			.then(restoreGlobalObj('state'))
 			.then(function () {
 				// Set initial stats
 				global.stats.startTime = moment().format();
