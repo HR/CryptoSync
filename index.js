@@ -29,6 +29,7 @@ const SETUPTEST = false; // ? Setup : Menubar
 global.MasterPass = require('./src/MasterPass');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
+global.accounts = {};
 global.state = {};
 /* Global state
  has three queues:
@@ -990,16 +991,22 @@ app.on('ready', function () {
 						console.log(`SUCCESS: ${objName} FOUND`);
 						// Sub-obj restore
 						if (/\./g.test(objName)) {
-							let nobj = objName.split('.');
-							global[nobj[0]][nobj[1]] = JSON.parse(json);
-							resolve();
+							try {
+								let nobj = objName.split('.');
+								global[nobj[0]][nobj[1]] = JSON.parse(json);
+							} catch (e) {
+								reject(e); // error in the above string(in this case,yes)!
+							} finally {
+								resolve();
+							}
 						} else {
 							try {
 								global[objName] = JSON.parse(json);
 							} catch (e) {
 								reject(e); // error in the above string(in this case,yes)!
+							} finally {
+								resolve();
 							}
-							resolve();
 						}
 					}
 				});
@@ -1035,9 +1042,6 @@ app.on('ready', function () {
 				// Set initial stats
 				global.stats.startTime = moment().format();
 				global.stats.time = moment();
-				setTimeout(function() {
-
-				}, 5000);
 			})
 			.then(InitDrive(global.accounts[Object.keys(global.accounts)[0]].oauth))
 			.then(function () {
