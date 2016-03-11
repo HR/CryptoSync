@@ -74,6 +74,8 @@
     "jasmine": "^2.4.1",
     "jasmine-core": "^2.4.1",
     "jshint": "^2.9.1",
+    "node-inspector": "^0.12.7",
+    "node-pre-gyp": "git+https://git@github.com/enlight/node-pre-gyp.git#detect-electron-runtime-in-find",
     "selenium-webdriver": "^2.48.2",
     "webdriverio": "^4.0.3",
     "xo": "^0.11.2"

@@ -44,7 +44,7 @@ global.paths = {
 	userData: app.getPath('userData'),
 	vault: `${fs.getHomeDirectory()}/CryptoSync/Vault`,
 	gdriveSecret: `${app.getPath('userData')}/client_secret_gdrive.json`,
-	dropboxSecret: `${app.getPath('userData')}/client_secret_dropbox.json`
+	// dropboxSecret: `${app.getPath('userData')}/client_secret_dropbox.json`
 };
 
 // TODO: Get from mdb as JSON and store as JSON as one value
@@ -53,8 +53,8 @@ global.settings = {
 
 	},
 	default: { // TODO: finalise the default settings
-		keyLength: "128", // TODO: parseInt ehen read
-		algorithm: "CTR", // TODO: set proper encrption arg on encryption
+		keyLength: "128",
+		algorithm: "CTR",
 		randomness: "Pseudo",
 		MPkeyLength: "256",
 		shares: "s2n3",
@@ -103,9 +103,36 @@ require('electron-debug')();
 let Menubar;
 let drive;
 
+/**
+ * Promises (global)
+ **/
+
+let InitDrive = function (gAuth) {
+	// store auth token in mdb
+	return new Promise(function (resolve, reject) {
+		global.drive = google.drive({
+			version: 'v3',
+			auth: gAuth.oauth2Client
+		});
+		resolve();
+	});
+};
+
 function Sync() {
 	if (!_.isEmpty(global.state.toget)) {
-
+		var fileId = '0BwwA4oUTeiV1UVNwOHItT0xfa2M';
+		var dest = fs.createWriteStream('/tmp/photo.jpg');
+		drive.files.get({
+				fileId: fileId,
+				alt: 'media'
+			})
+			.on('end', function () {
+				console.log('Done');
+			})
+			.on('error', function (err) {
+				console.log('Error during download', err);
+			})
+			.pipe(dest);
 	}
 }
 
@@ -296,16 +323,6 @@ function createSetup(callback) {
 						console.log(`IPCMAIN: token retrieved and stored: ${token}`);
 						console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
 						resolve(gAuth);
-					});
-				};
-				let InitDrive = function (gAuth) {
-					// store auth token in mdb
-					return new Promise(function (resolve, reject) {
-						global.drive = google.drive({
-							version: 'v3',
-							auth: gAuth.oauth2Client
-						});
-						resolve();
 					});
 				};
 
@@ -959,7 +976,7 @@ app.on('ready', function () {
 		let restoreGlobalObj = function (objName) {
 			console.log(`PROMISE: restoreGlobalObj for ${objName}`);
 			return new Promise(function (resolve, reject) {
-				global.mdb.get(objName, function (err, obj) {
+				global.mdb.get(objName, function (err, json) {
 					if (err) {
 						if (err.notFound) {
 							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
@@ -974,10 +991,14 @@ app.on('ready', function () {
 						// Sub-obj restore
 						if (/\./g.test(objName)) {
 							let nobj = objName.split('.');
-							global[nobj[0]][nobj[1]] = JSON.parse(obj);
+							global[nobj[0]][nobj[1]] = JSON.parse(json);
 							resolve();
 						} else {
-							global[objName] = JSON.parse(obj);
+							try {
+								global[objName] = JSON.parse(json);
+							} catch (e) {
+								reject(e); // error in the above string(in this case,yes)!
+							}
 							resolve();
 						}
 					}
@@ -985,14 +1006,52 @@ app.on('ready', function () {
 			});
 		};
 
+		let getValue = function (key) {
+			console.log(`PROMISE: getValue for ${key}`);
+			return new Promise(function (resolve, reject) {
+				global.mdb.get(key, function (err, json) {
+					if (err) {
+						if (err.notFound) {
+							console.log(`ERROR: key ${key} NOT FOUND `);
+							reject(err);
+						} else {
+							// I/O or other error, pass it up the callback
+							console.log(`ERROR: mdb.get('${key}') FAILED`);
+							reject(err);
+						}
+					} else {
+						console.log(`SUCCESS: ${key} FOUND`);
+						resolve(json);
+					}
+				});
+			});
+		};
+
 		Init()
 			.then(restoreGlobalObj('accounts'))
-			.then(restoreGlobalObj('settings.user'))
 			.then(restoreGlobalObj('state'))
+			.then(restoreGlobalObj('settings.user'))
 			.then(function () {
 				// Set initial stats
 				global.stats.startTime = moment().format();
 				global.stats.time = moment();
+				setTimeout(function() {
+
+				}, 5000);
+			})
+			.then(InitDrive(global.accounts[Object.keys(global.accounts)[0]].oauth))
+			.then(function () {
+				global.drive.files.list({
+					q: `'root' in parents and trashed = false`,
+					orderBy: 'folder desc',
+					fields: 'files(name),nextPageToken',
+					spaces: 'drive',
+					pageSize: 1000
+				}, function (err, res) {
+					for (var i = 0; i < res.files.length; i++) {
+						console.log(`Got file/folder ${res.files[i].name}`);
+					}
+				});
 			})
 			.then(
 				// TODO: start sync daemon
