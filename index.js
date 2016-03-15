@@ -120,20 +120,34 @@ let InitDrive = function (gAuth) {
 };
 
 function Sync() {
+	// InitDrive(global.accounts[Object.keys(global.accounts)[0]].oauth)
+	// .then(function () {
+	// 	global.drive.files.list({
+	// 		q: `'root' in parents and trashed = false`,
+	// 		orderBy: 'folder desc',
+	// 		fields: 'files(name),nextPageToken',
+	// 		spaces: 'drive',
+	// 		pageSize: 1000
+	// 	}, function (err, res) {
+	// 		for (var i = 0; i < res.files.length; i++) {
+	// 			console.log(`Got file/folder ${res.files[i].name}`);
+	// 		}
+	// 	});
+	// });
 	if (!_.isEmpty(global.state.toget)) {
-		var fileId = '0BwwA4oUTeiV1UVNwOHItT0xfa2M';
-		var dest = fs.createWriteStream('/tmp/photo.jpg');
-		drive.files.get({
-				fileId: fileId,
-				alt: 'media'
-			})
-			.on('end', function () {
-				console.log('Done');
-			})
-			.on('error', function (err) {
-				console.log('Error during download', err);
-			})
-			.pipe(dest);
+		// var fileId = '0BwwA4oUTeiV1UVNwOHItT0xfa2M';
+		// var dest = fs.createWriteStream('/tmp/photo.jpg');
+		// drive.files.get({
+		// 		fileId: fileId,
+		// 		alt: 'media'
+		// 	})
+		// 	.on('end', function () {
+		// 		console.log('Done');
+		// 	})
+		// 	.on('error', function (err) {
+		// 		console.log('Error during download', err);
+		// 	})
+		// 	.pipe(dest);
 	}
 }
 
@@ -386,7 +400,7 @@ function createSetup(callback) {
 
 				// TODO: Implement recursive function
 				function fetchFolderItems(folderId, callback) {
-					let fsuBtree = {};
+					let fsuBtree = [];
 					global.drive.files.list({
 						q: `'${folderId}' in parents`,
 						orderBy: 'folder desc',
@@ -421,10 +435,10 @@ function createSetup(callback) {
 								let file = res.files[i];
 								if (!_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 									console.log(`root/${folderId}/  ${file.name} ${file.id}`);
-									fsuBtree[file.id.split('-')[1]] = file;
+									fsuBtree.push(file);
 								}
 							}
-							callback(null, fsuBtree, folderId);
+							callback(null, fsuBtree);
 						}
 					});
 				};
@@ -441,7 +455,10 @@ function createSetup(callback) {
 						console.log(`PROMISE for retrieving all of ${email} files`);
 						return new Promise(
 							function (resolve, reject) {
-								let fBtree = {};
+								let fBtree = [],
+									folders = [],
+									root,
+									rfsTree = {};
 								// TODO: Implement Btree for file directory structure
 								console.log('PROMISE: getAllFiles');
 								console.log(`query is going to be >> 'root' in parents and trashed = false`);
@@ -459,29 +476,30 @@ function createSetup(callback) {
 										console.log('No files found.');
 									} else {
 										console.log('Google Drive files (depth 2):');
-										for (var i = 0; i < res.files.length; i++) {
-											var file = res.files[i];
+										for (let i = 0; i < res.files.length; i++) {
+											let file = res.files[i];
 											if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 												console.log(`Folder ${file.name} found. Calling fetchFolderItems...`);
-												fetchFolderItems(file.id, function (err, fsuBtree, folderId) {
-													console.log(`fetchFolderItems CALLBACK for ${folderId}`);
-													if (err) {
-														reject(err);
-													} else {
-														// console.log(`Post-callback ${JSON.stringify(fsuBtree)}`);
-														fBtree[folderId.split('-')[1]] = fsuBtree;
-														console.log(`\nlength: ${res.files.length}, i: ${i}, folderId: ${folderId}`);
-													}
-												});
+												folders.push(file.id);
 											} else {
 												console.log('root/ %s (%s)', file.name, file.id);
-												fBtree[file.id.split('-')[1]] = file;
+												fBtree.push(file);
 											}
 										}
+										// TODO: map folderIds to their respective files & append to the toget arr
+										async.map(folders, fetchFolderItems, function (err, fsuBtree) {
+											console.log(`Got ids: ${folders}. Calling async.map(folders, fetchFolderItem,...) to map`);
+											if (err) {
+												console.log(`Errpr while mapping folders to file array: ${err}`);
+												reject(err);
+											} else {
+												// console.log(`Post-callback ${JSON.stringify(fsuBtree)}`);
+												fBtree.push(_.flattenDeep(fsuBtree));
+												console.log(`Got fsuBtree: ${fsuBtree}`);
+												resolve(fBtree);
+											}
+										});
 										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met
-										setTimeout(function () {
-											resolve(fBtree);
-										}, 2500);
 									}
 								});
 							}
@@ -489,7 +507,7 @@ function createSetup(callback) {
 					})
 					.then(function (fBtree) {
 						console.log(`\n THEN saving file tree (fBtree) to global.state.toget`);
-						global.state.toget = fBtree;
+						global.state.toget = _.flattenDeep(fBtree);
 					})
 					.then((value) => {})
 					.catch(function (error) {
@@ -874,27 +892,16 @@ app.on('will-quit', () => {
 		});
 	};
 
-	saveGlobalObj('accounts')
-		.then(saveGlobalObj('state'))
-		.then(function () {
-			if (!(_.isEmpty(global.settings.user))) {
-				console.log("global.settings.user is not empty, JSON.stringifying & saving in mdb...");
-				global.mdb.put('settings.user', JSON.stringify(global.settings.user), function (err) {
-					if (err) {
-						console.log(`ERROR: mdb.put('settings.user') failed, ${err}`);
-						// I/O or other error, pass it up the callback
-					}
-					console.log(`SUCCESS: mdb.put('settings.user')`);
-				});
-			}
-			console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
-			// global.vault.close();
-			global.mdb.close();
-		}).catch(function (error) {
+	Promise.all([saveGlobalObj('accounts'), saveGlobalObj('state'), saveGlobalObj('settings')]).then(function () {
+		console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
+		// global.vault.close();
+		global.mdb.close();
+	}, function (reason) {
+		console.log(`PROMISE ERR (reason): `, reason);
+	}).catch(function (error) {
 			console.log(`PROMISE ERR: `, error);
-		});
+	});
 });
-
 
 app.on('activate', function (win) {
 	console.log('activate event emitted');
@@ -914,17 +921,22 @@ app.on('ready', function () {
 			console.log(`INITIALISATION PROMISE`);
 			return new Promise(function (resolve, reject) {
 				global.mdb = new Db(global.paths.mdb);
-				global.accounts = {};
 				resolve();
 			});
 		};
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		Init()
+			.then(
+				global.mdb.del('gdrive-token', function (err) {
+					if (err) console.log(`Error retrieving gdrive-token, ${err}`);
+					console.log("deleted gdrive-token");
+				})
+			)
 			// .then(
-			// 	global.mdb.del('gdrive-token', function (err) {
-			// 		if (err) console.log(`Error retrieving gdrive-token, ${err}`);
-			// 		console.log("deleted gdrive-token");
+			// 	global.mdb.del('state', function (err) {
+			// 		if (err) console.log(`Error retrieving state, ${err}`);
+			// 		console.log("deleted state");
 			// 	})
 			// )
 			.then(
@@ -966,50 +978,9 @@ app.on('ready', function () {
 			// Prompt MP
 			// Decrypt db (the Vault) and get ready for use
 			// open mdb
-			console.log(`INITIALISATION PROMISE`);
 			return new Promise(function (resolve, reject) {
 				global.mdb = new Db(global.paths.mdb);
 				resolve();
-			});
-		};
-
-		// Restore accounts object from DB promise
-		let restoreGlobalObj = function (objName) {
-			console.log(`PROMISE: restoreGlobalObj for ${objName}`);
-			return new Promise(function (resolve, reject) {
-				global.mdb.get(objName, function (err, json) {
-					if (err) {
-						if (err.notFound) {
-							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
-							reject(err);
-						} else {
-							// I/O or other error, pass it up the callback
-							console.log(`ERROR: mdb.get('${objName}') FAILED`);
-							reject(err);
-						}
-					} else {
-						console.log(`SUCCESS: ${objName} FOUND`);
-						// Sub-obj restore
-						if (/\./g.test(objName)) {
-							try {
-								let nobj = objName.split('.');
-								global[nobj[0]][nobj[1]] = JSON.parse(json);
-							} catch (e) {
-								reject(e); // error in the above string(in this case,yes)!
-							} finally {
-								resolve();
-							}
-						} else {
-							try {
-								global[objName] = JSON.parse(json);
-							} catch (e) {
-								reject(e); // error in the above string(in this case,yes)!
-							} finally {
-								resolve();
-							}
-						}
-					}
-				});
 			});
 		};
 
@@ -1034,39 +1005,75 @@ app.on('ready', function () {
 			});
 		};
 
+		// Restore accounts object from DB promise
+		let restoreGlobalObj = function (objName) {
+			console.log(`PROMISE: restoreGlobalObj for ${objName}`);
+			return new Promise(function (resolve, reject) {
+				global.mdb.get(objName, function (err, json) {
+					if (err) {
+						if (err.notFound) {
+							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
+							reject(err);
+						} else {
+							// I/O or other error, pass it up the callback
+							console.log(`ERROR: mdb.get('${objName}') FAILED`);
+							reject(err);
+						}
+					} else {
+						console.log(`SUCCESS: ${objName} FOUND`);
+						try {
+							// JSON.parse(json).then((obj) => {
+							// 	console.log(`parse ${objName} called`);
+							// 	global[objName] = obj;
+							// }).catch((err) => {
+							// 	reject(e);
+							// });
+							setTimeout(function () {
+								resolve();
+								console.log(`resolve global.${objName} called`);
+							}, 0);
+							global[objName] = JSON.parse(json);
+						} catch (e) {
+							reject(e);
+						}
+					}
+				});
+			});
+		};
+
 		Init()
-			.then(restoreGlobalObj('accounts'))
-			.then(restoreGlobalObj('state'))
-			.then(restoreGlobalObj('settings.user'))
-			.then(function () {
+		.then(restoreGlobalObj('state'))
+		.then(restoreGlobalObj('settings'))
+		.then(restoreGlobalObj('accounts'))
+		.then(function () {
 				// Set initial stats
 				global.stats.startTime = moment().format();
 				global.stats.time = moment();
+				async.whilst(
+				    function () { return _.isUndefined(global.accounts[Object.keys(global.accounts)[0]].oauth); },
+				    function (callback) {
+							console.log('global.accounts[Object.keys(global.accounts)[0]].oauth undefined');
+				    },
+				    function (err, result) {
+				      console.log(`global.accounts[Object.keys(global.accounts)[0]].oauth not undefined anymore, err: ${err}, result: ${result}`);
+							console.log(`STRINGIFIED accounts: ${JSON.stringify(global.accounts)}`);
+				    }
+				);
+				// console.log(`STRINGIFIED state: ${JSON.stringify(global.state)}`);
+				// console.log(`STRINGIFIED settings: ${JSON.stringify(global.settings)}`);
+				// console.log(`STRINGIFIED accounts: ${JSON.stringify(global.accounts)}`);
+				// console.log(`STRINGIFIED mdb: ${JSON.stringify(mdb)}`);
+		})
+		.then(
+			// TODO: start sync daemon
+			// Start menubar
+			Cryptobar(function (result) {
+				// body...
 			})
-			.then(InitDrive(global.accounts[Object.keys(global.accounts)[0]].oauth))
-			.then(function () {
-				global.drive.files.list({
-					q: `'root' in parents and trashed = false`,
-					orderBy: 'folder desc',
-					fields: 'files(name),nextPageToken',
-					spaces: 'drive',
-					pageSize: 1000
-				}, function (err, res) {
-					for (var i = 0; i < res.files.length; i++) {
-						console.log(`Got file/folder ${res.files[i].name}`);
-					}
-				});
-			})
-			.then(
-				// TODO: start sync daemon
-				// Start menubar
-				Cryptobar(function (result) {
-					// body...
-				})
-			)
-			.catch(function (error) {
-				console.log(`PROMISE ERR: `, error);
-			});
+		)
+		.catch(function (error) {
+			console.log(`PROMISE ERR: `, error);
+		});
 
 		// if (!global.MasterPass.get()) {
 		// 	masterPassPrompt(null, function(err) {

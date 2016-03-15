@@ -15,6 +15,10 @@ gulp.task('rebuildni', shell.task([
 	'node_modules/.bin/node-pre-gyp --target=$(node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron -v | sed s/\v//g) --runtime=electron --fallback-to-build --directory node_modules/v8-debug/ --dist-url=https://atom.io/download/atom-shell reinstall && node_modules/.bin/node-pre-gyp --target=$(node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron -v | sed s/\v//g) --runtime=electron --fallback-to-build --directory node_modules/v8-profiler/ --dist-url=https://atom.io/download/atom-shell reinstall'
 ]));
 
+gulp.task('buildnative', shell.task([
+	// start build the native module
+	'./node_modules/.bin/electron-rebuild #1'
+]));
 
 gulp.task('ni', shell.task([
 	// start node inspector server

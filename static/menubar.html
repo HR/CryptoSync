@@ -116,6 +116,33 @@
 			rconsole.log("IPCRENDER: statusChange emitted");
 			updateStatus(status);
 		});
+		var files = {
+			first: {
+				name:"List of secret keys.docx",
+				fileType:"word",
+				type:"gdrive",
+				lastMod:"22min ago.",
+			},
+			sec: {
+				name:"Computing spec.pdf",
+				fileType:"pdf",
+				type:"gdrive",
+				lastMod:"1h ago.",
+			},
+			third: {
+				name:"Ubuntu_16.04x64.zip",
+				fileType:"zip",
+				type:"gdrive",
+				lastMod:"2 days ago.",
+			},
+			fourth: {
+				name:"matrix.png",
+				fileType:"image",
+				type:"dropbox",
+				lastMod:"1 week ago.",
+			}
+		};
+		addFiles(files);
 	</script>
 </body>
 
