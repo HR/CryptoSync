@@ -1007,61 +1007,43 @@ app.on('ready', function () {
 
 		// Restore accounts object from DB promise
 		let restoreGlobalObj = function (objName) {
-			console.log(`PROMISE: restoreGlobalObj for ${objName}`);
-			return new Promise(function (resolve, reject) {
-				global.mdb.get(objName, function (err, json) {
-					if (err) {
-						if (err.notFound) {
-							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
-							reject(err);
-						} else {
-							// I/O or other error, pass it up the callback
-							console.log(`ERROR: mdb.get('${objName}') FAILED`);
-							reject(err);
-						}
+			console.log(`FUNC: restoreGlobalObj for ${objName}`);
+			global.mdb.get(objName, function (err, json) {
+				if (err) {
+					if (err.notFound) {
+						console.log(`ERROR: Global obj ${objName} NOT FOUND `);
+						reject(err);
 					} else {
-						console.log(`SUCCESS: ${objName} FOUND`);
-						try {
-							// JSON.parse(json).then((obj) => {
-							// 	console.log(`parse ${objName} called`);
-							// 	global[objName] = obj;
-							// }).catch((err) => {
-							// 	reject(e);
-							// });
-							setTimeout(function () {
-								resolve();
-								console.log(`resolve global.${objName} called`);
-							}, 0);
-							global[objName] = JSON.parse(json);
-						} catch (e) {
-							reject(e);
-						}
+						// I/O or other error, pass it up the callback
+						console.log(`ERROR: mdb.get('${objName}') FAILED`);
+						reject(err);
 					}
-				});
+				} else {
+					console.log(`SUCCESS: ${objName} FOUND`);
+					try {
+						global[objName] = JSON.parse(json);
+						setTimeout(function () {
+							console.log(`resolve global.${objName} called`);
+							resolve();
+						}, 0);
+					} catch (e) {
+						return e;
+					}
+				}
 			});
 		};
-
-		Init()
-		.then(restoreGlobalObj('state'))
-		.then(restoreGlobalObj('settings'))
-		.then(restoreGlobalObj('accounts'))
+		Init();
+		Promise.all([restoreGlobalObj('accounts'), restoreGlobalObj('state'), restoreGlobalObj('settings')])
+		.then(() => {})
+		// .then(restoreGlobalObj('state'))
+		// .then(restoreGlobalObj('settings'))
+		// .then(restoreGlobalObj('accounts'))
 		.then(function () {
 				// Set initial stats
 				global.stats.startTime = moment().format();
 				global.stats.time = moment();
-				async.whilst(
-				    function () { return _.isUndefined(global.accounts[Object.keys(global.accounts)[0]].oauth); },
-				    function (callback) {
-							console.log('global.accounts[Object.keys(global.accounts)[0]].oauth undefined');
-				    },
-				    function (err, result) {
-				      console.log(`global.accounts[Object.keys(global.accounts)[0]].oauth not undefined anymore, err: ${err}, result: ${result}`);
-							console.log(`STRINGIFIED accounts: ${JSON.stringify(global.accounts)}`);
-				    }
-				);
 				// console.log(`STRINGIFIED state: ${JSON.stringify(global.state)}`);
 				// console.log(`STRINGIFIED settings: ${JSON.stringify(global.settings)}`);
-				// console.log(`STRINGIFIED accounts: ${JSON.stringify(global.accounts)}`);
 				// console.log(`STRINGIFIED mdb: ${JSON.stringify(mdb)}`);
 		})
 		.then(
