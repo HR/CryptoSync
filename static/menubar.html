@@ -57,6 +57,8 @@
 			Handlebars = require('handlebars'),
 			status = remote.getGlobal("status"),
 			accounts = remote.getGlobal("accounts"), // TODO: check if necessary
+			drive = remote.getGlobal("drive"), // TODO: check if necessary
+			oauth2 = remote.getGlobal("oauth2"), // TODO: check if necessary
 			rconsole = remote.getGlobal("console");
 
 		$(window).on('online', updateOnlineStatus);

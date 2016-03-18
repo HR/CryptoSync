@@ -870,8 +870,8 @@ app.on('will-quit', () => {
 	console.log(`APP.ON('will-quit'): will-quit event emitted`);
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
-	// if (global.accounts[Object.keys(global.accounts)[0]].changed) {
-	// TODO: Promisify
+	global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client = global.gAuth;
+
 	var saveGlobalObj = function (objName) {
 		console.log(`PROMISE: saveGlobalObj for ${objName}`);
 		return new Promise(function (resolve, reject) {
@@ -899,7 +899,7 @@ app.on('will-quit', () => {
 	}, function (reason) {
 		console.log(`PROMISE ERR (reason): `, reason);
 	}).catch(function (error) {
-			console.log(`PROMISE ERR: `, error);
+		console.log(`PROMISE ERR: `, error);
 	});
 });
 
@@ -974,6 +974,51 @@ app.on('ready', function () {
 		 * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
 		 */
 
+		Init()
+			.catch(function (error) {
+				console.log(`PROMISE ERR: `, error);
+			});
+		Promise.all([restoreGlobalObj('accounts'), restoreGlobalObj('state'), restoreGlobalObj('settings')])
+			.then(() => {
+				let o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;
+				global.gAuth = new google.auth.OAuth2(o2c.clientId_, o2c.clientSecret_, o2c.redirectUri_);
+				gAuth.setCredentials(o2c.credentials);
+				global.drive = google.drive({
+					version: 'v3',
+					auth: gAuth
+				});
+				return;
+			})
+			// .then(InitDrive(global.accounts[Object.keys(global.accounts)[0]].oauth))
+			.then(function () {
+				global.drive.files.list({
+					q: `'root' in parents and trashed = false`,
+					orderBy: 'folder desc',
+					fields: 'files(name),nextPageToken',
+					spaces: 'drive',
+					pageSize: 1000
+				}, function (err, res) {
+					for (var i = 0; i < res.files.length; i++) {
+						console.log(`Got file/folder ${res.files[i].name}`);
+					}
+				});
+			})
+			.then(function () {
+				// Set initial stats
+				global.stats.startTime = moment().format();
+				global.stats.time = moment();
+			})
+			.then(
+				// TODO: start sync daemon
+				// Start menubar
+				Cryptobar(function (result) {
+					// body...
+				})
+			)
+			.catch(function (error) {
+				console.log(`PROMISE ERR: `, error);
+			});
+
 		let Init = function () {
 			// Prompt MP
 			// Decrypt db (the Vault) and get ready for use
@@ -1008,54 +1053,32 @@ app.on('ready', function () {
 		// Restore accounts object from DB promise
 		let restoreGlobalObj = function (objName) {
 			console.log(`FUNC: restoreGlobalObj for ${objName}`);
-			global.mdb.get(objName, function (err, json) {
-				if (err) {
-					if (err.notFound) {
-						console.log(`ERROR: Global obj ${objName} NOT FOUND `);
-						reject(err);
+			return new Promise(function (resolve, reject) {
+				global.mdb.get(objName, function (err, json) {
+					if (err) {
+						if (err.notFound) {
+							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
+							reject(err);
+						} else {
+							// I/O or other error, pass it up the callback
+							console.log(`ERROR: mdb.get('${objName}') FAILED`);
+							reject(err);
+						}
 					} else {
-						// I/O or other error, pass it up the callback
-						console.log(`ERROR: mdb.get('${objName}') FAILED`);
-						reject(err);
+						console.log(`SUCCESS: ${objName} FOUND`);
+						try {
+							global[objName] = JSON.parse(json);
+							setTimeout(function () {
+								console.log(`resolve global.${objName} called`);
+								resolve();
+							}, 0);
+						} catch (e) {
+							return e;
+						}
 					}
-				} else {
-					console.log(`SUCCESS: ${objName} FOUND`);
-					try {
-						global[objName] = JSON.parse(json);
-						setTimeout(function () {
-							console.log(`resolve global.${objName} called`);
-							resolve();
-						}, 0);
-					} catch (e) {
-						return e;
-					}
-				}
+				});
 			});
 		};
-		Init();
-		Promise.all([restoreGlobalObj('accounts'), restoreGlobalObj('state'), restoreGlobalObj('settings')])
-		.then(() => {})
-		// .then(restoreGlobalObj('state'))
-		// .then(restoreGlobalObj('settings'))
-		// .then(restoreGlobalObj('accounts'))
-		.then(function () {
-				// Set initial stats
-				global.stats.startTime = moment().format();
-				global.stats.time = moment();
-				// console.log(`STRINGIFIED state: ${JSON.stringify(global.state)}`);
-				// console.log(`STRINGIFIED settings: ${JSON.stringify(global.settings)}`);
-				// console.log(`STRINGIFIED mdb: ${JSON.stringify(mdb)}`);
-		})
-		.then(
-			// TODO: start sync daemon
-			// Start menubar
-			Cryptobar(function (result) {
-				// body...
-			})
-		)
-		.catch(function (error) {
-			console.log(`PROMISE ERR: `, error);
-		});
 
 		// if (!global.MasterPass.get()) {
 		// 	masterPassPrompt(null, function(err) {
