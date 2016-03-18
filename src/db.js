@@ -7,19 +7,7 @@
 let levelup = require('levelup'),
 	fs = require('fs-plus'),
 	crypto = require('./crypto'),
-	util = require("util");
-
-// Override default main process console.log to include time stamp and file being exec
-(function () {
-	if (console.log) {
-		let old = console.log;
-		console.log = function () {
-			Array.prototype.unshift.call(arguments, `[${moment().format('DD/MM HH:MM:SS')} ${path.basename(__filename)}]`);
-			/* use process.argv[1]? */
-			old.apply(this, arguments);
-		};
-	}
-})();
+	util = require('util');
 
 function readFile(filename, enc) {
 	return new Promise(function (fulfill, reject) {

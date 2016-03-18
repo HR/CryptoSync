@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 const electron = require('electron');
 const app = electron.app,
 	BrowserWindow = electron.BrowserWindow,
@@ -9,7 +9,6 @@ const app = electron.app,
 	https = require('https'),
 	moment = require('moment'),
 	base64 = require('base64-stream'),
-	path = require('path'),
 	Db = require('./src/Db'),
 	crypto = require('./src/crypto'),
 	OAuth = require('./src/OAuth'),
@@ -91,10 +90,11 @@ require('electron-debug')();
 
 // Override default main process console.log to include time stamp and file being exec
 (function () {
+	'use strict';
 	if (console.log) {
 		let old = console.log;
 		console.log = function () {
-			Array.prototype.unshift.call(arguments, `[${moment().format('DD/MM HH:MM:SS')} ${path.basename(__filename)}]`);
+			Array.prototype.unshift.call(arguments, `[${moment().format('DD/MM HH:MM:SS')}]`);
 			/* use process.argv[1]? */
 			old.apply(this, arguments);
 		};
