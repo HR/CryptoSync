@@ -8,6 +8,18 @@ const google = require(`googleapis`),
 	googleAuth = require(`google-auth-library`),
 	request = require(`request`);
 
+// Override default main process console.log to include time stamp and file being exec
+(function () {
+	if (console.log) {
+		let old = console.log;
+		console.log = function () {
+			Array.prototype.unshift.call(arguments, `[${moment().format('DD/MM HH:MM:SS')} ${path.basename(__filename)}]`);
+			/* use process.argv[1]? */
+			old.apply(this, arguments);
+		};
+	}
+})();
+
 /**
  * Constructor
  *

@@ -19,7 +19,7 @@ const app = electron.app,
 	google = require(`googleapis`),
 	async = require('async');
 
-const SETUPTEST = false; // ? Setup : Menubar
+const SETUPTEST = true; // ? Setup : Menubar
 
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
@@ -89,12 +89,12 @@ global.views = {
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')();
 
-// TODO: override console.log to prepend the currently being executeded script's name for debug purposes
+// Override default main process console.log to include time stamp and file being exec
 (function () {
 	if (console.log) {
 		let old = console.log;
 		console.log = function () {
-			Array.prototype.unshift.call(arguments, `[${moment().format('DD/MM HH:MM:SS')} @${path.basename(__filename)}`);
+			Array.prototype.unshift.call(arguments, `[${moment().format('DD/MM HH:MM:SS')} ${path.basename(__filename)}]`);
 			/* use process.argv[1]? */
 			old.apply(this, arguments);
 		};
@@ -461,13 +461,20 @@ function createSetup(callback) {
 									}
 									if (res.files.length == 0) {
 										console.log('No files found.');
+										reject('No files found so no need tp proceed');
 									} else {
 										console.log('Google Drive files (depth 2):');
+										root = res.files[0].parents[0];
+										rfsTree[root] = {};
+										rfsTree[root]['path'] = `/`;
+
 										for (let i = 0; i < res.files.length; i++) {
 											let file = res.files[i];
 											if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 												console.log(`Folder ${file.name} found. Calling fetchFolderItems...`);
 												folders.push(file.id);
+												rfsTree[file.parents[0]][file.id] = file;
+												rfsTree[file.parents[0]][file.id]['path'] = `${rfsTree[file.parents[0]]['path']}${file.name}`;
 											} else {
 												console.log('root/ %s (%s)', file.name, file.id);
 												fBtree.push(file);
@@ -483,7 +490,7 @@ function createSetup(callback) {
 												// console.log(`Post-callback ${JSON.stringify(fsuBtree)}`);
 												fBtree.push(_.flattenDeep(fsuBtree));
 												console.log(`Got fsuBtree: ${fsuBtree}`);
-												resolve(fBtree);
+												resolve([fBtree, rfsTree]);
 											}
 										});
 										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met
@@ -492,9 +499,10 @@ function createSetup(callback) {
 							}
 						);
 					})
-					.then(function (fBtree) {
+					.then(function (trees) {
 						console.log(`\n THEN saving file tree (fBtree) to global.state.toget`);
-						global.state.toget = _.flattenDeep(fBtree);
+						global.state.toget = _.flattenDeep(trees[0]);
+						global.state.rfs = trees[1];
 					})
 					.then((value) => {})
 					.catch(function (error) {
@@ -858,6 +866,7 @@ app.on('will-quit', () => {
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
 	global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client = global.gAuth;
+	global.stats.endTime = moment().format();
 
 	var saveGlobalObj = function (objName) {
 		console.log(`PROMISE: saveGlobalObj for ${objName}`);
@@ -1041,12 +1050,12 @@ app.on('ready', function () {
 				global.drive.files.list({
 					q: `'root' in parents and trashed = false`,
 					orderBy: 'folder desc',
-					fields: 'files(name),nextPageToken',
+					fields: 'files(name,parents),nextPageToken',
 					spaces: 'drive',
 					pageSize: 1000
 				}, function (err, res) {
 					for (var i = 0; i < res.files.length; i++) {
-						console.log(`Got file/folder ${res.files[i].name}`);
+						console.log(`Got file/folder ${res.files[i].name} with parents ${res.files[i].parents}`);
 					}
 				});
 			})
