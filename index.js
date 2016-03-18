@@ -90,15 +90,16 @@ global.views = {
 require('electron-debug')();
 
 // TODO: override console.log to prepend the currently being executeded script's name for debug purposes
-// (function () {
-// 	if (console.log) {
-// 		let old = console.log;
-// 		console.log = function () {
-// 			Array.prototype.unshift.call(arguments, `${path.basename(__filename)}: `);
-// 			old.apply(this, arguments);
-// 		};
-// 	}
-// })();
+(function () {
+	if (console.log) {
+		let old = console.log;
+		console.log = function () {
+			Array.prototype.unshift.call(arguments, `[${moment().format('DD/MM HH:MM:SS')} @${path.basename(__filename)}`);
+			/* use process.argv[1]? */
+			old.apply(this, arguments);
+		};
+	}
+})();
 
 // prevent the following from being garbage collected
 let Menubar;
@@ -120,20 +121,6 @@ let InitDrive = function (gAuth) {
 };
 
 function Sync() {
-	// InitDrive(global.accounts[Object.keys(global.accounts)[0]].oauth)
-	// .then(function () {
-	// 	global.drive.files.list({
-	// 		q: `'root' in parents and trashed = false`,
-	// 		orderBy: 'folder desc',
-	// 		fields: 'files(name),nextPageToken',
-	// 		spaces: 'drive',
-	// 		pageSize: 1000
-	// 	}, function (err, res) {
-	// 		for (var i = 0; i < res.files.length; i++) {
-	// 			console.log(`Got file/folder ${res.files[i].name}`);
-	// 		}
-	// 	});
-	// });
 	if (!_.isEmpty(global.state.toget)) {
 		// var fileId = '0BwwA4oUTeiV1UVNwOHItT0xfa2M';
 		// var dest = fs.createWriteStream('/tmp/photo.jpg');
@@ -973,6 +960,66 @@ app.on('ready', function () {
 		/* TODO: Implement all objects to restore from persistent storage as a routine to be run on start
 		 * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
 		 */
+		 let Init = function () {
+ 			// Prompt MP
+ 			// Decrypt db (the Vault) and get ready for use
+ 			// open mdb
+ 			return new Promise(function (resolve, reject) {
+ 				global.mdb = new Db(global.paths.mdb);
+ 				resolve();
+ 			});
+ 		};
+
+ 		let getValue = function (key) {
+ 			console.log(`PROMISE: getValue for ${key}`);
+ 			return new Promise(function (resolve, reject) {
+ 				global.mdb.get(key, function (err, json) {
+ 					if (err) {
+ 						if (err.notFound) {
+ 							console.log(`ERROR: key ${key} NOT FOUND `);
+ 							reject(err);
+ 						} else {
+ 							// I/O or other error, pass it up the callback
+ 							console.log(`ERROR: mdb.get('${key}') FAILED`);
+ 							reject(err);
+ 						}
+ 					} else {
+ 						console.log(`SUCCESS: ${key} FOUND`);
+ 						resolve(json);
+ 					}
+ 				});
+ 			});
+ 		};
+
+ 		// Restore accounts object from DB promise
+ 		let restoreGlobalObj = function (objName) {
+ 			console.log(`FUNC: restoreGlobalObj for ${objName}`);
+ 			return new Promise(function (resolve, reject) {
+ 				global.mdb.get(objName, function (err, json) {
+ 					if (err) {
+ 						if (err.notFound) {
+ 							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
+ 							reject(err);
+ 						} else {
+ 							// I/O or other error, pass it up the callback
+ 							console.log(`ERROR: mdb.get('${objName}') FAILED`);
+ 							reject(err);
+ 						}
+ 					} else {
+ 						console.log(`SUCCESS: ${objName} FOUND`);
+ 						try {
+ 							global[objName] = JSON.parse(json);
+ 							setTimeout(function () {
+ 								console.log(`resolve global.${objName} called`);
+ 								resolve();
+ 							}, 0);
+ 						} catch (e) {
+ 							return e;
+ 						}
+ 					}
+ 				});
+ 			});
+ 		};
 
 		Init()
 			.catch(function (error) {
@@ -1018,67 +1065,6 @@ app.on('ready', function () {
 			.catch(function (error) {
 				console.log(`PROMISE ERR: `, error);
 			});
-
-		let Init = function () {
-			// Prompt MP
-			// Decrypt db (the Vault) and get ready for use
-			// open mdb
-			return new Promise(function (resolve, reject) {
-				global.mdb = new Db(global.paths.mdb);
-				resolve();
-			});
-		};
-
-		let getValue = function (key) {
-			console.log(`PROMISE: getValue for ${key}`);
-			return new Promise(function (resolve, reject) {
-				global.mdb.get(key, function (err, json) {
-					if (err) {
-						if (err.notFound) {
-							console.log(`ERROR: key ${key} NOT FOUND `);
-							reject(err);
-						} else {
-							// I/O or other error, pass it up the callback
-							console.log(`ERROR: mdb.get('${key}') FAILED`);
-							reject(err);
-						}
-					} else {
-						console.log(`SUCCESS: ${key} FOUND`);
-						resolve(json);
-					}
-				});
-			});
-		};
-
-		// Restore accounts object from DB promise
-		let restoreGlobalObj = function (objName) {
-			console.log(`FUNC: restoreGlobalObj for ${objName}`);
-			return new Promise(function (resolve, reject) {
-				global.mdb.get(objName, function (err, json) {
-					if (err) {
-						if (err.notFound) {
-							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
-							reject(err);
-						} else {
-							// I/O or other error, pass it up the callback
-							console.log(`ERROR: mdb.get('${objName}') FAILED`);
-							reject(err);
-						}
-					} else {
-						console.log(`SUCCESS: ${objName} FOUND`);
-						try {
-							global[objName] = JSON.parse(json);
-							setTimeout(function () {
-								console.log(`resolve global.${objName} called`);
-								resolve();
-							}, 0);
-						} catch (e) {
-							return e;
-						}
-					}
-				});
-			});
-		};
 
 		// if (!global.MasterPass.get()) {
 		// 	masterPassPrompt(null, function(err) {
