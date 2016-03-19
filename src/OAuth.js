@@ -1,4 +1,4 @@
-`use strict`;
+'use strict';
 /**
  * OAuth.js
  * Establish a authorised OAuth 2 client

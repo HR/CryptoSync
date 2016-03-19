@@ -13,27 +13,32 @@ const app = electron.app,
 	crypto = require('./src/crypto'),
 	OAuth = require('./src/OAuth'),
 	Account = require('./src/Account'),
+	sync = require('./src/sync'),
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
-	google = require(`googleapis`),
+	google = require('googleapis'),
 	async = require('async');
 
-const SETUPTEST = true; // ? Setup : Menubar
+const SETUPTEST = false; // ? Setup : Menubar
 
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
+// YOLO#101
 
 // MasterPass is protected (private var) and only exist in Main memory
 global.MasterPass = require('./src/MasterPass');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
 global.accounts = {};
-global.state = {};
+// global.state = {};
+// global.state.toget = [];
+// global.state.tocrypt = [];
+// global.state.toput = [];
 /* Global state
  has three queues:
  - toget: files to download (incl. updated ones)
- - toencrypt: files to encrypt
+ - tocrypt: files to encrypt
  - toput: files to upload (/update)
 */
 
@@ -120,24 +125,6 @@ let InitDrive = function (gAuth) {
 	});
 };
 
-function Sync() {
-	if (!_.isEmpty(global.state.toget)) {
-		// var fileId = '0BwwA4oUTeiV1UVNwOHItT0xfa2M';
-		// var dest = fs.createWriteStream('/tmp/photo.jpg');
-		// drive.files.get({
-		// 		fileId: fileId,
-		// 		alt: 'media'
-		// 	})
-		// 	.on('end', function () {
-		// 		console.log('Done');
-		// 	})
-		// 	.on('error', function (err) {
-		// 		console.log('Error during download', err);
-		// 	})
-		// 	.pipe(dest);
-	}
-}
-
 /**
  * Window constructors
  **/
@@ -181,8 +168,6 @@ function Cryptobar(callback) {
 		win.hide();
 		// emitt after-hide
 	}
-
-	Sync();
 
 	let win = new BrowserWindow({
 		width: 500, // 290
@@ -501,6 +486,7 @@ function createSetup(callback) {
 					})
 					.then(function (trees) {
 						console.log(`\n THEN saving file tree (fBtree) to global.state.toget`);
+						global.state = {};
 						global.state.toget = _.flattenDeep(trees[0]);
 						global.state.rfs = trees[1];
 					})
@@ -865,7 +851,7 @@ app.on('will-quit', () => {
 	console.log(`APP.ON('will-quit'): will-quit event emitted`);
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
-	global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client = global.gAuth;
+	global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials;
 	global.stats.endTime = moment().format();
 
 	var saveGlobalObj = function (objName) {
@@ -888,7 +874,12 @@ app.on('will-quit', () => {
 		});
 	};
 
-	Promise.all([saveGlobalObj('accounts'), saveGlobalObj('state'), saveGlobalObj('settings')]).then(function () {
+	Promise.all([
+		saveGlobalObj('accounts'),
+		saveGlobalObj('state'),
+		saveGlobalObj('settings'),
+		saveGlobalObj('stats')
+	]).then(function () {
 		console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
 		// global.vault.close();
 		global.mdb.close();
@@ -969,72 +960,77 @@ app.on('ready', function () {
 		/* TODO: Implement all objects to restore from persistent storage as a routine to be run on start
 		 * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
 		 */
-		 let Init = function () {
- 			// Prompt MP
- 			// Decrypt db (the Vault) and get ready for use
- 			// open mdb
- 			return new Promise(function (resolve, reject) {
- 				global.mdb = new Db(global.paths.mdb);
- 				resolve();
- 			});
- 		};
+		let Init = function () {
+			// Prompt MP
+			// Decrypt db (the Vault) and get ready for use
+			// open mdb
+			return new Promise(function (resolve, reject) {
+				global.mdb = new Db(global.paths.mdb);
+				resolve();
+			});
+		};
 
- 		let getValue = function (key) {
- 			console.log(`PROMISE: getValue for ${key}`);
- 			return new Promise(function (resolve, reject) {
- 				global.mdb.get(key, function (err, json) {
- 					if (err) {
- 						if (err.notFound) {
- 							console.log(`ERROR: key ${key} NOT FOUND `);
- 							reject(err);
- 						} else {
- 							// I/O or other error, pass it up the callback
- 							console.log(`ERROR: mdb.get('${key}') FAILED`);
- 							reject(err);
- 						}
- 					} else {
- 						console.log(`SUCCESS: ${key} FOUND`);
- 						resolve(json);
- 					}
- 				});
- 			});
- 		};
+		let getValue = function (key) {
+			console.log(`PROMISE: getValue for ${key}`);
+			return new Promise(function (resolve, reject) {
+				global.mdb.get(key, function (err, json) {
+					if (err) {
+						if (err.notFound) {
+							console.log(`ERROR: key ${key} NOT FOUND `);
+							reject(err);
+						} else {
+							// I/O or other error, pass it up the callback
+							console.log(`ERROR: mdb.get('${key}') FAILED`);
+							reject(err);
+						}
+					} else {
+						console.log(`SUCCESS: ${key} FOUND`);
+						resolve(json);
+					}
+				});
+			});
+		};
 
- 		// Restore accounts object from DB promise
- 		let restoreGlobalObj = function (objName) {
- 			console.log(`FUNC: restoreGlobalObj for ${objName}`);
- 			return new Promise(function (resolve, reject) {
- 				global.mdb.get(objName, function (err, json) {
- 					if (err) {
- 						if (err.notFound) {
- 							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
- 							reject(err);
- 						} else {
- 							// I/O or other error, pass it up the callback
- 							console.log(`ERROR: mdb.get('${objName}') FAILED`);
- 							reject(err);
- 						}
- 					} else {
- 						console.log(`SUCCESS: ${objName} FOUND`);
- 						try {
- 							global[objName] = JSON.parse(json);
- 							setTimeout(function () {
- 								console.log(`resolve global.${objName} called`);
- 								resolve();
- 							}, 0);
- 						} catch (e) {
- 							return e;
- 						}
- 					}
- 				});
- 			});
- 		};
+		// Restore accounts object from DB promise
+		let restoreGlobalObj = function (objName) {
+			console.log(`FUNC: restoreGlobalObj for ${objName}`);
+			return new Promise(function (resolve, reject) {
+				global.mdb.get(objName, function (err, json) {
+					if (err) {
+						if (err.notFound) {
+							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
+							reject(err);
+						} else {
+							// I/O or other error, pass it up the callback
+							console.log(`ERROR: mdb.get('${objName}') FAILED`);
+							reject(err);
+						}
+					} else {
+						console.log(`SUCCESS: ${objName} FOUND`);
+						try {
+							global[objName] = JSON.parse(json);
+							setTimeout(function () {
+								console.log(`resolve global.${objName} called`);
+								resolve();
+							}, 0);
+						} catch (e) {
+							return e;
+						}
+					}
+				});
+			});
+		};
 
 		Init()
 			.catch(function (error) {
 				console.log(`PROMISE ERR: `, error);
 			});
-		Promise.all([restoreGlobalObj('accounts'), restoreGlobalObj('state'), restoreGlobalObj('settings')])
+		Promise.all([
+				restoreGlobalObj('accounts'),
+				restoreGlobalObj('state'),
+				restoreGlobalObj('settings'),
+				restoreGlobalObj('stats')
+			])
 			.then(() => {
 				let o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;
 				global.gAuth = new google.auth.OAuth2(o2c.clientId_, o2c.clientSecret_, o2c.redirectUri_);
@@ -1045,25 +1041,25 @@ app.on('ready', function () {
 				});
 				return;
 			})
-			// .then(InitDrive(global.accounts[Object.keys(global.accounts)[0]].oauth))
-			.then(function () {
-				global.drive.files.list({
-					q: `'root' in parents and trashed = false`,
-					orderBy: 'folder desc',
-					fields: 'files(name,parents),nextPageToken',
-					spaces: 'drive',
-					pageSize: 1000
-				}, function (err, res) {
-					for (var i = 0; i < res.files.length; i++) {
-						console.log(`Got file/folder ${res.files[i].name} with parents ${res.files[i].parents}`);
-					}
-				});
-			})
+			// .then(function () {
+			// 	global.drive.files.list({
+			// 		q: `'root' in parents and trashed = false`,
+			// 		orderBy: 'folder desc',
+			// 		fields: 'files(name,parents),nextPageToken',
+			// 		spaces: 'drive',
+			// 		pageSize: 1000
+			// 	}, function (err, res) {
+			// 		for (var i = 0; i < res.files.length; i++) {
+			// 			console.log(`Got file/folder ${res.files[i].name} with parents ${res.files[i].parents}`);
+			// 		}
+			// 	});
+			// })
 			.then(function () {
 				// Set initial stats
 				global.stats.startTime = moment().format();
 				global.stats.time = moment();
 			})
+			.then(sync(global.state))
 			.then(
 				// TODO: start sync daemon
 				// Start menubar
