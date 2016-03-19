@@ -24,13 +24,12 @@ let defaults = {
  * - rewrite as promises
  */
 
-exports.encrypt = function (ptext, password, mp, callback) {
+exports.encrypt = function (ptext, password, callback) {
 	// TODO: Use HMAC to authoritatively add metadata about the encryption
 	// decrypts any arbitrary data passed with the pass
 	let i = defaults.iterations,
 		kL = defaults.keyLength,
 		pass = (Array.isArray(password)) ? shares2pass(password) : password;
-	mp = mp || false;
 	const salt = crypto.randomBytes(kL); // generate pseudorandom salt
 	const iv = crypto.randomBytes(kL); // generate pseudorandom iv
 	if (mp) {

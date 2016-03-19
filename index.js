@@ -5,15 +5,16 @@ const app = electron.app,
 	ipc = electron.ipcMain,
 	Tray = electron.Tray,
 	shell = electron.shell,
-	fs = require('fs-plus'),
-	https = require('https'),
-	moment = require('moment'),
-	base64 = require('base64-stream'),
 	Db = require('./src/Db'),
 	crypto = require('./src/crypto'),
 	OAuth = require('./src/OAuth'),
 	Account = require('./src/Account'),
-	sync = require('./src/sync'),
+	// sync = require('./src/sync'),
+	fs = require('fs-plus'),
+	https = require('https'),
+	moment = require('moment'),
+	base64 = require('base64-stream'),
+	chalk = require('chalk'),
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
 	google = require('googleapis'),
@@ -45,6 +46,7 @@ global.accounts = {};
 global.stats = {};
 global.paths = {
 	home: `${fs.getHomeDirectory()}/CryptoSync`,
+	crypted: `${fs.getHomeDirectory()}/CryptoSync/.encrypted`,
 	mdb: `${app.getPath('userData')}/mdb`,
 	userData: app.getPath('userData'),
 	vault: `${fs.getHomeDirectory()}/CryptoSync/Vault`,
@@ -446,7 +448,7 @@ function createSetup(callback) {
 									}
 									if (res.files.length == 0) {
 										console.log('No files found.');
-										reject('No files found so no need tp proceed');
+										reject('No files found so no need to proceed');
 									} else {
 										console.log('Google Drive files (depth 2):');
 										root = res.files[0].parents[0];
@@ -458,8 +460,8 @@ function createSetup(callback) {
 											if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 												console.log(`Folder ${file.name} found. Calling fetchFolderItems...`);
 												folders.push(file.id);
-												rfsTree[file.parents[0]][file.id] = file;
-												rfsTree[file.parents[0]][file.id]['path'] = `${rfsTree[file.parents[0]]['path']}${file.name}`;
+												rfsTree[file.id] = file;
+												rfsTree[file.id]['path'] = `${rfsTree[file.parents[0]]['path']}${file.name}`;
 											} else {
 												console.log('root/ %s (%s)', file.name, file.id);
 												fBtree.push(file);
@@ -488,11 +490,13 @@ function createSetup(callback) {
 						console.log(`\n THEN saving file tree (fBtree) to global.state.toget`);
 						global.state = {};
 						global.state.toget = _.flattenDeep(trees[0]);
+						global.state.tocrypt = [];
+						global.state.toput = [];
 						global.state.rfs = trees[1];
 					})
 					.then((value) => {})
 					.catch(function (error) {
-						console.log(`PROMISE ERR: `, error);
+						console.error(`PROMISE ERR: ${error.stack}`);
 					});
 
 				webContents.on('did-finish-load', function () {
@@ -851,7 +855,7 @@ app.on('will-quit', () => {
 	console.log(`APP.ON('will-quit'): will-quit event emitted`);
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
-	global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials;
+	// global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials;
 	global.stats.endTime = moment().format();
 
 	var saveGlobalObj = function (objName) {
@@ -886,7 +890,7 @@ app.on('will-quit', () => {
 	}, function (reason) {
 		console.log(`PROMISE ERR (reason): `, reason);
 	}).catch(function (error) {
-		console.log(`PROMISE ERR: `, error);
+		console.error(`PROMISE ERR: ${error.stack}`);
 	});
 });
 
@@ -950,7 +954,7 @@ app.on('ready', function () {
 				})
 			)
 			.catch(function (error) {
-				console.log(`PROMISE ERR: `, error);
+				console.error(`PROMISE ERR: ${error.stack}`);
 			});
 	} else {
 		// start menubar
@@ -993,7 +997,7 @@ app.on('ready', function () {
 
 		// Restore accounts object from DB promise
 		let restoreGlobalObj = function (objName) {
-			console.log(`FUNC: restoreGlobalObj for ${objName}`);
+			console.log(`PROMISE: restoreGlobalObj for ${objName}`);
 			return new Promise(function (resolve, reject) {
 				global.mdb.get(objName, function (err, json) {
 					if (err) {
@@ -1023,7 +1027,7 @@ app.on('ready', function () {
 
 		Init()
 			.catch(function (error) {
-				console.log(`PROMISE ERR: `, error);
+				console.error(`PROMISE ERR: ${error.stack}`);
 			});
 		Promise.all([
 				restoreGlobalObj('accounts'),
@@ -1059,7 +1063,75 @@ app.on('ready', function () {
 				global.stats.startTime = moment().format();
 				global.stats.time = moment();
 			})
-			.then(sync(global.state))
+			.then(() => {
+				if (global.state.toget) {
+					/* TODO: Evaluate the use of async.queues where a queue task is created
+							forEach file and the task is to first get the file then encrypt and then
+							upload. See if persistently viable (i.e. can continue where left of on
+							program restart)
+					*/
+					async.each(global.state.toget, function (file, callback) {
+						let parentPath = global.state.rfs[file.parents[0]].path;
+						let dir = `${global.paths.home}${parentPath}`;
+						fs.makeTree(dir, function () {
+							let path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
+							console.log(`GETing ${file.name} at dest ${path}`);
+							let dest = fs.createWriteStream(path);
+							// TODO: figure out a better way of limiting API requests to less than 10/s (Google API limit)
+							setTimeout(function () {
+								global.drive.files.get({
+										fileId: file.id,
+										alt: 'media'
+									})
+									.on('end', function () {
+										console.log(`GOT ${file.name} ${file.id} at dest ${path}. Moving this file obj to tocrypt`);
+										global.state.tocrypt.push(file); // add from tocrypt queue
+										_.pull(global.state.toget, file); // remove from toget queue
+										callback(null, file.id, file.name);
+									})
+									.on('error', function (err) {
+										console.log('Error during download', err);
+										callback(err, file.id, file.name);
+									})
+									.pipe(dest);
+							}, 600);
+						});
+					}, function (err, fileId, fileName) {
+						// if any of the file processing produced an error, err would equal that error
+						if (err) {
+							// One of the iterations produced an error.
+							// All processing will now stop.
+							console.error(`Failed to get ${fileName} (${fileId}), err: ${err.stack}`);
+						} else {
+							console.log(`To trigger tocrypt for ${fileName} (${fileId})`);
+						}
+					});
+				}
+
+				if (global.state.tocrypt) {
+					fs.makeTree(global.paths.crypted, function () {
+						async.each(global.state.tocrypt, function (file, callback) {
+							let parentPath = global.state.rfs[file.parents[0]].path;
+							let rpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
+							let epath = (parentPath === "/") ? `${global.state.tocrypt}${parentPath}${file.name}` : `${global.state.tocrypt}${parentPath}/${file.name}`;
+							let dest = fs.createWriteStream(path);
+
+							global.state.toput.push(file);
+							_.pull(global.state.tocrypt, file);
+							callback(null, file.id, file.name);
+						}, function (err, fileId, fileName) {
+							// if any of the file processing produced an error, err would equal that error
+							if (err) {
+								// One of the iterations produced an error.
+								// All processing will now stop.
+								console.error(`Failed to get ${fileName} (${fileId}), err: ${err.stack}`);
+							} else {
+								console.log(`To trigger tocrypt for ${fileName} (${fileId})`);
+							}
+						});
+					});
+				}
+			})
 			.then(
 				// TODO: start sync daemon
 				// Start menubar
@@ -1068,7 +1140,7 @@ app.on('ready', function () {
 				})
 			)
 			.catch(function (error) {
-				console.log(`PROMISE ERR: `, error);
+				console.error(`PROMISE ERR: ${error.stack}`);
 			});
 
 		// if (!global.MasterPass.get()) {

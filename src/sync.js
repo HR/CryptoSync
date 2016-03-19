@@ -5,8 +5,7 @@ let levelup = require('levelup'),
 	google = require('googleapis'),
 	crypto = require('./crypto');
 
-function sync(arg) {
-	console.log(`Global state: ${arg}`);
+function sync() {
 	if (global.state.toget) {
 		/* TODO: Evaluate the use of async.queues where a queue task is created
 				forEach file and the task is to first get the file then encrypt and then

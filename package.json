@@ -65,6 +65,7 @@
   },
   "devDependencies": {
     "babel-eslint": "^6.0.0-beta.6",
+    "chalk": "^1.1.1",
     "chromedriver": "*",
     "electron-packager": "*",
     "electron-prebuilt": "*",
