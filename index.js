@@ -676,21 +676,23 @@ function createSettings(callback) {
 }
 
 function masterPassPrompt(reset, callback) {
+	let tries = 0,
+		newMPset = false,
+		gotMP = false;
 	let win = new BrowserWindow({
-		width: 500, // 300
+		width: 300, // 300
 		height: 435,
 		center: true,
 		titleBarStyle: 'hidden-inset'
 			// resizable: false,
 	});
 	let webContents = win.webContents;
-	let newMPset = false;
 	if (reset) {
 		win.loadURL(`${global.views.masterpassprompt}?nav_to=reset`);
 	} else {
 		win.loadURL(global.views.masterpassprompt);
 	}
-	win.openDevTools();
+	// win.openDevTools();
 	ipc.on('checkMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
 		// TODO: Clean this up and remove redundancies
@@ -698,7 +700,7 @@ function masterPassPrompt(reset, callback) {
 			if (err) {
 				//send error
 				webContents.send('checkMasterPassResult', err);
-				return;
+				callback(err);
 			}
 			if (match) {
 				console.log("IPCMAIN: PASSWORD MATCHES!");
@@ -713,14 +715,20 @@ function masterPassPrompt(reset, callback) {
 				// Db.decrypt(global.paths.vault, masspass, function(succ, err) {
 				// 	// body...
 				// });
-				return;
+				gotMP = true;
+				setTimeout(function () {
+					win.close();
+				}, 1000);
 			} else {
 				console.log("IPCMAIN: PASSWORD DOES NOT MATCH!");
 				webContents.send('checkMasterPassResult', {
 					err: null,
 					match: match
 				});
-				return;
+				if (tries >= 3) {
+					app.quit();
+				}
+				tries++;
 			}
 		});
 	});
@@ -740,7 +748,12 @@ function masterPassPrompt(reset, callback) {
 	win.on('closed', function () {
 		console.log('win.closed event emitted for createSettings.');
 		win = null;
-		callback(((reset) ? newMPset : null));
+		// callback(((reset) ? newMPset : null));
+		if (gotMP) {
+			callback();
+		} else {
+			app.quit();
+		}
 	});
 
 	return win;
@@ -882,11 +895,14 @@ app.on('will-quit', () => {
 		saveGlobalObj('accounts'),
 		saveGlobalObj('state'),
 		saveGlobalObj('settings'),
+		saveGlobalObj('files'),
 		saveGlobalObj('stats')
 	]).then(function () {
 		console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
 		// global.vault.close();
-		global.mdb.close();
+		global.mdb.close(function() {
+			crypto.encryptDB(global.paths);
+		});
 	}, function (reason) {
 		console.log(`PROMISE ERR (reason): `, reason);
 	}).catch(function (error) {
@@ -965,7 +981,6 @@ app.on('ready', function () {
 		 * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
 		 */
 		let Init = function () {
-			// Prompt MP
 			// Decrypt db (the Vault) and get ready for use
 			// open mdb
 			return new Promise(function (resolve, reject) {
@@ -1012,7 +1027,7 @@ app.on('ready', function () {
 					} else {
 						console.log(`SUCCESS: ${objName} FOUND`);
 						try {
-							global[objName] = JSON.parse(json);
+							global[objName] = JSON.parse(json) || {};
 							setTimeout(function () {
 								console.log(`resolve global.${objName} called`);
 								resolve();
@@ -1029,122 +1044,147 @@ app.on('ready', function () {
 			.catch(function (error) {
 				console.error(`PROMISE ERR: ${error.stack}`);
 			});
-		Promise.all([
-				restoreGlobalObj('accounts'),
-				restoreGlobalObj('state'),
-				restoreGlobalObj('settings'),
-				restoreGlobalObj('stats')
-			])
-			.then(() => {
-				let o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;
-				global.gAuth = new google.auth.OAuth2(o2c.clientId_, o2c.clientSecret_, o2c.redirectUri_);
-				gAuth.setCredentials(o2c.credentials);
-				global.drive = google.drive({
-					version: 'v3',
-					auth: gAuth
-				});
-				return;
-			})
-			// .then(function () {
-			// 	global.drive.files.list({
-			// 		q: `'root' in parents and trashed = false`,
-			// 		orderBy: 'folder desc',
-			// 		fields: 'files(name,parents),nextPageToken',
-			// 		spaces: 'drive',
-			// 		pageSize: 1000
-			// 	}, function (err, res) {
-			// 		for (var i = 0; i < res.files.length; i++) {
-			// 			console.log(`Got file/folder ${res.files[i].name} with parents ${res.files[i].parents}`);
-			// 		}
-			// 	});
-			// })
-			.then(function () {
-				// Set initial stats
-				global.stats.startTime = moment().format();
-				global.stats.time = moment();
-			})
-			.then(() => {
-				if (global.state.toget) {
-					/* TODO: Evaluate the use of async.queues where a queue task is created
-							forEach file and the task is to first get the file then encrypt and then
-							upload. See if persistently viable (i.e. can continue where left of on
-							program restart)
-					*/
-					async.each(global.state.toget, function (file, callback) {
-						let parentPath = global.state.rfs[file.parents[0]].path;
-						let dir = `${global.paths.home}${parentPath}`;
-						fs.makeTree(dir, function () {
-							let path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
-							console.log(`GETing ${file.name} at dest ${path}`);
-							let dest = fs.createWriteStream(path);
-							// TODO: figure out a better way of limiting API requests to less than 10/s (Google API limit)
-							setTimeout(function () {
-								global.drive.files.get({
-										fileId: file.id,
-										alt: 'media'
-									})
-									.on('end', function () {
-										console.log(`GOT ${file.name} ${file.id} at dest ${path}. Moving this file obj to tocrypt`);
-										global.state.tocrypt.push(file); // add from tocrypt queue
-										_.pull(global.state.toget, file); // remove from toget queue
-										callback(null, file.id, file.name);
-									})
-									.on('error', function (err) {
-										console.log('Error during download', err);
-										callback(err, file.id, file.name);
-									})
-									.pipe(dest);
-							}, 600);
+		// TODO: rewrite as promise
+		masterPassPrompt(null, function (err) {
+			if (err) {
+				throw err;
+			} else {
+				Promise.all([
+						restoreGlobalObj('accounts'),
+						restoreGlobalObj('state'),
+						restoreGlobalObj('settings'),
+						restoreGlobalObj('stats'),
+						restoreGlobalObj('files'),
+					])
+					.then(() => {
+						let o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;
+						global.gAuth = new google.auth.OAuth2(o2c.clientId_, o2c.clientSecret_, o2c.redirectUri_);
+						gAuth.setCredentials(o2c.credentials);
+						global.drive = google.drive({
+							version: 'v3',
+							auth: gAuth
 						});
-					}, function (err, fileId, fileName) {
-						// if any of the file processing produced an error, err would equal that error
-						if (err) {
-							// One of the iterations produced an error.
-							// All processing will now stop.
-							console.error(`Failed to get ${fileName} (${fileId}), err: ${err.stack}`);
-						} else {
-							console.log(`To trigger tocrypt for ${fileName} (${fileId})`);
+						return;
+					})
+					.then(() => {
+						// Set initial stats
+						global.stats.startTime = moment().format();
+						global.stats.time = moment();
+					})
+					.then(() => {
+						if (global.state.toget) {
+							/* TODO: Evaluate the use of async.queues where a queue task is created
+									forEach file and the task is to first get the file then encrypt and then
+									upload. See if persistently viable (i.e. can continue where left of on
+									program restart)
+							*/
+							async.each(global.state.toget, function (file, callback) {
+								let parentPath = global.state.rfs[file.parents[0]].path;
+								let dir = `${global.paths.home}${parentPath}`;
+								fs.makeTree(dir, function () {
+									let path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
+									console.log(`GETing ${file.name} at dest ${path}`);
+									let dest = fs.createWriteStream(path);
+									// TODO: figure out a better way of limiting API requests to less than 10/s (Google API limit)
+									setTimeout(function () {
+										global.drive.files.get({
+												fileId: file.id,
+												alt: 'media'
+											})
+											.on('end', function () {
+												console.log(`GOT ${file.name} ${file.id} at dest ${path}. Moving this file obj to tocrypt`);
+												global.state.tocrypt.push(file); // add from tocrypt queue
+												_.pull(global.state.toget, file); // remove from toget queue
+												callback(null, file.id, file.name);
+											})
+											.on('error', function (err) {
+												console.log('Error during download', err);
+												callback(err, file.id, file.name);
+											})
+											.pipe(dest);
+									}, 600);
+								});
+							}, function (err, fileId, fileName) {
+								// if any of the file processing produced an error, err would equal that error
+								if (err) {
+									// One of the iterations produced an error.
+									// All processing will now stop.
+									console.error(`Failed to get ${fileName} (${fileId}), err: ${err.stack}`);
+								} else {
+									console.log(`To trigger tocrypt for ${fileName} (${fileId})`);
+								}
+							});
 						}
-					});
-				}
 
-				if (global.state.tocrypt) {
-					fs.makeTree(global.paths.crypted, function () {
-						async.each(global.state.tocrypt, function (file, callback) {
-							let parentPath = global.state.rfs[file.parents[0]].path;
-							let rpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
-							let epath = (parentPath === "/") ? `${global.state.tocrypt}${parentPath}${file.name}` : `${global.state.tocrypt}${parentPath}/${file.name}`;
-							let dest = fs.createWriteStream(path);
-
-							global.state.toput.push(file);
-							_.pull(global.state.tocrypt, file);
-							callback(null, file.id, file.name);
-						}, function (err, fileId, fileName) {
-							// if any of the file processing produced an error, err would equal that error
-							if (err) {
-								// One of the iterations produced an error.
-								// All processing will now stop.
-								console.error(`Failed to get ${fileName} (${fileId}), err: ${err.stack}`);
-							} else {
-								console.log(`To trigger tocrypt for ${fileName} (${fileId})`);
-							}
-						});
+						if (global.state.tocrypt) {
+							// global.state.tocrypt.push(global.state.toput[0]);
+							// global.state.toput.pop();
+							fs.makeTree(global.paths.crypted, function () {
+								let file = global.state.tocrypt[0];
+								console.log(`TO encrypt ${file.name} (${file.id})`);
+								let parentPath = global.state.rfs[file.parents[0]].path;
+								let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
+								let destpath = `${global.paths.crypted}/${file.name}.crypto`;
+								console.log(`origpath: ${origpath}, destpath: ${destpath}`);
+								crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, keyiv) {
+									if (err) {
+										console.error(`Error while encrypting ${err.stack}`);
+										// callback(err, file.id, file.name);
+									} else {
+										file.cryptpath = destpath;
+										file.iv = keyiv[1];
+										console.log(`Done encrypting ${file.name} (${file.id}) to ${destpath}`);
+										// global.state.toput.push(file);
+										// _.pull(global.state.tocrypt, file);
+										// callback(null, file.id, file.name);
+									}
+								});
+								// async.each(global.state.tocrypt, function (file, callback) {
+								// 	let parentPath = global.state.rfs[file.parents[0]].path;
+								// 	let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
+								// 	let destpath = `${global.paths.crypted}/${file.name}.crypto`;
+								// 	// console.log(`origpath: ${origpath}, destpath: ${destpath}`);
+								// 	crypto.encrypt(origin, dest, global.MasterPass.get(), function (err, keyiv) {
+								// 		if (err) {
+								// 			callback(err, file.id, file.name);
+								// 		} else {
+								// 			let key = keyiv[0],
+								// 				iv = keyiv[1];
+								// 			file.cryptpath = destpath;
+								// 			global.state.toput.push(file);
+								// 			_.pull(global.state.tocrypt, file);
+								// 			callback(null, file.id, file.name);
+								// 		}
+								// 	});
+								// }, function (err, fileId, fileName) {
+								// 	// if any of the file processing produced an error, err would equal that error
+								// 	if (err) {
+								// 		// One of the iterations produced an error.
+								// 		// All processing will now stop.
+								// 		console.error(`Failed to encrypt ${fileName} (${fileId}), err: ${err.stack}`);
+								// 	} else {
+								// 		console.log(`To trigger tocrypt for ${fileName} (${fileId})`);
+								// 	}
+								// });
+							});
+						}
+					})
+					.then(
+						// TODO: start sync daemon
+						// Start menubar
+						Cryptobar(function (result) {
+							// body...
+						})
+					)
+					.catch(function (error) {
+						console.error(`PROMISE ERR: ${error.stack}`);
 					});
-				}
-			})
-			.then(
-				// TODO: start sync daemon
-				// Start menubar
-				Cryptobar(function (result) {
-					// body...
-				})
-			)
-			.catch(function (error) {
-				console.error(`PROMISE ERR: ${error.stack}`);
-			});
+
+			}
+		});
 
 		// if (!global.MasterPass.get()) {
-		// 	masterPassPrompt(null, function(err) {
+		// 	masterPassPrompt(null, function (err) {
 		// 		if (err) {
 		// 			console.log(`ERROR: ${err}`);
 		// 		}

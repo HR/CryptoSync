@@ -147,7 +147,7 @@
 		// load core modules first
 		var remote = require('electron').remote,
 			ipcRenderer = require('electron').ipcRenderer,
-			webContents = remote.getCurrentWindow().webContents,
+			webContents = remote.getCurrentWebContents(),
 			rconsole = remote.getGlobal("console"),
 			nav_to = getParam("nav_to", window.document.URL),
 			authErr,

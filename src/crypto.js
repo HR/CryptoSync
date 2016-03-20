@@ -5,13 +5,14 @@
  ******************************/
 
 let secrets = require('secrets.js'),
+	fs = require('fs-plus'),
 	crypto = require('crypto');
 
 // Crypto default constants
 // TODO: change accordingly when changed in settings
 let defaults = {
-	iterations: 4096,
-	keyLength: 128,
+	iterations: 10000,
+	keyLength: 32, // in bytes
 	algorithm: 'aes-256-ctr',
 	digest: 'sha256',
 	padLength: 1024
@@ -23,38 +24,91 @@ let defaults = {
  *	- Implement bitcoin blockchain as source of randomness (in iv generation)
  * - rewrite as promises
  */
-
-exports.encrypt = function (ptext, password, callback) {
+// TODO: Implement hmac ciphertext authentication (encrypt-then-MAC) to prevent padding oracle attack
+exports.encrypt = function (origpath, destpath, password, callback) {
 	// TODO: Use HMAC to authoritatively add metadata about the encryption
 	// decrypts any arbitrary data passed with the pass
 	let i = defaults.iterations,
 		kL = defaults.keyLength,
-		pass = (Array.isArray(password)) ? shares2pass(password) : password;
+		ivL = defaults.keyLength/2,
+		// pass = (Array.isArray(password)) ? shares2pass(password) : password,
+		pass = password;
 	const salt = crypto.randomBytes(kL); // generate pseudorandom salt
-	const iv = crypto.randomBytes(kL); // generate pseudorandom iv
-	if (mp) {
-		let cipher = crypto.createCipheriv(defaults.algorithm, password, iv),
-			crypted = cipher.update(ptext, 'utf8', 'hex');
-		crypted += cipher.final('hex');
-		console.log("Encrypted file using mp");
-		callback([crypted, key, iv]);
-	} else {
-		crypto.pbkdf2Sync(pass, salt, i, kL, defaults.digest, function (err, key) {
-			if (err) {
-				throw err;
-				// return error to callback
-				return callback(null, err);
-			} else {
-				console.log("Pbkdf2 generated key" + key.toString() + " using iv, salt: " + iv.toString() + ", " + salt.toString());
-				let cipher = crypto.createCipheriv(defaults.algorithm, key, iv),
-					crypted = cipher.update(ptext, 'utf8', 'hex');
-				crypted += cipher.final('hex');
-				console.log("Encrypted file");
-				// supply to callback
-				return callback([crypted, key, iv]);
-			}
-		});
-	}
+	const iv = crypto.randomBytes(ivL); // generate pseudorandom iv
+	crypto.pbkdf2(pass, salt, i, kL, defaults.digest, (err, key) => {
+		if (err) {
+			// return error to callback YOLO#101
+			callback(err);
+		} else {
+			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
+			const origin = fs.createReadStream(origpath);
+			const dest = fs.createWriteStream(destpath);
+			const cipher = crypto.createCipheriv(defaults.algorithm, key, iv);
+			let destf = destpath.match(/[^/]+[A-z0-9]+\.[A-z0-9]+/g)[0];
+			origin.pipe(cipher).pipe(dest, { end: false });
+
+			dest.on('error', () => {
+				console.log(`Error while encrypting/writting file to ${dest}`);
+				callback(err);
+			});
+
+			origin.on('end', () => {
+				// Append iv used to encrypt the file to end of file
+				dest.write(`\nCryptoSync#${iv.toString('hex')}`);
+				dest.end();
+				console.log(`End for ${destf} called`);
+			});
+
+			dest.on('finish', () => {
+				console.log(`Finished encrypted/written to ${destf}`);
+				callback(null, [key, iv]);
+			});
+		}
+	});
+};
+
+exports.encryptDB = function (origpath, masterpass, callback) {
+	// TODO: Use HMAC to authoritatively add metadata about the encryption
+	// decrypts any arbitrary data passed with the pass
+	const i = 100000,
+		kL = defaults.keyLength,
+		ivL = defaults.keyLength/2,
+		// pass = (Array.isArray(password)) ? shares2pass(password) : password,
+		pass = masterpass;
+	const salt = crypto.randomBytes(kL); // generate pseudorandom salt
+	const iv = crypto.randomBytes(ivL); // generate pseudorandom iv
+	crypto.pbkdf2(pass, salt, i, kL, defaults.digest, (err, key) => {
+		if (err) {
+			// return error to callback YOLO#101
+			callback(err);
+		} else {
+			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
+			let destpath = `${origpath}.crypto`;
+			const origin = fs.createReadStream(origpath);
+			const zip = zlib.createGzip();
+			const dest = fs.createWriteStream(destpath);
+			const cipher = crypto.createCipheriv(defaults.algorithm, key, iv);
+			let destf = destpath.match(/[^/]+[A-z0-9]+\.[A-z0-9]+/g)[0];
+			origin.piep(zip).pipe(cipher).pipe(dest, { end: false });
+
+			dest.on('error', () => {
+				console.log(`Error while encrypting/writting file to ${dest}`);
+				callback(err);
+			});
+
+			origin.on('end', () => {
+				// Append iv used to encrypt the file to end of file
+				dest.write(`\nCryptoSync#${iv.toString('hex')}`);
+				dest.end();
+				console.log(`End for ${destf} called`);
+			});
+
+			dest.on('finish', () => {
+				console.log(`Finished encrypted/written to ${destf}`);
+				callback(null, [key, iv]);
+			});
+		}
+	});
 };
 
 exports.decrypt = function (ctext, key, iv, callback) {
@@ -100,10 +154,10 @@ exports.pass2shares = function (pass, N, S) {
 
 exports.genPassHash = function (pass, salt) {
 	if (salt) {
-		return crypto.createHash('sha256').update(pass+salt).digest('hex');
+		return crypto.createHash('sha256').update(pass + salt).digest('hex');
 	} else {
 		let salt = crypto.randomBytes(32).toString('hex'); // generate 256 random bits
-		let hash = crypto.createHash('sha256').update(pass+salt).digest('hex');
+		let hash = crypto.createHash('sha256').update(pass + salt).digest('hex');
 		return `${salt}#${hash}`;
 	}
 };
