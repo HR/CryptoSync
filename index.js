@@ -32,7 +32,9 @@ global.MasterPass = require('./src/MasterPass');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
 global.accounts = {};
-// global.state = {};
+global.vaultd = {};
+global.state = {};
+global.files = {};
 // global.state.toget = [];
 // global.state.tocrypt = [];
 // global.state.toput = [];
@@ -488,11 +490,13 @@ function createSetup(callback) {
 					})
 					.then(function (trees) {
 						console.log(`\n THEN saving file tree (fBtree) to global.state.toget`);
+						let files = _.flattenDeep(trees[0]);
 						global.state = {};
-						global.state.toget = _.flattenDeep(trees[0]);
-						global.state.tocrypt = [];
-						global.state.toput = [];
-						global.state.rfs = trees[1];
+						global.files = files;
+						// global.state.toget = files;
+						// global.state.tocrypt = [];
+						// global.state.toput = [];
+						// global.state.rfs = trees[1];
 					})
 					.then((value) => {})
 					.catch(function (error) {
@@ -696,7 +700,7 @@ function masterPassPrompt(reset, callback) {
 	ipc.on('checkMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
 		// TODO: Clean this up and remove redundancies
-		checkMasterPass(masterpass, function (err, match) {
+		checkMasterPass(masterpass, function (err, match, mpkey) {
 			if (err) {
 				//send error
 				webContents.send('checkMasterPassResult', err);
@@ -704,7 +708,7 @@ function masterPassPrompt(reset, callback) {
 			}
 			if (match) {
 				console.log("IPCMAIN: PASSWORD MATCHES!");
-				global.MasterPass.set(masterpass);
+				global.MasterPass.set(mpkey);
 				console.log(`global.MasterPass.get() = ${global.MasterPass.get()}`);
 				webContents.send('checkMasterPassResult', {
 					err: null,
@@ -734,11 +738,11 @@ function masterPassPrompt(reset, callback) {
 	});
 	ipc.on('setMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
-		setMasterPass(masterpass, function (err) {
+		setMasterPass(masterpass, function (err, mpkey) {
 			// TODO: create new Vault, delete old data and start re-encrypting
 			if (!err) {
 				newMPset = true;
-				global.MasterPass.set(masterpass);
+				global.MasterPass.set(mpkey);
 				webContents.send('setMasterPassResult', null);
 			} else {
 				webContents.send('setMasterPassResult', err);
@@ -798,41 +802,43 @@ function createErrorPrompt(err, callback) {
 /**
  * Functions
  **/
+
 function setMasterPass(masterpass, callback) {
-	let MPhash = crypto.genPassHash(masterpass);
-	console.log(`MPhash = ${MPhash}`);
-	global.mdb.put('MPhash', MPhash, function (err) {
-		if (err) {
-			console.log(`ERROR: mdb.put('MPhash') failed, ${err}`);
-			return callback(err);
-			// I/O or other error, pass it up the callback
-		}
-		console.log(`SUCCESS: mdb.put('MPhash')`);
-		return callback(null);
+	// TODO: decide whther to put updated masterpass instantly
+	console.log(`setMasterPass() for ${masterpass}`);
+	crypto.deriveMasterPassKey(masterpass, null, function (err, key, cred) {
+		global.vaultd = cred;
+		crypto.genPassHash(key, null, function (hash, salt) {
+			global.vaultd.mpkhash = hash;
+			global.vaultd.mpksalt = salt;
+			console.log(`deriveMasterPassKey callback: pbkdf2 key ${key}, mpkhash: ${hash}, mpksalt: ${salt}`);
+			global.mdb.put('vaultd', JSON.stringify(global.vaultd), function (err) {
+				if (err) {
+					console.error(`ERROR: mdb.put('vaultd') failed, ${err.stack}`);
+					// I/O or other error, pass it up the callback
+					return callback(err);
+				}
+				console.log(`SUCCESS: mdb.put('vaultd'). Calling callback`);
+				return callback(null, key);
+			});
+		});
 	});
 }
 
 
 function checkMasterPass(masterpass, callback) {
-	global.mdb.get('MPhash', function (err, MPhash) {
+	crypto.deriveMasterPassKey(masterpass, global.vaultd, function (err, key, cred) {
+		console.log('checkMasterPass deriveMasterPassKey callback');
 		if (err) {
-			if (err.notFound) {
-				console.log(`ERROR: MPhash NOT FOUND, Need setMasterPass...`);
-				return callback(err, null);
-			}
-			// I/O or other error, pass it up the callback
-			console.log(`ERROR: mdb.get('MPhash') failed, ${err}`);
+			console.error(`ERROR: deriveMasterPassKey failed, ${err.stack}`);
 			return callback(err, null);
 		}
-		console.log(`SUCCESS: MPhash FOUND, ${MPhash}`);
-		MPhash = MPhash.split("#");
-		const SALT = MPhash[0];
-		const MPHASH = MPhash[1];
-		console.log(`SALT = ${SALT}, MPHASH = ${MPHASH}`);
-		let hash = crypto.genPassHash(masterpass, SALT);
-		let match = (hash === MPHASH);
-		console.log(`MATCH: ${hash} === ${MPHASH} = ${match}`);
-		return callback(null, match);
+		crypto.genPassHash(key, global.vaultd.mpksalt, function (mpkhash) {
+			console.log(`vaultd.mpkhash = ${global.vaultd.mpkhash}, mpkhash (of entered mp) = ${mpkhash}`);
+			const MATCH = _.isEqual(global.vaultd.mpkhash, mpkhash); // masterpasskey derived is correct
+			console.log(`MATCH: ${global.vaultd.mpkhash} (vaultd.mpkhash) === ${mpkhash} (mpkhash) = ${MATCH}`);
+			return callback(null, MATCH, key);
+		});
 	});
 }
 
@@ -899,10 +905,31 @@ app.on('will-quit', () => {
 		saveGlobalObj('stats')
 	]).then(function () {
 		console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
-		// global.vault.close();
-		global.mdb.close(function() {
-			crypto.encryptDB(global.paths);
-		});
+		if (global.MasterPass.get()) {
+			global.vault.close(() => {
+				crypto.encryptDB(global.paths.vault, global.MasterPass.get(), function (err, key, cred) {
+					// NOW QUIT
+					if (err) {
+						console.error(err.stack);
+					} else {
+						// global.vaultd = cred;
+						// global.vaultd.hash = crypto.genPassHash(key);
+						// console.log(`encryptDB callback: pbkdf2 key ${key}, cred`);
+						// global.mdb.put('vaultd', JSON.stringify(global[vaultd]), function (err) {
+						// 	if (err) {
+						// 		console.error(`ERROR: mdb.put('vaultd') failed, ${err.stack}`);
+						// 		reject(err);
+						// 	}
+						// 	console.log(`SUCCESS: mdb.put('vaultd'). Calling global.mdb.close()...`);
+							global.mdb.close();
+						// });
+					}
+				});
+			});
+		} else {
+			if (!_.isEmpty(global.vault)) global.vault.close();
+			global.mdb.close();
+		}
 	}, function (reason) {
 		console.log(`PROMISE ERR (reason): `, reason);
 	}).catch(function (error) {
@@ -985,7 +1012,26 @@ app.on('ready', function () {
 			// open mdb
 			return new Promise(function (resolve, reject) {
 				global.mdb = new Db(global.paths.mdb);
-				resolve();
+				global.mdb.get('vaultd', function (err, json) {
+					if (err) {
+						if (err.notFound) {
+							console.log(`ERROR: key vaultd NOT FOUND `);
+							global.vaultd = {};
+							reject(err);
+						} else {
+							// I/O or other error, pass it up the callback
+							console.log(`ERROR: mdb.get('vaultd') FAILED`);
+							reject(err);
+						}
+					} else {
+						console.log(`SUCCESS: vaultd FOUND`);
+						global.vaultd = JSON.parse(json);
+						setTimeout(function () {
+							console.log(`resolve global.vaultd called`);
+							resolve();
+						}, 0);
+					}
+				});
 			});
 		};
 
@@ -1049,12 +1095,24 @@ app.on('ready', function () {
 			if (err) {
 				throw err;
 			} else {
+				// crypto.decryptDB(global.paths.vault, global.MasterPass.get(), global.vaultd.iv, global.vaultd.salt, function (err) {
+				// 	if (err) {
+				// 		throw err;
+				// 	} else {
+				// 		const keyHash = crypto.genPassHash(key, global.vaultd.salt);
+				// 		if (_.isEqual(global.vaultd.hash, keyHash)) {
+				// 			global.vault = new Db(global.paths.vault);
+				// 		} else {
+				// 			console.error(`Password hash don't match ${global.vaultd.hash} != ${keyHash}`);
+				// 		}
+				// 	}
+				// });
 				Promise.all([
 						restoreGlobalObj('accounts'),
 						restoreGlobalObj('state'),
 						restoreGlobalObj('settings'),
 						restoreGlobalObj('stats'),
-						restoreGlobalObj('files'),
+						restoreGlobalObj('files')
 					])
 					.then(() => {
 						let o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;
@@ -1191,6 +1249,5 @@ app.on('ready', function () {
 		// 	});
 		// }
 		// global.mdb = new Db(global.paths.mdb);
-		// global.vault = new Db(global.paths.vault);
 	}
 });
