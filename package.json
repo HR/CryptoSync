@@ -42,7 +42,7 @@
     "electron-prebuilt": "*",
     "event-kit": "*",
     "fs-plus": "*",
-    "fstream": "*",
+    "fstream": "^1.0.8",
     "google-auth-library": "*",
     "googleapis": "*",
     "gulp-shell": "*",
@@ -61,6 +61,7 @@
     "request": "*",
     "request-progress": "*",
     "secrets.js": "*",
+    "tar": "^2.2.1",
     "xo": "*"
   },
   "devDependencies": {

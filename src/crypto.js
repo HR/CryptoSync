@@ -6,6 +6,8 @@
 
 let secrets = require('secrets.js'),
 	fs = require('fs-plus'),
+	fstream = require('fstream'),
+	tar = require('tar'),
 	zlib = require('zlib'),
 	crypto = require('crypto');
 
@@ -64,7 +66,7 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 
 			dest.on('finish', () => {
 				console.log(`Finished encrypted/written to ${destf}`);
-				callback(null, [key, iv]);
+				callback(null, [key, iv, salt]);
 			});
 		}
 	});
@@ -87,16 +89,22 @@ exports.encryptDB = function (origpath, masterpass, callback) {
 		} else {
 			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
 			let destpath = `${origpath}.crypto`;
-			const origin = fs.createReadStream(origpath);
-			const zip = zlib.createGzip();
-			const dest = fs.createWriteStream(destpath);
+			const origin = fstream.Reader({
+				'path': origpath,
+				'type': 'Directory'
+			});
+			const dest = fstream.Writer({
+				'path': destpath
+			});
 			const cipher = crypto.createCipheriv(defaults.algorithm, key, iv);
-			let destf = destpath.match(/[^/]+[A-z0-9]+\.[A-z0-9]+/g)[0];
 			// origin.pipe(zip).pipe(cipher).pipe(dest, { end: false });
-			origin.pipe(zip).pipe(cipher).pipe(dest);
-
-			dest.on('error', () => {
-				console.log(`Error while encrypting/writting file to ${dest}`);
+			// Read the source directory
+			origin.pipe(tar.Pack()) // Convert the directory to a .tar file
+				.pipe(zlib.Gzip()) // Compress the .tar file
+				.pipe(dest); // Give the output file name
+			// origin.pipe(zip).pipe(cipher).pipe(dest);
+			origin.on('error', () => {
+				console.error(`Error while encrypting/writting file to ${destpath}`);
 				callback(err);
 			});
 
@@ -107,14 +115,9 @@ exports.encryptDB = function (origpath, masterpass, callback) {
 			// 	console.log(`End for ${destf} called`);
 			// });
 
-			dest.on('finish', () => {
-				console.log(`Finished encrypted/written to ${destf}`);
-				callback(null, key, {
-					iv: iv,
-					salt: salt,
-					iterations: i,
-					keyLength: kL
-				});
+			origin.on('end', () => {
+				console.log(`Finished encrypted/written to ${destpath}`);
+				callback(null);
 			});
 		}
 	});
@@ -161,7 +164,10 @@ exports.deriveMasterPassKey = function (masterpass, cred, callback) {
 			callback(err);
 		} else {
 			console.log(`Pbkdf2 generated key ${key.toString('hex')}, salt = ${salt.toString('hex')}`);
-			callback(null, key, {salt: salt, iterations: i});
+			callback(null, key, {
+				salt: salt,
+				iterations: i
+			});
 		}
 	});
 };

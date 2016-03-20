@@ -870,7 +870,8 @@ app.on('window-all-closed', () => {
 app.on('quit', () => {
 	console.log('APP: quit event emitted');
 });
-app.on('will-quit', () => {
+app.on('will-quit', (event) => {
+	event.preventDefault();
 	console.log(`APP.ON('will-quit'): will-quit event emitted`);
 	console.log(`platform is ${process.platform}`);
 	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
@@ -904,11 +905,12 @@ app.on('will-quit', () => {
 		saveGlobalObj('files'),
 		saveGlobalObj('stats')
 	]).then(function () {
-		console.log('Closing vault and mdb. Calling vault.close() and mdb.close()');
+		console.log(`if global.MasterPass.get() ${Boolean(global.MasterPass.get())}`);
 		if (global.MasterPass.get()) {
 			global.vault.close(() => {
-				crypto.encryptDB(global.paths.vault, global.MasterPass.get(), function (err, key, cred) {
+				crypto.encryptDB(global.paths.vault, global.MasterPass.get(), function (err) {
 					// NOW QUIT
+					console.log(`crypto.encryptDB INVOKED`);
 					if (err) {
 						console.error(err.stack);
 					} else {
@@ -921,7 +923,9 @@ app.on('will-quit', () => {
 						// 		reject(err);
 						// 	}
 						// 	console.log(`SUCCESS: mdb.put('vaultd'). Calling global.mdb.close()...`);
-							global.mdb.close();
+						global.mdb.close();
+						console.log('encryptDB: Closed vault and mdb (called vault.close() and mdb.close()). Calling app.quit');
+						app.exit(9);
 						// });
 					}
 				});
@@ -929,6 +933,8 @@ app.on('will-quit', () => {
 		} else {
 			if (!_.isEmpty(global.vault)) global.vault.close();
 			global.mdb.close();
+			console.log('NOT encryptDB: Closed vault and mdb. Calling vault.close() and mdb.close()');
+			app.exit(9);
 		}
 	}, function (reason) {
 		console.log(`PROMISE ERR (reason): `, reason);
@@ -1095,18 +1101,18 @@ app.on('ready', function () {
 			if (err) {
 				throw err;
 			} else {
-				// crypto.decryptDB(global.paths.vault, global.MasterPass.get(), global.vaultd.iv, global.vaultd.salt, function (err) {
-				// 	if (err) {
-				// 		throw err;
-				// 	} else {
-				// 		const keyHash = crypto.genPassHash(key, global.vaultd.salt);
-				// 		if (_.isEqual(global.vaultd.hash, keyHash)) {
-				// 			global.vault = new Db(global.paths.vault);
-				// 		} else {
-				// 			console.error(`Password hash don't match ${global.vaultd.hash} != ${keyHash}`);
-				// 		}
-				// 	}
-				// });
+				crypto.decryptDB(global.paths.vault, global.MasterPass.get(), global.vaultd.iv, global.vaultd.salt, function (err) {
+					if (err) {
+						throw err;
+					} else {
+						// const keyHash = crypto.genPassHash(key, global.vaultd.salt);
+						// if (_.isEqual(global.vaultd.hash, keyHash)) {
+						global.vault = new Db(global.paths.vault);
+						// } else {
+						// 	console.error(`Password hash don't match ${global.vaultd.hash} != ${keyHash}`);
+						// }
+					}
+				});
 				Promise.all([
 						restoreGlobalObj('accounts'),
 						restoreGlobalObj('state'),
