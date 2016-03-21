@@ -51,7 +51,7 @@ global.paths = {
 	crypted: `${fs.getHomeDirectory()}/CryptoSync/.encrypted`,
 	mdb: `${app.getPath('userData')}/mdb`,
 	userData: app.getPath('userData'),
-	vault: `${fs.getHomeDirectory()}/CryptoSync/Vault`,
+	vault: `${fs.getHomeDirectory()}/CryptoSync/vault.crypto`,
 	gdriveSecret: `${app.getPath('userData')}/client_secret_gdrive.json`,
 	// dropboxSecret: `${app.getPath('userData')}/client_secret_dropbox.json`
 };
@@ -551,16 +551,16 @@ function createSetup(callback) {
 
 function initVault(callback) {
 	console.log(`initVault invoked. Opening new Db (vault)...`);
-	global.vault = new Db(global.paths.vault);
-	crypto.encryptDB(global.paths.vault, global.MasterPass.get(), null, null, function (err, ivsalt) {
+	global.vault = {};
+	crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), null, null, function (err, ivsalt) {
 		// NOW QUIT
-		console.log(`crypto.encryptDB callback.`);
+		console.log(`crypto.encryptObj callback.`);
 		if (err) {
 			callback(err);
 		} else {
 			global.vaultd.viv = ivsalt[0];
 			global.vaultd.vsalt = ivsalt[1];
-			console.log(`encryptDB: vault iv generated ${ivsalt}. Attaching to vaultd and saving in mdb...`);
+			console.log(`encryptObj: vault iv generated ${ivsalt}. Attaching to vaultd and saving in mdb...`);
 			// global.mdb.put('vaultd', JSON.stringify(global.vaultd), function (err) {
 			// 	if (err) {
 			// 		console.error(`ERROR: mdb.put('vaultd') failed, ${err.stack}`);
@@ -1182,6 +1182,7 @@ app.on('ready', function () {
 							async.each(global.state.toget, function (file, callback) {
 								let parentPath = global.state.rfs[file.parents[0]].path;
 								let dir = `${global.paths.home}${parentPath}`;
+								// TODO: replace with mkdirp
 								fs.makeTree(dir, function () {
 									let path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
 									console.log(`GETing ${file.name} at dest ${path}`);

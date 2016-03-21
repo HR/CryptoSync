@@ -9,6 +9,7 @@ let secrets = require('secrets.js'),
 	fstream = require('fstream'),
 	tar = require('tar'),
 	zlib = require('zlib'),
+	Readable = require('stream').Readable,
 	crypto = require('crypto');
 
 // Crypto default constants
@@ -52,16 +53,21 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 				end: false
 			});
 
-			dest.on('error', () => {
-				console.log(`Error while encrypting/writting file to ${dest}`);
-				callback(err);
-			});
-
 			origin.on('end', () => {
 				// Append iv used to encrypt the file to end of file
 				dest.write(`\nCryptoSync#${iv.toString('hex')}`);
 				dest.end();
 				console.log(`End for ${destf} called`);
+			});
+
+			origin.on('error', () => {
+				console.log(`ORIGIN STREAM: Error while encrypting/writting file to ${dest}`);
+				callback(err);
+			});
+
+			dest.on('error', () => {
+				console.log(`DEST STREAM: Error while encrypting/writting file to ${dest}`);
+				callback(err);
 			});
 
 			dest.on('finish', () => {
@@ -72,13 +78,20 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 	});
 };
 
-exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
+exports.encryptObj = function (obj, destpath, mpkey, viv, vsalt, callback) {
 	// TODO: Use HMAC to authoritatively add metadata about the encryption
 	// decrypts any arbitrary data passed with the pass
 	const i = defaults.mpk_iterations,
 		kL = defaults.keyLength,
 		ivL = defaults.ivLength,
 		digest = defaults.digest;
+
+	try {
+		const json = JSON.stringify(obj);
+	} catch (err) {
+		console.log(`JSON.stringify error for ${destpath}`);
+		callback(err);
+	}
 	// pass = (Array.isArray(password)) ? shares2pass(password) : password,
 	const salt = (vsalt) ? new Buffer(vsalt, 'utf8') : crypto.randomBytes(kL); // generate pseudorandom salt
 	const iv = (viv) ? new Buffer(viv, 'utf8') : crypto.randomBytes(ivL); // generate pseudorandom iv
@@ -88,25 +101,15 @@ exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 			callback(err);
 		} else {
 			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
-			let destpath = `${origpath}.crypto`;
-			const origin = fstream.Reader({
-				'path': origpath,
-				'type': 'Directory'
-			});
-			const dest = fstream.Writer({
-				'path': destpath
-			});
+			const origin = new Readable();
+			origin.push(json); // writes the json string of obj to stream
+			origin.push(null); // indicates end-of-file basically - the end of the stream
+			const dest = fs.createWriteStream(destpath);
 			const cipher = crypto.createCipheriv(defaults.algorithm, key, iv);
-			// Read the source directory
-			origin.pipe(tar.Pack()) // Convert the directory to a .tar file
-				.pipe(zlib.Gzip()) // Compress the .tar file
-				.pipe(dest); // Give the output file name
-			// origin.pipe(zip).pipe(cipher).pipe(dest);
-			origin.on('error', () => {
-				console.error(`Error while encrypting/writting file to ${destpath}`);
-				callback(err);
-			});
 
+			origin.pipe(cipher).pipe(dest);
+
+			// TODO: append iv and salt at the end of the file once written
 			// origin.on('end', () => {
 			// 	// Append iv used to encrypt the file to end of file
 			// 	dest.write(`\nCryptoSync#${iv.toString('hex')}`);
@@ -114,7 +117,17 @@ exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 			// 	console.log(`End for ${destf} called`);
 			// });
 
-			origin.on('end', () => {
+			origin.on('error', () => {
+				console.log(`ORIGIN STREAM: Error while encrypting/writting file to ${destpath}`);
+				callback(err);
+			});
+
+			dest.on('error', () => {
+				console.log(`DEST STREAM: Error while encrypting/writting file to ${destpath}`);
+				callback(err);
+			});
+
+			dest.on('finish', () => {
 				console.log(`Finished encrypted/written to ${destpath}`);
 				callback(null, [iv, salt]);
 			});
@@ -122,12 +135,21 @@ exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 	});
 };
 
-exports.decryptDB = function (origpath, mpkey, viv, vsalt, callback) {
+exports.decryptObj = function (obj, origpath, mpkey, viv, vsalt, callback) {
 	const i = defaults.mpk_iterations,
 		kL = defaults.keyLength,
 		digest = defaults.digest;
 	const iv = new Buffer(viv, 'utf8');
 	const salt = new Buffer(vsalt, 'utf8');
+	const streamToString = function (stream, cb) {
+		const chunks = [];
+		stream.on('data', (chunk) => {
+			chunks.push(chunk);
+		});
+		stream.on('end', () => {
+			cb(chunks.join(''));
+		});
+	};
 	// pass = (Array.isArray(password)) ? shares2pass(password) : password;
 	crypto.pbkdf2(mpkey, salt, i, kL, digest, (err, key) => {
 		if (err) {
@@ -135,29 +157,40 @@ exports.decryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 			callback(err);
 		} else {
 			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
-			let destpath = origpath.replace(/[\.]{1}(crypto)/g, '');
-			const origin = fstream.Reader({
-				'path': origpath,
-			});
-			const dest = fstream.Writer({
-				'path': destpath,
-				'type': 'Directory'
-			});
+			const origin = fs.createReadStream(origpath);
 			const decipher = crypto.createDecipheriv(defaults.algorithm, key, iv);
 
-			origin.pipe(zlib.Unzip()) // uncompress archive to a .tar file
-				.pipe(tar.Extract()) // Convert .tar file to directory
-				.pipe(dest); // Give the output file name
-
+			const stream = origin.pipe(decipher);
+			streamToString(stream, function (json) {
+				console.log(`Finished encrypted/written to ${origpath}`);
+				try {
+				  let vault = JSON.parse(json);
+				} catch (err) {
+					console.log(`JSON.parse error for ${destpath}`);
+					callback(err);
+				}
+				callback(null, vault);
+			});
 			origin.on('error', () => {
-				console.error(`Error while encrypting/writting file to ${destpath}`);
+				console.log(`ORIGIN STREAM: Error while encrypting/writting file to ${origpath}`);
 				callback(err);
 			});
 
-			origin.on('end', () => {
-				console.log(`Finished encrypted/written to ${destpath}`);
-				callback(null, [iv, salt]);
-			});
+			// dest.on('error', () => {
+			// 	console.log(`DEST STREAM: Error while encrypting/writting file to ${dest}`);
+			// 	callback(err);
+			// });
+			//
+			// dest.on('finish', () => {
+			// 	console.log(`Finished encrypted/written to ${destf}`);
+			// 	try {
+			// 	  let vault = JSON.parse(dest);
+			// 	} catch (err) {
+			// 		console.log(`JSON.parse error for ${dest}`);
+			// 		callback(err);
+			// 	}
+			// 	callback(null, vault);
+			// });
 		}
 	});
 };
@@ -171,7 +204,10 @@ exports.deriveMasterPassKey = function (masterpass, cred, callback) {
 			callback(err);
 		} else {
 			console.log(`Pbkdf2 generated key ${key.toString('hex')}, salt = ${salt.toString('hex')}`);
-			callback(null, key, {salt: salt, iterations: i});
+			callback(null, key, {
+				salt: salt,
+				iterations: i
+			});
 		}
 	});
 };
@@ -231,4 +267,96 @@ exports.pass2shares = function (pass, N, S) {
 	let shares = secrets.share(key, N, S, defaults.padLength);
 
 	return [shares, N, S];
+};
+
+exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
+	// TODO: Use HMAC to authoritatively add metadata about the encryption
+	// decrypts any arbitrary data passed with the pass
+	const i = defaults.mpk_iterations,
+		kL = defaults.keyLength,
+		ivL = defaults.ivLength,
+		digest = defaults.digest;
+	// pass = (Array.isArray(password)) ? shares2pass(password) : password,
+	const salt = (vsalt) ? new Buffer(vsalt, 'utf8') : crypto.randomBytes(kL); // generate pseudorandom salt
+	const iv = (viv) ? new Buffer(viv, 'utf8') : crypto.randomBytes(ivL); // generate pseudorandom iv
+	crypto.pbkdf2(mpkey, salt, i, kL, digest, (err, key) => {
+		if (err) {
+			// return error to callback YOLO#101
+			callback(err);
+		} else {
+			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
+			let destpath = `${origpath}.crypto`;
+			const origin = fstream.Reader({
+				'path': origpath,
+				'type': 'Directory'
+			});
+			const dest = fstream.Writer({
+				'path': destpath
+			});
+			const cipher = crypto.createCipheriv(defaults.algorithm, key, iv);
+			// Read the source directory
+			origin.pipe(tar.Pack()) // Convert the directory to a .tar file
+				.pipe(zlib.Gzip()) // Compress the .tar file
+				.pipe(cipher) // Encrypt
+				.pipe(dest); // Give the output file name
+			// origin.pipe(zip).pipe(cipher).pipe(dest);
+			origin.on('error', () => {
+				console.error(`Error while encrypting/writting file to ${destpath}`);
+				callback(err);
+			});
+
+			// origin.on('end', () => {
+			// 	// Append iv used to encrypt the file to end of file
+			// 	dest.write(`\nCryptoSync#${iv.toString('hex')}`);
+			// 	dest.end();
+			// 	console.log(`End for ${destf} called`);
+			// });
+
+			origin.on('end', () => {
+				console.log(`Finished encrypted/written to ${destpath}`);
+				callback(null, [iv, salt]);
+			});
+		}
+	});
+};
+
+exports.decryptDB = function (origpath, mpkey, viv, vsalt, callback) {
+	const i = defaults.mpk_iterations,
+		kL = defaults.keyLength,
+		digest = defaults.digest;
+	const iv = new Buffer(viv, 'utf8');
+	const salt = new Buffer(vsalt, 'utf8');
+	// pass = (Array.isArray(password)) ? shares2pass(password) : password;
+	crypto.pbkdf2(mpkey, salt, i, kL, digest, (err, key) => {
+		if (err) {
+			// return error to callback YOLO#101
+			callback(err);
+		} else {
+			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
+			let destpath = origpath.replace(/[\.]{1}(crypto)/g, '');
+			const origin = fstream.Reader({
+				'path': origpath,
+			});
+			const dest = fstream.Writer({
+				'path': destpath,
+				'type': 'Directory'
+			});
+			const decipher = crypto.createDecipheriv(defaults.algorithm, key, iv);
+
+			origin.pipe(zlib.Unzip()) // uncompress archive to a .tar file
+				.pipe(tar.Extract()) // Convert .tar file to directory
+				.pipe(decipher) // Decrypt
+				.pipe(dest); // Give the output file name
+
+			origin.on('error', () => {
+				console.error(`Error while encrypting/writting file to ${destpath}`);
+				callback(err);
+			});
+
+			origin.on('end', () => {
+				console.log(`Finished encrypted/written to ${destpath}`);
+				callback(null, [iv, salt]);
+			});
+		}
+	});
 };
