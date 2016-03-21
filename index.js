@@ -20,7 +20,7 @@ const app = electron.app,
 	google = require('googleapis'),
 	async = require('async');
 
-const SETUPTEST = false; // ? Setup : Menubar
+const SETUPTEST = true; // ? Setup : Menubar
 
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
@@ -528,7 +528,13 @@ function createSetup(callback) {
 	ipc.on('done', function (event, masterpass) {
 		console.log('IPCMAIN: done emitted, setup complete. Closing this window and opening menubar...');
 		setupComplete = true;
-		win.close();
+		initVault(function (err, ivsalt) {
+			if (err) {
+				console.error(`initVault ERR: ${err.stack}`);
+			} else {
+				win.close();
+			}
+		});
 		// TODO: restart the application in default mode
 	});
 
@@ -539,6 +545,30 @@ function createSetup(callback) {
 			callback(null);
 		} else {
 			callback('Setup did not finish successfully');
+		}
+	});
+}
+
+function initVault(callback) {
+	console.log(`initVault invoked. Opening new Db (vault)...`);
+	global.vault = new Db(global.paths.vault);
+	crypto.encryptDB(global.paths.vault, global.MasterPass.get(), null, null, function (err, ivsalt) {
+		// NOW QUIT
+		console.log(`crypto.encryptDB callback.`);
+		if (err) {
+			callback(err);
+		} else {
+			global.vaultd.viv = ivsalt[0];
+			global.vaultd.vsalt = ivsalt[1];
+			console.log(`encryptDB: vault iv generated ${ivsalt}. Attaching to vaultd and saving in mdb...`);
+			// global.mdb.put('vaultd', JSON.stringify(global.vaultd), function (err) {
+			// 	if (err) {
+			// 		console.error(`ERROR: mdb.put('vaultd') failed, ${err.stack}`);
+			// 		callback(err);
+			// 	}
+			// 	console.log(`SUCCESS: mdb.put('vaultd'). Calling global.mdb.close() and callback...`);
+			callback(null);
+			// });
 		}
 	});
 }
@@ -807,7 +837,7 @@ function setMasterPass(masterpass, callback) {
 	// TODO: decide whther to put updated masterpass instantly
 	console.log(`setMasterPass() for ${masterpass}`);
 	crypto.deriveMasterPassKey(masterpass, null, function (err, key, cred) {
-		global.vaultd = cred;
+		global.vaultd.mp = cred;
 		crypto.genPassHash(key, null, function (hash, salt) {
 			global.vaultd.mpkhash = hash;
 			global.vaultd.mpksalt = salt;
@@ -827,7 +857,7 @@ function setMasterPass(masterpass, callback) {
 
 
 function checkMasterPass(masterpass, callback) {
-	crypto.deriveMasterPassKey(masterpass, global.vaultd, function (err, key, cred) {
+	crypto.deriveMasterPassKey(masterpass, global.vaultd.mp, function (err, key, cred) {
 		console.log('checkMasterPass deriveMasterPassKey callback');
 		if (err) {
 			console.error(`ERROR: deriveMasterPassKey failed, ${err.stack}`);
@@ -906,27 +936,17 @@ app.on('will-quit', (event) => {
 		saveGlobalObj('stats')
 	]).then(function () {
 		console.log(`if global.MasterPass.get() ${Boolean(global.MasterPass.get())}`);
-		if (global.MasterPass.get()) {
+		if (global.MasterPass.get() && ((global.vault) ? global.vault.isOpen() : false)) {
 			global.vault.close(() => {
-				crypto.encryptDB(global.paths.vault, global.MasterPass.get(), function (err) {
+				crypto.encryptDB(global.paths.vault, global.MasterPass.get(), global.vaultd.viv, global.vaultd.vsalt, function (err) {
 					// NOW QUIT
 					console.log(`crypto.encryptDB INVOKED`);
 					if (err) {
 						console.error(err.stack);
 					} else {
-						// global.vaultd = cred;
-						// global.vaultd.hash = crypto.genPassHash(key);
-						// console.log(`encryptDB callback: pbkdf2 key ${key}, cred`);
-						// global.mdb.put('vaultd', JSON.stringify(global[vaultd]), function (err) {
-						// 	if (err) {
-						// 		console.error(`ERROR: mdb.put('vaultd') failed, ${err.stack}`);
-						// 		reject(err);
-						// 	}
-						// 	console.log(`SUCCESS: mdb.put('vaultd'). Calling global.mdb.close()...`);
 						global.mdb.close();
 						console.log('encryptDB: Closed vault and mdb (called vault.close() and mdb.close()). Calling app.quit');
 						app.exit(9);
-						// });
 					}
 				});
 			});
@@ -973,10 +993,16 @@ app.on('ready', function () {
 					console.log("deleted gdrive-token");
 				})
 			)
+			.then(
+				global.mdb.del('vaultd', function (err) {
+					if (err) console.log(`Error retrieving state, ${err}`);
+					console.log("deleted vaultd");
+				})
+			)
 			// .then(
-			// 	global.mdb.del('state', function (err) {
+			// 	global.mdb.del('vaultd', function (err) {
 			// 		if (err) console.log(`Error retrieving state, ${err}`);
-			// 		console.log("deleted state");
+			// 		console.log("deleted vaultd");
 			// 	})
 			// )
 			.then(
@@ -1093,6 +1119,17 @@ app.on('ready', function () {
 		};
 
 		Init()
+			.then(() => {
+				for (var prop in global.vaultd) {
+					if (global.vaultd.hasOwnProperty(prop)) {
+						if (typeof(global.vaultd[prop]) === "object") {
+							console.log(`global.${prop} = ${global.vaultd[JSON.stringify(prop)]}`);
+						} else {
+							console.log(`global.${prop} = ${global.vaultd[prop]}`);
+						}
+					}
+				}
+			})
 			.catch(function (error) {
 				console.error(`PROMISE ERR: ${error.stack}`);
 			});
@@ -1101,18 +1138,18 @@ app.on('ready', function () {
 			if (err) {
 				throw err;
 			} else {
-				crypto.decryptDB(global.paths.vault, global.MasterPass.get(), global.vaultd.iv, global.vaultd.salt, function (err) {
-					if (err) {
-						throw err;
-					} else {
-						// const keyHash = crypto.genPassHash(key, global.vaultd.salt);
-						// if (_.isEqual(global.vaultd.hash, keyHash)) {
-						global.vault = new Db(global.paths.vault);
-						// } else {
-						// 	console.error(`Password hash don't match ${global.vaultd.hash} != ${keyHash}`);
-						// }
-					}
-				});
+				// crypto.decryptDB(global.paths.vault, global.MasterPass.get(), global.vaultd.viv, global.vaultd.vsalt, function (err) {
+				// 	if (err) {
+				// 		throw err;
+				// 	} else {
+				// 		// const keyHash = crypto.genPassHash(key, global.vaultd.salt);
+				// 		// if (_.isEqual(global.vaultd.hash, keyHash)) {
+				// 		global.vault = new Db(global.paths.vault);
+				// 		// } else {
+				// 		// 	console.error(`Password hash don't match ${global.vaultd.hash} != ${keyHash}`);
+				// 		// }
+				// 	}
+				// });
 				Promise.all([
 						restoreGlobalObj('accounts'),
 						restoreGlobalObj('state'),

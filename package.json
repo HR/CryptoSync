@@ -54,6 +54,7 @@
     "levelup": "*",
     "lodash": "*",
     "moment": "*",
+    "nedb": "^1.8.0",
     "nslog": "*",
     "pathwatcher": "*",
     "prr": "*",
