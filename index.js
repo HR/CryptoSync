@@ -113,6 +113,7 @@ require('electron-debug')();
 // prevent the following from being garbage collected
 let Menubar;
 let drive;
+let exit = false;
 
 /**
  * Promises (global)
@@ -550,27 +551,34 @@ function createSetup(callback) {
 }
 
 function initVault(callback) {
-	console.log(`initVault invoked. Opening new Db (vault)...`);
+	console.log(`initVault invoked. Creating global vault obj & encrypting...`);
 	global.vault = {};
-	crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), null, null, function (err, ivsalt) {
-		// NOW QUIT
+	global.vault.creationDate = moment().format();
+	// TODO: decide whether to use crypto.encryptObj or genIvSalt (and then encryptObj
+	// & remove gen functionality from crypto.encryptObj)
+	crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), null, null, function (err, iv, salt) {
 		console.log(`crypto.encryptObj callback.`);
 		if (err) {
 			callback(err);
 		} else {
-			global.vaultd.viv = ivsalt[0];
-			global.vaultd.vsalt = ivsalt[1];
-			console.log(`encryptObj: vault iv generated ${ivsalt}. Attaching to vaultd and saving in mdb...`);
-			// global.mdb.put('vaultd', JSON.stringify(global.vaultd), function (err) {
-			// 	if (err) {
-			// 		console.error(`ERROR: mdb.put('vaultd') failed, ${err.stack}`);
-			// 		callback(err);
-			// 	}
-			// 	console.log(`SUCCESS: mdb.put('vaultd'). Calling global.mdb.close() and callback...`);
+			global.vaultd.viv = iv;
+			global.vaultd.vsalt = salt;
+			console.log(`Encrypted successfully with iv, salt = [${iv}, ${salt}]`);
 			callback(null);
-			// });
 		}
 	});
+	// crypto.genIvSalt(null, null, function (err, iv, salt) {
+	// 	// NOW QUIT
+	// 	console.log(`crypto.encryptObj callback.`);
+	// 	if (err) {
+	// 		callback(err);
+	// 	} else {
+	// 		global.vaultd.viv = iv;
+	// 		global.vaultd.vsalt = salt;
+	// 		console.log(`encryptObj: vault iv & salt generated [${iv}, ${salt}]`);
+	// 		callback(null);
+	// 	}
+	// });
 }
 
 function addAccountPrompt(callback) {
@@ -901,66 +909,71 @@ app.on('quit', () => {
 	console.log('APP: quit event emitted');
 });
 app.on('will-quit', (event) => {
-	event.preventDefault();
-	console.log(`APP.ON('will-quit'): will-quit event emitted`);
-	console.log(`platform is ${process.platform}`);
-	// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
-	// global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials;
-	global.stats.endTime = moment().format();
+	if (!exit) {
+		event.preventDefault();
+		console.log(`APP.ON('will-quit'): will-quit event emitted`);
+		console.log(`platform is ${process.platform}`);
+		// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
+		// global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials;
+		global.stats.endTime = moment().format();
 
-	var saveGlobalObj = function (objName) {
-		console.log(`PROMISE: saveGlobalObj for ${objName}`);
-		return new Promise(function (resolve, reject) {
-			if (!(_.isEmpty(global[objName]))) {
-				global.mdb.put(objName, JSON.stringify(global[objName]), function (err) {
-					if (err) {
-						console.log(`ERROR: mdb.put('${objName}') failed, ${err}`);
-						// I/O or other error, pass it up the callback
-						reject(err);
-					}
-					console.log(`SUCCESS: mdb.put('${objName}')`);
+		var saveGlobalObj = function (objName) {
+			console.log(`PROMISE: saveGlobalObj for ${objName}`);
+			return new Promise(function (resolve, reject) {
+				if (!(_.isEmpty(global[objName]))) {
+					global.mdb.put(objName, JSON.stringify(global[objName]), function (err) {
+						if (err) {
+							console.log(`ERROR: mdb.put('${objName}') failed, ${err}`);
+							// I/O or other error, pass it up the callback
+							reject(err);
+						}
+						console.log(`SUCCESS: mdb.put('${objName}')`);
+						resolve();
+					});
+				} else {
+					console.log('Nothing to save; empty.');
 					resolve();
-				});
-			} else {
-				console.log('Nothing to save; empty.');
-				resolve();
-			}
-		});
-	};
+				}
+			});
+		};
 
-	Promise.all([
-		saveGlobalObj('accounts'),
-		saveGlobalObj('state'),
-		saveGlobalObj('settings'),
-		saveGlobalObj('files'),
-		saveGlobalObj('stats')
-	]).then(function () {
-		console.log(`if global.MasterPass.get() ${Boolean(global.MasterPass.get())}`);
-		if (global.MasterPass.get() && ((global.vault) ? global.vault.isOpen() : false)) {
-			global.vault.close(() => {
-				crypto.encryptDB(global.paths.vault, global.MasterPass.get(), global.vaultd.viv, global.vaultd.vsalt, function (err) {
+		Promise.all([
+			saveGlobalObj('accounts'),
+			saveGlobalObj('state'),
+			saveGlobalObj('settings'),
+			saveGlobalObj('files'),
+			saveGlobalObj('stats'),
+			saveGlobalObj('vaultd')
+		]).then(function () {
+			if (global.MasterPass.get() && !_.isEmpty(global.vault)) {
+				console.log(`DEFAULT EXIT. global.MasterPass and global.vault not empty. Calling crypto.encryptObj to encrypt the vault...`);
+				crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.vaultd.viv, global.vaultd.vsalt, function (err, iv, salt) {
 					// NOW QUIT
-					console.log(`crypto.encryptDB INVOKED`);
+					console.log(`crypto.encryptObj invoked...`);
 					if (err) {
 						console.error(err.stack);
 					} else {
 						global.mdb.close();
-						console.log('encryptDB: Closed vault and mdb (called vault.close() and mdb.close()). Calling app.quit');
-						app.exit(9);
+						console.log(`Encrypted successfully with iv, salt = [${iv}, ${salt}]`);
+						console.log('encryptObj: Closed vault and mdb (called mdb.close()).');
+						exit = true;
+						app.quit();
 					}
 				});
-			});
-		} else {
-			if (!_.isEmpty(global.vault)) global.vault.close();
-			global.mdb.close();
-			console.log('NOT encryptDB: Closed vault and mdb. Calling vault.close() and mdb.close()');
-			app.exit(9);
-		}
-	}, function (reason) {
-		console.log(`PROMISE ERR (reason): `, reason);
-	}).catch(function (error) {
-		console.error(`PROMISE ERR: ${error.stack}`);
-	});
+			} else {
+				console.log(`NORMAL EXIT. global.MasterPass / global.vault empty. Just closing mdb (global.mdb.close())...`);
+				global.mdb.close();
+				exit = true;
+				app.quit();
+			}
+		}, function (reason) {
+			console.log(`PROMISE ERR (reason): `, reason);
+		}).catch(function (error) {
+			console.error(`PROMISE ERR: ${error.stack}`);
+		});
+	} else {
+		return;
+	}
 });
 
 app.on('activate', function (win) {
@@ -1056,7 +1069,7 @@ app.on('ready', function () {
 							reject(err);
 						}
 					} else {
-						console.log(`SUCCESS: vaultd FOUND`);
+						console.log(`SUCCESS: vaultd FOUND ${json}`);
 						global.vaultd = JSON.parse(json);
 						setTimeout(function () {
 							console.log(`resolve global.vaultd called`);
@@ -1122,7 +1135,7 @@ app.on('ready', function () {
 			.then(() => {
 				for (var prop in global.vaultd) {
 					if (global.vaultd.hasOwnProperty(prop)) {
-						if (typeof(global.vaultd[prop]) === "object") {
+						if (typeof (global.vaultd[prop]) === "object") {
 							console.log(`global.${prop} = ${global.vaultd[JSON.stringify(prop)]}`);
 						} else {
 							console.log(`global.${prop} = ${global.vaultd[prop]}`);
@@ -1138,6 +1151,15 @@ app.on('ready', function () {
 			if (err) {
 				throw err;
 			} else {
+				global.vault = {};
+				crypto.decryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.vaultd.viv, global.vaultd.vsalt, function (err, vault) {
+					if (err) {
+						console.error(`decryptObj ERR: ${err.stack}`);
+					} else {
+						global.vault = vault;
+						console.log(`Decrypted vault, vault's content is ${JSON.stringify(vault)}`);
+					}
+				});
 				// crypto.decryptDB(global.paths.vault, global.MasterPass.get(), global.vaultd.viv, global.vaultd.vsalt, function (err) {
 				// 	if (err) {
 				// 		throw err;
