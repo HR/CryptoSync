@@ -74,3 +74,4 @@ bower_components
 .Debug
 src/elements/*.js
 debug
+backups/
