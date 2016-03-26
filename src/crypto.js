@@ -69,12 +69,12 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 			});
 
 			origin.on('error', () => {
-				console.log(`ORIGIN STREAM: Error while reading ${destf} file to ${dest}`);
+				console.log(`ORIGIN STREAM: Error while reading ${destf} file to ${destpath}`);
 				callback(err);
 			});
 
 			dest.on('error', () => {
-				console.log(`DEST STREAM: Error while writting ${destf} file to ${dest}`);
+				console.log(`DEST STREAM: Error while writting ${destf} file to ${destpath}`);
 				callback(err);
 			});
 

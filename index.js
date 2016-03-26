@@ -1133,7 +1133,7 @@ app.on('ready', function () {
 								return;
 							})
 							.then(() => {
-								if (global.state.toget) {
+								if (!_.isEmpty(global.state.toget)) {
 									/* TODO: Evaluate the use of async.queues where a queue task is created
 											forEach file and the task is to first get the file then encrypt and then
 											upload. See if persistently viable (i.e. can continue where left of on
@@ -1181,60 +1181,68 @@ app.on('ready', function () {
 									});
 								}
 
-								if (global.state.tocrypt) {
+								if (!_.isEmpty(global.state.tocrypt)) {
 									// global.state.tocrypt.push(global.state.toput[0]);
 									// global.state.toput.pop();
 									fs.mkdirs(global.paths.crypted, function (err) {
-										if (err) throw err;
-										let file = global.state.tocrypt[0];
-										console.log(`TO ENCRYTPT: ${file.name} (${file.id})`);
-										let parentPath = global.state.rfs[file.parents[0]].path;
-										let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
-										let destpath = `${global.paths.crypted}/${file.name}.crypto`;
-										console.log(`origpath: ${origpath}, destpath: ${destpath}`);
-										crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, key, iv, tag) {
+										async.each(global.state.tocrypt, function (file, callback) {
+											if (err) callback(err);
+											let parentPath = global.state.rfs[file.parents[0]].path;
+											let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
+											let destpath = `${global.paths.crypted}/${file.name}.crypto`;
+											console.log(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`);
+											crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, key, iv, tag) {
+												if (err) {
+													return callback(err, file.id, file.name);
+												} else {
+													try {
+														file.cryptPath = destpath;
+														file.iv = iv.toString('hex');
+														file.authTag = tag.toString('hex');
+														global.vault[file.id] = file;
+														console.log(`Done encrypting ${file.name} (${file.id}) to ${destpath}`);
+														global.state.toput.push(file);
+														_.pull(global.state.tocrypt, file);
+														return callback(null, file.id, file.name);
+													} catch (err) {
+														return callback(err, file.id, file.name);
+													}
+												}
+											});
+										}, function (err, fileId, fileName) {
+											// if any of the file processing produced an error, err would equal that error
 											if (err) {
-												console.error(`Error while encrypting ${err.stack}`);
-												// callback(err, file.id, file.name);
+												// One of the iterations produced an error.
+												// All processing will now stop.
+												console.error(`Failed to encrypt ${fileName} (${fileId}), err: ${err.stack}`);
 											} else {
-												file.cryptPath = destpath;
-												file.iv = iv.toString('hex');
-												file.authTag = tag.toString('hex');
-												global.vault[file.id] = file;
-												console.log(`Done encrypting ${file.name} (${file.id}) to ${destpath}`);
-												// global.state.toput.push(file);
-												// _.pull(global.state.tocrypt, file);
-												// callback(null, file.id, file.name);
+												console.log(`Done encrypting. To trigger toput for ${fileName} (${fileId})`);
 											}
 										});
-										// async.each(global.state.tocrypt, function (file, callback) {
-										// 	let parentPath = global.state.rfs[file.parents[0]].path;
-										// 	let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
-										// 	let destpath = `${global.paths.crypted}/${file.name}.crypto`;
-										// 	// console.log(`origpath: ${origpath}, destpath: ${destpath}`);
-										// 	crypto.encrypt(origin, dest, global.MasterPass.get(), function (err, keyiv) {
-										// 		if (err) {
-										// 			callback(err, file.id, file.name);
-										// 		} else {
-										// 			let key = keyiv[0],
-										// 				iv = keyiv[1];
-										// 			file.cryptpath = destpath;
-										// 			global.state.toput.push(file);
-										// 			_.pull(global.state.tocrypt, file);
-										// 			callback(null, file.id, file.name);
-										// 		}
-										// 	});
-										// }, function (err, fileId, fileName) {
-										// 	// if any of the file processing produced an error, err would equal that error
-										// 	if (err) {
-										// 		// One of the iterations produced an error.
-										// 		// All processing will now stop.
-										// 		console.error(`Failed to encrypt ${fileName} (${fileId}), err: ${err.stack}`);
-										// 	} else {
-										// 		console.log(`To trigger tocrypt for ${fileName} (${fileId})`);
-										// 	}
-										// });
 									});
+								}
+
+								if (!_.isEmpty(global.state.toput)) {
+									// let fileMetadata = {
+									// 	'name': 'My Report',
+									// 	'mimeType': 'application/vnd.google-apps.spreadsheet'
+									// };
+									// let media = {
+									// 	body: fs.createReadStream('files/report.csv')
+									// };
+									// drive.files.update({
+									// 	fileId: '0B-skmV2...',
+									// 	resource: {
+									// 		title: 'Updated title'
+									// 	},
+									// 	media: {
+									// 		mimeType: 'text/plain',
+									// 		body: 'Hello World updated with metadata'
+									// 	},
+									// 	auth: oauth2Client
+									// }, function (err, response) {
+									// 	console.log('error:', err, 'updated:', response.id);
+									// });
 								}
 							})
 							.then(
