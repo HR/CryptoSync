@@ -8,6 +8,7 @@ const app = electron.app,
 	Db = require('./src/Db'),
 	crypto = require('./src/crypto'),
 	OAuth = require('./src/OAuth'),
+	util = require('./src/util'),
 	Account = require('./src/Account'),
 	// sync = require('./src/sync'),
 	fs = require('fs-extra'),
@@ -28,7 +29,7 @@ const SETUPTEST = 0; // ? Setup : Menubar
 // YOLO#101
 
 // MasterPass is protected (private var) and only exist in Main memory
-global.MasterPass = require('./src/MasterPass');
+global.MasterPass = require('./src/_MasterPass');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
 global.accounts = {};
@@ -54,7 +55,7 @@ global.paths = {
 	userData: app.getPath('userData'),
 	vault: `${app.getPath('home')}/CryptoSync/vault.crypto`,
 	gdriveSecret: `${app.getPath('userData')}/client_secret_gdrive.json`
-	// dropboxSecret: `${app.getPath('userData')}/client_secret_dropbox.json`
+		// dropboxSecret: `${app.getPath('userData')}/client_secret_dropbox.json`
 };
 
 // TODO: Get from mdb as JSON and store as JSON as one value
@@ -531,7 +532,7 @@ function createSetup(callback) {
 	ipc.on('done', function (event, masterpass) {
 		console.log('IPCMAIN: done emitted, setup complete. Closing this window and opening menubar...');
 		setupComplete = true;
-		initVault(function (err, ivsalt) {
+		initVault(function (err) {
 			if (err) {
 				console.error(`initVault ERR: ${err.stack}`);
 			} else {
@@ -840,6 +841,56 @@ function createErrorPrompt(err, callback) {
  * Functions
  **/
 
+// Restore accounts object from DB promise
+function restoreGlobalObj(objName) {
+	console.log(`PROMISE: restoreGlobalObj for ${objName}`);
+	return new Promise(function (resolve, reject) {
+		global.mdb.get(objName, function (err, json) {
+			if (err) {
+				if (err.notFound) {
+					console.log(`ERROR: Global obj ${objName} NOT FOUND `);
+					reject(err);
+				} else {
+					// I/O or other error, pass it up the callback
+					console.log(`ERROR: mdb.get('${objName}') FAILED`);
+					reject(err);
+				}
+			} else {
+				console.log(`SUCCESS: ${objName} FOUND`);
+				try {
+					global[objName] = JSON.parse(json) || {};
+					setTimeout(function () {
+						console.log(`resolve global.${objName} called`);
+						resolve();
+					}, 0);
+				} catch (e) {
+					return e;
+				}
+			}
+		});
+	});
+};
+
+function saveGlobalObj(objName) {
+	console.log(`PROMISE: saveGlobalObj for ${objName}`);
+	return new Promise(function (resolve, reject) {
+		if (!(_.isEmpty(global[objName]))) {
+			global.mdb.put(objName, JSON.stringify(global[objName]), function (err) {
+				if (err) {
+					console.log(`ERROR: mdb.put('${objName}') failed, ${err}`);
+					// I/O or other error, pass it up the callback
+					reject(err);
+				}
+				console.log(`SUCCESS: mdb.put('${objName}')`);
+				resolve();
+			});
+		} else {
+			console.log('Nothing to save; empty.');
+			resolve();
+		}
+	});
+};
+
 function setMasterPass(masterpass, callback) {
 	// TODO: decide whther to put updated masterpass instantly
 	console.log(`setMasterPass() for ${masterpass}`);
@@ -850,16 +901,11 @@ function setMasterPass(masterpass, callback) {
 			global.creds.mpkhash = mpkhash;
 			global.creds.mpksalt = mpksalt;
 			console.log(`deriveMasterPassKey callback: \npbkdf2 mpkey = ${mpkey.toString('hex')},\nmpsalt = ${global.creds.mpsalt.toString('hex')},\nmpkhash = ${mpkhash},\nmpksalt = ${mpksalt}`);
-			return callback(null, mpkey);
-			// global.mdb.put('creds', JSON.stringify(global.creds), function (err) {
-			// 	if (err) {
-			// 		console.error(`ERROR: mdb.put('creds') failed, ${err.stack}`);
-			// 		// I/O or other error, pass it up the callback
-			// 		return callback(err);
-			// 	}
-			// 	console.log(`SUCCESS: mdb.put('creds'). Calling callback`);
-			// 	return callback(null, mpkey);
-			// });
+			saveGlobalObj('creds').then(() => {
+				return callback(null, mpkey);
+			}).catch((err) => {
+				return callback(err);
+			});
 		});
 	});
 }
@@ -918,26 +964,6 @@ app.on('will-quit', (event) => {
 		// global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials;
 		global.stats.endTime = moment().format();
 
-		var saveGlobalObj = function (objName) {
-			console.log(`PROMISE: saveGlobalObj for ${objName}`);
-			return new Promise(function (resolve, reject) {
-				if (!(_.isEmpty(global[objName]))) {
-					global.mdb.put(objName, JSON.stringify(global[objName]), function (err) {
-						if (err) {
-							console.log(`ERROR: mdb.put('${objName}') failed, ${err}`);
-							// I/O or other error, pass it up the callback
-							reject(err);
-						}
-						console.log(`SUCCESS: mdb.put('${objName}')`);
-						resolve();
-					});
-				} else {
-					console.log('Nothing to save; empty.');
-					resolve();
-				}
-			});
-		};
-
 		Promise.all([
 			saveGlobalObj('accounts'),
 			saveGlobalObj('state'),
@@ -949,7 +975,6 @@ app.on('will-quit', (event) => {
 				console.log(`DEFAULT EXIT. global.MasterPass and global.vault not empty. Calling crypto.encryptObj...`);
 				console.log(`Encrypting using MasterPass = ${global.MasterPass.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
 				crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.creds.viv, function (err, tag) {
-					// NOW QUIT
 					console.log(`crypto.encryptObj invoked...`);
 					if (err) {
 						console.error(err.stack);
@@ -961,6 +986,8 @@ app.on('will-quit', (event) => {
 							console.log('Closed vault and mdb (called mdb.close()).');
 							exit = true;
 							app.quit();
+						}).catch((err) => {
+							console.error(`Error while saving global.creds before quit: ${err.stack}`);
 						});
 					}
 				});
@@ -1004,24 +1031,6 @@ app.on('ready', function () {
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		Init()
-			.then(
-				global.mdb.del('gdrive-token', function (err) {
-					if (err) console.log(`Error retrieving gdrive-token, ${err}`);
-					console.log("deleted gdrive-token");
-				})
-			)
-			.then(
-				global.mdb.del('creds', function (err) {
-					if (err) console.log(`Error retrieving state, ${err}`);
-					console.log("deleted creds");
-				})
-			)
-			// .then(
-			// 	global.mdb.del('creds', function (err) {
-			// 		if (err) console.log(`Error retrieving state, ${err}`);
-			// 		console.log("deleted creds");
-			// 	})
-			// )
 			.then(
 				createSetup(function (err) {
 					if (err) {
@@ -1084,69 +1093,7 @@ app.on('ready', function () {
 			});
 		};
 
-		let getValue = function (key) {
-			console.log(`PROMISE: getValue for ${key}`);
-			return new Promise(function (resolve, reject) {
-				global.mdb.get(key, function (err, json) {
-					if (err) {
-						if (err.notFound) {
-							console.log(`ERROR: key ${key} NOT FOUND `);
-							reject(err);
-						} else {
-							// I/O or other error, pass it up the callback
-							console.log(`ERROR: mdb.get('${key}') FAILED`);
-							reject(err);
-						}
-					} else {
-						console.log(`SUCCESS: ${key} FOUND`);
-						resolve(json);
-					}
-				});
-			});
-		};
-
-		// Restore accounts object from DB promise
-		let restoreGlobalObj = function (objName) {
-			console.log(`PROMISE: restoreGlobalObj for ${objName}`);
-			return new Promise(function (resolve, reject) {
-				global.mdb.get(objName, function (err, json) {
-					if (err) {
-						if (err.notFound) {
-							console.log(`ERROR: Global obj ${objName} NOT FOUND `);
-							reject(err);
-						} else {
-							// I/O or other error, pass it up the callback
-							console.log(`ERROR: mdb.get('${objName}') FAILED`);
-							reject(err);
-						}
-					} else {
-						console.log(`SUCCESS: ${objName} FOUND`);
-						try {
-							global[objName] = JSON.parse(json) || {};
-							setTimeout(function () {
-								console.log(`resolve global.${objName} called`);
-								resolve();
-							}, 0);
-						} catch (e) {
-							return e;
-						}
-					}
-				});
-			});
-		};
-
 		Init()
-			.then(() => {
-				// for (var prop in global.creds) {
-				// 	if (global.creds.hasOwnProperty(prop)) {
-				// 		if (typeof (global.creds[prop]) === "object") {
-				// 			console.log(`global.${prop} = ${global.creds[JSON.stringify(prop)]}`);
-				// 		} else {
-				// 			console.log(`global.${prop} = ${global.creds[prop]}`);
-				// 		}
-				// 	}
-				// }
-			})
 			.catch(function (error) {
 				console.error(`PROMISE ERR: ${error.stack}`);
 			});
@@ -1170,7 +1117,7 @@ app.on('ready', function () {
 								restoreGlobalObj('files')
 							])
 							.then(() => {
-								let o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;
+								const o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;
 								global.gAuth = new google.auth.OAuth2(o2c.clientId_, o2c.clientSecret_, o2c.redirectUri_);
 								gAuth.setCredentials(o2c.credentials);
 								global.drive = google.drive({
@@ -1183,6 +1130,7 @@ app.on('ready', function () {
 								// Set initial stats
 								global.stats.startTime = moment().format();
 								global.stats.time = moment();
+								return;
 							})
 							.then(() => {
 								if (global.state.toget) {
@@ -1250,8 +1198,8 @@ app.on('ready', function () {
 												// callback(err, file.id, file.name);
 											} else {
 												file.cryptPath = destpath;
-												file.iv = iv;
-												file.authTag = tag;
+												file.iv = iv.toString('hex');
+												file.authTag = tag.toString('hex');
 												global.vault[file.id] = file;
 												console.log(`Done encrypting ${file.name} (${file.id}) to ${destpath}`);
 												// global.state.toput.push(file);
@@ -1304,14 +1252,5 @@ app.on('ready', function () {
 				});
 			}
 		});
-
-		// if (!global.MasterPass.get()) {
-		// 	masterPassPrompt(null, function (err) {
-		// 		if (err) {
-		// 			console.log(`ERROR: ${err}`);
-		// 		}
-		// 	});
-		// }
-		// global.mdb = new Db(global.paths.mdb);
 	}
 });

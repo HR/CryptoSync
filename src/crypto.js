@@ -4,8 +4,8 @@
  * Provides the crypto functionality required
  ******************************/
 
-let secrets = require('secrets.js'),
-	fs = require('fs-plus'),
+const secrets = require('secrets.js'),
+	fs = require('fs-extra'),
 	fstream = require('fstream'),
 	tar = require('tar'),
 	_ = require('lodash'),
