@@ -10,7 +10,7 @@ const app = electron.app,
 	OAuth = require('./src/OAuth'),
 	Account = require('./src/Account'),
 	// sync = require('./src/sync'),
-	fs = require('fs-plus'),
+	fs = require('fs-extra'),
 	https = require('https'),
 	moment = require('moment'),
 	base64 = require('base64-stream'),
@@ -20,7 +20,7 @@ const app = electron.app,
 	google = require('googleapis'),
 	async = require('async');
 
-const SETUPTEST = false; // ? Setup : Menubar
+const SETUPTEST = 0; // ? Setup : Menubar
 
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
@@ -32,7 +32,7 @@ global.MasterPass = require('./src/MasterPass');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
 global.accounts = {};
-global.vaultd = {};
+global.creds = {};
 global.state = {};
 global.files = {};
 // global.state.toget = [];
@@ -44,19 +44,21 @@ global.files = {};
  - tocrypt: files to encrypt
  - toput: files to upload (/update)
 */
+// app.setPath('cs', `${app.getPath('home')}/CryptoSync`);
 
 global.stats = {};
 global.paths = {
-	home: `${fs.getHomeDirectory()}/CryptoSync`,
-	crypted: `${fs.getHomeDirectory()}/CryptoSync/.encrypted`,
+	home: `${app.getPath('home')}/CryptoSync`,
+	crypted: `${app.getPath('home')}/CryptoSync/.encrypted`,
 	mdb: `${app.getPath('userData')}/mdb`,
 	userData: app.getPath('userData'),
-	vault: `${fs.getHomeDirectory()}/CryptoSync/vault.crypto`,
-	gdriveSecret: `${app.getPath('userData')}/client_secret_gdrive.json`,
+	vault: `${app.getPath('home')}/CryptoSync/vault.crypto`,
+	gdriveSecret: `${app.getPath('userData')}/client_secret_gdrive.json`
 	// dropboxSecret: `${app.getPath('userData')}/client_secret_dropbox.json`
 };
 
 // TODO: Get from mdb as JSON and store as JSON as one value
+// TODO: set default at setup only
 global.settings = {
 	user: {
 
@@ -556,21 +558,20 @@ function initVault(callback) {
 	global.vault.creationDate = moment().format();
 	// TODO: decide whether to use crypto.encryptObj or genIvSalt (and then encryptObj
 	// & remove gen functionality from crypto.encryptObj)
-	crypto.genIvSalt(function (err, iv, salt) {
+	crypto.genIv(function (err, iv, salt) {
 		console.log(`crypto.genIvSalt callback.`);
 		if (err) {
 			callback(err);
 		} else {
-			global.vaultd.viv = iv;
-			global.vaultd.vsalt = salt;
-			console.log(`Encrypting using MasterPass = ${global.MasterPass.get().toString('hex')}, viv = ${global.vaultd.viv.toString('hex')}`);
-			crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.vaultd.viv, function (err, tag) {
+			global.creds.viv = iv;
+			console.log(`Encrypting using MasterPass = ${global.MasterPass.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
+			crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.creds.viv, function (err, tag) {
 				console.log(`crypto.encryptObj callback.`);
 				if (err) {
 					callback(err);
 				} else {
 					console.log(`Encrypted successfully with tag = ${tag.toString('hex')}`);
-					global.vaultd.tag = tag;
+					global.creds.authTag = tag;
 					callback(null);
 				}
 			});
@@ -743,7 +744,7 @@ function masterPassPrompt(reset, callback) {
 			}
 			if (match) {
 				console.log("IPCMAIN: PASSWORD MATCHES!");
-				// Now derive masterpasskey
+				// Now derive masterpasskey and set it (temporarily)
 				global.MasterPass.set(mpkey);
 				console.log(`global.MasterPass.get() = ${global.MasterPass.get()}`);
 				webContents.send('checkMasterPassResult', {
@@ -842,38 +843,40 @@ function createErrorPrompt(err, callback) {
 function setMasterPass(masterpass, callback) {
 	// TODO: decide whther to put updated masterpass instantly
 	console.log(`setMasterPass() for ${masterpass}`);
-	crypto.deriveMasterPassKey(masterpass, null, function (err, key, cred) {
-		global.vaultd.mp = cred;
-		crypto.genPassHash(key, null, function (hash, salt) {
-			global.vaultd.mpkhash = hash;
-			global.vaultd.mpksalt = salt;
-			console.log(`deriveMasterPassKey callback: pbkdf2 mpkey = ${key.toString('hex')}, mpkhash = ${hash.toString('hex')}, mpksalt = ${salt.toString('hex')}`);
-			global.mdb.put('vaultd', JSON.stringify(global.vaultd), function (err) {
-				if (err) {
-					console.error(`ERROR: mdb.put('vaultd') failed, ${err.stack}`);
-					// I/O or other error, pass it up the callback
-					return callback(err);
-				}
-				console.log(`SUCCESS: mdb.put('vaultd'). Calling callback`);
-				return callback(null, key);
-			});
+	crypto.deriveMasterPassKey(masterpass, null, function (err, mpkey, mpsalt) {
+		global.creds.mpsalt = mpsalt;
+		// console.log(`\n global.creds.mpsalt = ${global.creds.mpsalt.toString('hex')}`);
+		crypto.genPassHash(mpkey, null, function (mpkhash, mpksalt) {
+			global.creds.mpkhash = mpkhash;
+			global.creds.mpksalt = mpksalt;
+			console.log(`deriveMasterPassKey callback: \npbkdf2 mpkey = ${mpkey.toString('hex')},\nmpsalt = ${global.creds.mpsalt.toString('hex')},\nmpkhash = ${mpkhash},\nmpksalt = ${mpksalt}`);
+			return callback(null, mpkey);
+			// global.mdb.put('creds', JSON.stringify(global.creds), function (err) {
+			// 	if (err) {
+			// 		console.error(`ERROR: mdb.put('creds') failed, ${err.stack}`);
+			// 		// I/O or other error, pass it up the callback
+			// 		return callback(err);
+			// 	}
+			// 	console.log(`SUCCESS: mdb.put('creds'). Calling callback`);
+			// 	return callback(null, mpkey);
+			// });
 		});
 	});
 }
 
 
 function checkMasterPass(masterpass, callback) {
-	crypto.deriveMasterPassKey(masterpass, global.vaultd.mp, function (err, key, cred) {
+	crypto.deriveMasterPassKey(masterpass, global.creds.mpsalt, function (err, mpkey, mpsalt) {
 		console.log('checkMasterPass deriveMasterPassKey callback');
 		if (err) {
 			console.error(`ERROR: deriveMasterPassKey failed, ${err.stack}`);
 			return callback(err, null);
 		}
-		crypto.genPassHash(key, global.vaultd.mpksalt, function (mpkhash) {
-			console.log(`vaultd.mpkhash = ${global.vaultd.mpkhash.toString('hex')}, mpkhash (of entered mp) = ${mpkhash}.toString('hex')`);
-			const MATCH = _.isEqual(global.vaultd.mpkhash, mpkhash); // masterpasskey derived is correct
-			console.log(`MATCH: ${global.vaultd.mpkhash.toString('hex')} (vaultd.mpkhash) === ${mpkhash.toString('hex')} (mpkhash) = ${MATCH}`);
-			return callback(null, MATCH, key);
+		crypto.genPassHash(mpkey, global.creds.mpksalt, function (mpkhash) {
+			// console.log(`creds.mpkhash = ${global.creds.mpkhash}, mpkhash (of entered mp) = ${mpkhash}`);
+			const MATCH = _.isEqual(global.creds.mpkhash, mpkhash); // masterpasskey derived is correct
+			console.log(`MATCH: ${global.creds.mpkhash} (creds.mpkhash) === ${mpkhash} (mpkhash) = ${MATCH}`);
+			return callback(null, MATCH, mpkey);
 		});
 	});
 }
@@ -944,16 +947,16 @@ app.on('will-quit', (event) => {
 		]).then(function () {
 			if (global.MasterPass.get() && !_.isEmpty(global.vault)) {
 				console.log(`DEFAULT EXIT. global.MasterPass and global.vault not empty. Calling crypto.encryptObj...`);
-				console.log(`Encrypting using MasterPass = ${global.MasterPass.get().toString('hex')}, viv = ${global.vaultd.viv.toString('hex')}`);
-				crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.vaultd.viv, function (err, tag) {
+				console.log(`Encrypting using MasterPass = ${global.MasterPass.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
+				crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.creds.viv, function (err, tag) {
 					// NOW QUIT
 					console.log(`crypto.encryptObj invoked...`);
 					if (err) {
 						console.error(err.stack);
 					} else {
 						console.log(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`);
-						global.vaultd.tag = tag;
-						saveGlobalObj('vaultd').then(() => {
+						global.creds.authTag = tag;
+						saveGlobalObj('creds').then(() => {
 							global.mdb.close();
 							console.log('Closed vault and mdb (called mdb.close()).');
 							exit = true;
@@ -1008,15 +1011,15 @@ app.on('ready', function () {
 				})
 			)
 			.then(
-				global.mdb.del('vaultd', function (err) {
+				global.mdb.del('creds', function (err) {
 					if (err) console.log(`Error retrieving state, ${err}`);
-					console.log("deleted vaultd");
+					console.log("deleted creds");
 				})
 			)
 			// .then(
-			// 	global.mdb.del('vaultd', function (err) {
+			// 	global.mdb.del('creds', function (err) {
 			// 		if (err) console.log(`Error retrieving state, ${err}`);
-			// 		console.log("deleted vaultd");
+			// 		console.log("deleted creds");
 			// 	})
 			// )
 			.then(
@@ -1058,22 +1061,22 @@ app.on('ready', function () {
 			// open mdb
 			return new Promise(function (resolve, reject) {
 				global.mdb = new Db(global.paths.mdb);
-				global.mdb.get('vaultd', function (err, json) {
+				global.mdb.get('creds', function (err, json) {
 					if (err) {
 						if (err.notFound) {
-							console.log(`ERROR: key vaultd NOT FOUND `);
-							global.vaultd = {};
+							console.log(`ERROR: key creds NOT FOUND `);
+							global.creds = {};
 							reject(err);
 						} else {
 							// I/O or other error, pass it up the callback
-							console.log(`ERROR: mdb.get('vaultd') FAILED`);
+							console.log(`ERROR: mdb.get('creds') FAILED`);
 							reject(err);
 						}
 					} else {
-						console.log(`SUCCESS: vaultd FOUND ${json}`);
-						global.vaultd = JSON.parse(json);
+						console.log(`SUCCESS: creds FOUND ${json}`);
+						global.creds = JSON.parse(json);
 						setTimeout(function () {
-							console.log(`resolve global.vaultd called`);
+							console.log(`resolve global.creds called`);
 							resolve();
 						}, 0);
 					}
@@ -1134,12 +1137,12 @@ app.on('ready', function () {
 
 		Init()
 			.then(() => {
-				// for (var prop in global.vaultd) {
-				// 	if (global.vaultd.hasOwnProperty(prop)) {
-				// 		if (typeof (global.vaultd[prop]) === "object") {
-				// 			console.log(`global.${prop} = ${global.vaultd[JSON.stringify(prop)]}`);
+				// for (var prop in global.creds) {
+				// 	if (global.creds.hasOwnProperty(prop)) {
+				// 		if (typeof (global.creds[prop]) === "object") {
+				// 			console.log(`global.${prop} = ${global.creds[JSON.stringify(prop)]}`);
 				// 		} else {
-				// 			console.log(`global.${prop} = ${global.vaultd[prop]}`);
+				// 			console.log(`global.${prop} = ${global.creds[prop]}`);
 				// 		}
 				// 	}
 				// }
@@ -1153,13 +1156,12 @@ app.on('ready', function () {
 				throw err;
 			} else {
 				global.vault = {};
-				crypto.decryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.vaultd.viv, global.vaultd.tag, function (err, vault) {
+				crypto.decryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.creds.viv, global.creds.authTag, function (err, vault) {
 					if (err) {
 						console.error(`decryptObj ERR: ${err.stack}`);
 					} else {
 						global.vault = vault;
 						console.log(`Decrypted vault, vault's content is ${JSON.stringify(vault)}`);
-						global.vault.yolo = "lol";
 						Promise.all([
 								restoreGlobalObj('accounts'),
 								restoreGlobalObj('state'),
@@ -1193,7 +1195,9 @@ app.on('ready', function () {
 										let parentPath = global.state.rfs[file.parents[0]].path;
 										let dir = `${global.paths.home}${parentPath}`;
 										// TODO: replace with mkdirp
-										fs.makeTree(dir, function () {
+										fs.mkdirs(dir, function (err) {
+											if (err) callback(err);
+
 											let path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
 											console.log(`GETing ${file.name} at dest ${path}`);
 											let dest = fs.createWriteStream(path);
@@ -1222,6 +1226,7 @@ app.on('ready', function () {
 											// One of the iterations produced an error.
 											// All processing will now stop.
 											console.error(`Failed to get ${fileName} (${fileId}), err: ${err.stack}`);
+											throw err;
 										} else {
 											console.log(`To trigger tocrypt for ${fileName} (${fileId})`);
 										}
@@ -1231,20 +1236,23 @@ app.on('ready', function () {
 								if (global.state.tocrypt) {
 									// global.state.tocrypt.push(global.state.toput[0]);
 									// global.state.toput.pop();
-									fs.makeTree(global.paths.crypted, function () {
+									fs.mkdirs(global.paths.crypted, function (err) {
+										if (err) throw err;
 										let file = global.state.tocrypt[0];
-										console.log(`TO encrypt ${file.name} (${file.id})`);
+										console.log(`TO ENCRYTPT: ${file.name} (${file.id})`);
 										let parentPath = global.state.rfs[file.parents[0]].path;
 										let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
 										let destpath = `${global.paths.crypted}/${file.name}.crypto`;
 										console.log(`origpath: ${origpath}, destpath: ${destpath}`);
-										crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, keyiv) {
+										crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, key, iv, tag) {
 											if (err) {
 												console.error(`Error while encrypting ${err.stack}`);
 												// callback(err, file.id, file.name);
 											} else {
-												file.cryptpath = destpath;
-												file.iv = keyiv[1];
+												file.cryptPath = destpath;
+												file.iv = iv;
+												file.authTag = tag;
+												global.vault[file.id] = file;
 												console.log(`Done encrypting ${file.name} (${file.id}) to ${destpath}`);
 												// global.state.toput.push(file);
 												// _.pull(global.state.tocrypt, file);

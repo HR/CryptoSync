@@ -17,14 +17,14 @@ let secrets = require('secrets.js'),
 // TODO: change accordingly when changed in settings
 // TODO: add defaults for db/vault encryption
 let defaults = {
-	iterations: 4096,
+	iterations: 4096, // file encryption key iterations
 	keyLength: 32, // in bytes
 	ivLength: 12,
 	algorithm: 'aes-256-gcm',
 	salgorithm: 'aes-256-ctr',
 	digest: 'sha256',
 	padLength: 1024,
-	mpk_iterations: 100000
+	mpk_iterations: 100000 // masterpass key iterations
 };
 
 /*	Crypto
@@ -58,30 +58,37 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 			const iv = crypto.randomBytes(defaults.ivLength); // generate pseudorandom iv
 			const cipher = crypto.createCipheriv(defaults.algorithm, key, iv);
 			let destf = destpath.match(/[^/]+[A-z0-9]+\.[A-z0-9]+/g)[0];
+
 			origin.pipe(cipher).pipe(dest, {
 				end: false
 			});
 
-			origin.on('end', () => {
-				// Append iv used to encrypt the file to end of file
-				dest.write(`\nCryptoSync#${iv.toString('hex')}`);
-				dest.end();
-				console.log(`End for ${destf} called`);
+			cipher.on('error', () => {
+				console.log(`CIPHER STREAM: Error while encrypting ${destf} file`);
+				callback(err);
 			});
 
 			origin.on('error', () => {
-				console.log(`ORIGIN STREAM: Error while encrypting/writting file to ${dest}`);
+				console.log(`ORIGIN STREAM: Error while reading ${destf} file to ${dest}`);
 				callback(err);
 			});
 
 			dest.on('error', () => {
-				console.log(`DEST STREAM: Error while encrypting/writting file to ${dest}`);
+				console.log(`DEST STREAM: Error while writting ${destf} file to ${dest}`);
 				callback(err);
 			});
 
+			origin.on('end', () => {
+				// Append iv used to encrypt the file to end of file
+				dest.write(`\nCryptoSync#${iv.toString('hex')}#${cipher.getAuthTag().toString('hex')}`);
+				dest.end();
+				console.log(`End (of writestream) for ${destf} called, IV&authTag appended`);
+			});
+
 			dest.on('finish', () => {
+				const tag = cipher.getAuthTag();
 				console.log(`Finished encrypted/written to ${destf}`);
-				callback(null, [key, iv, salt]);
+				callback(null, key, iv, tag);
 			});
 		}
 	});
@@ -169,33 +176,48 @@ exports.decryptObj = function (obj, origpath, mpkey, viv, vtag, callback) {
 	});
 };
 
-exports.genIvSalt = function (callback) {
+exports.genIv = function (callback) {
 	// TODO: check whether to callback inside try or outside
 	// TODO: promisify
 	try {
 		const iv = crypto.randomBytes(defaults.ivLength); // generate pseudorandom iv
-		const salt = crypto.randomBytes(defaults.keyLength); // generate pseudorandom salt
-		callback(null, iv, salt);
+		callback(null, iv);
 	} catch (err) {
 		callback(err);
 	}
 };
 
-exports.deriveMasterPassKey = function (masterpass, cred, callback) {
-	const salt = (cred) ? new Buffer(cred.salt, 'utf8') : crypto.randomBytes(defaults.keyLength),
-		i = (cred) ? cred.iterations : defaults.mpk_iterations;
-	crypto.pbkdf2(masterpass, salt, i, defaults.keyLength, defaults.digest, (err, mpkey) => {
+exports.deriveMasterPassKey = function (masterpass, mpsalt, callback) {
+	const salt = (mpsalt) ? new Buffer(mpsalt.data) : crypto.randomBytes(defaults.keyLength);
+	crypto.pbkdf2(masterpass, salt, defaults.mpk_iterations, defaults.keyLength, defaults.digest, (err, mpkey) => {
 		if (err) {
-			// return error to callback YOLO#101
-			callback(err);
+			// return error to callback
+			return callback(err);
 		} else {
-			console.log(`Pbkdf2 generated mpkey = ${mpkey.toString('hex')} with salt = ${salt.toString('hex')}`);
-			callback(null, mpkey, {
-				salt: salt,
-				iterations: i
-			});
+			console.log(`Pbkdf2 generated: \nmpkey = ${mpkey.toString('hex')} \nwith salt = ${salt.toString('hex')}`);
+			return callback(null, mpkey, salt);
 		}
 	});
+};
+
+exports.genPassHash = function (mpass, salt, callback) {
+	console.log(`crypto.genPassHash() invoked`);
+	const pass = (mpass instanceof Buffer) ? mpass.toString('hex') : mpass;
+
+	if (salt) {
+		let hash = crypto.createHash('sha256').update(`${pass}${salt}`).digest('hex');
+		console.log(`genPassHash: S, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
+		callback(hash);
+	} else {
+		let salt = crypto.randomBytes(defaults.keyLength).toString('hex'); // generate 256 random bits
+		let hash = crypto.createHash('sha256').update(`${pass}${salt}`).digest('hex');
+		console.log(`genPassHash: NS, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
+		callback(hash, salt);
+	}
+};
+
+exports.verifyPassHash = function (key, hash, callback) {
+	return this.genPassHash(key) === hash;
 };
 
 exports.decrypt = function (ctext, key, iv, callback) {
@@ -204,22 +226,6 @@ exports.decrypt = function (ctext, key, iv, callback) {
 		decrypted = decipher.update(ctext, 'hex', 'utf8');
 	decrypted += decipher.final('utf8');
 	return decrypted;
-};
-
-exports.verifyPassHash = function (key, hash, callback) {
-	return this.genPassHash(key) === hash;
-};
-
-exports.genPassHash = function (pass, salt, callback) {
-	console.log(`crypto.genPassHash() invoked`);
-	if (salt) {
-		let mpkhash = crypto.createHash('sha256').update(pass + salt).digest('hex');
-		callback(mpkhash);
-	} else {
-		let salt = crypto.randomBytes(defaults.keyLength).toString(); // generate 256 random bits
-		let hash = crypto.createHash('sha256').update(pass + salt).digest('hex');
-		callback(hash, salt);
-	}
 };
 
 exports.shares2pass = function (sharedata) {
