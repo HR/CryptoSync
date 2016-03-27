@@ -32,6 +32,7 @@ gulp.task('driver', shell.task([
 
 gulp.task('test', shell.task([
 	// Run test stuff
+	"electron-mocha --renderer --compilers js:babel-core/register 'test/**/*.@(js|jsx)'"
 ]));
 
 gulp.task('watch', function() {

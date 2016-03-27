@@ -10,9 +10,10 @@ const app = electron.app,
 	OAuth = require('./src/OAuth'),
 	util = require('./src/util'),
 	Account = require('./src/Account'),
-	// sync = require('./src/sync'),
+	// sync = require('./src/Sync'),
 	fs = require('fs-extra'),
 	https = require('https'),
+	EventEmitter = require('events').EventEmitter,
 	moment = require('moment'),
 	base64 = require('base64-stream'),
 	chalk = require('chalk'),
@@ -22,7 +23,9 @@ const app = electron.app,
 	async = require('async');
 
 const SETUPTEST = 0; // ? Setup : Menubar
-
+const API_REQ_LIMIT = 8;
+const sync = {};
+sync.event = new EventEmitter();
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
@@ -39,6 +42,7 @@ global.files = {};
 // global.state.toget = [];
 // global.state.tocrypt = [];
 // global.state.toput = [];
+// global.state.done = [];
 /* Global state
  has three queues:
  - toget: files to download (incl. updated ones)
@@ -196,6 +200,13 @@ function Cryptobar(callback) {
 	win.on('blur', hideWindow);
 	win.loadURL(global.views.menubar);
 	win.openDevTools();
+	const webContents = win.webContents;
+
+	// Event listeners
+	sync.event.on('put', (file) => {
+		console.log(`PUT EVENT RECEIVED for ${file.name}`);
+		// webContents.send('finished', file);
+	});
 
 	ipc.on('openSyncFolder', function (event) {
 		console.log('IPCMAIN: openSyncFolder event emitted');
@@ -747,7 +758,6 @@ function masterPassPrompt(reset, callback) {
 				console.log("IPCMAIN: PASSWORD MATCHES!");
 				// Now derive masterpasskey and set it (temporarily)
 				global.MasterPass.set(mpkey);
-				console.log(`global.MasterPass.get() = ${global.MasterPass.get()}`);
 				webContents.send('checkMasterPassResult', {
 					err: null,
 					match: match
@@ -1108,7 +1118,7 @@ app.on('ready', function () {
 						console.error(`decryptObj ERR: ${err.stack}`);
 					} else {
 						global.vault = vault;
-						console.log(`Decrypted vault, vault's content is ${JSON.stringify(vault)}`);
+						console.log(`Decrypted vault, vault's content is ${JSON.stringify(vault).substr(0, 20)}`);
 						Promise.all([
 								restoreGlobalObj('accounts'),
 								restoreGlobalObj('state'),
@@ -1139,34 +1149,35 @@ app.on('ready', function () {
 											upload. See if persistently viable (i.e. can continue where left of on
 											program restart)
 									*/
-									async.each(global.state.toget, function (file, callback) {
+									async.eachLimit(global.state.toget, API_REQ_LIMIT, function (file, callback) {
+										if (!file) return;
 										let parentPath = global.state.rfs[file.parents[0]].path;
 										let dir = `${global.paths.home}${parentPath}`;
 										// TODO: replace with mkdirp
 										fs.mkdirs(dir, function (err) {
 											if (err) callback(err);
-
 											let path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
 											console.log(`GETing ${file.name} at dest ${path}`);
 											let dest = fs.createWriteStream(path);
 											// TODO: figure out a better way of limiting API requests to less than 10/s (Google API limit)
-											setTimeout(function () {
-												global.drive.files.get({
-														fileId: file.id,
-														alt: 'media'
-													})
-													.on('end', function () {
-														console.log(`GOT ${file.name} ${file.id} at dest ${path}. Moving this file obj to tocrypt`);
-														global.state.tocrypt.push(file); // add from tocrypt queue
-														_.pull(global.state.toget, file); // remove from toget queue
-														callback(null, file.id, file.name);
-													})
-													.on('error', function (err) {
-														console.log('Error during download', err);
-														callback(err, file.id, file.name);
-													})
-													.pipe(dest);
-											}, 600);
+
+											global.drive.files.get({
+													fileId: file.id,
+													alt: 'media'
+												})
+												.on('error', function (err) {
+													console.log('Error during download', err);
+													callback(err, file.id, file.name);
+												})
+												.on('end', function () {
+													console.log(`GOT ${file.name} ${file.id} at dest ${path}. Moving this file obj to tocrypt`);
+													global.state.tocrypt.push(file); // add from tocrypt queue
+													_.pull(global.state.toget, file); // remove from toget queue
+													sync.event.emit('got', file);
+													callback(null, file.id, file.name);
+												})
+												.pipe(dest);
+
 										});
 									}, function (err, fileId, fileName) {
 										// if any of the file processing produced an error, err would equal that error
@@ -1176,7 +1187,7 @@ app.on('ready', function () {
 											console.error(`Failed to get ${fileName} (${fileId}), err: ${err.stack}`);
 											throw err;
 										} else {
-											console.log(`To trigger tocrypt for ${fileName} (${fileId})`);
+											console.log(`GOT ${fileName} (${fileId})`);
 										}
 									});
 								}
@@ -1187,6 +1198,7 @@ app.on('ready', function () {
 									fs.mkdirs(global.paths.crypted, function (err) {
 										async.each(global.state.tocrypt, function (file, callback) {
 											if (err) callback(err);
+											if (!file) return;
 											let parentPath = global.state.rfs[file.parents[0]].path;
 											let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
 											let destpath = `${global.paths.crypted}/${file.name}.crypto`;
@@ -1200,9 +1212,9 @@ app.on('ready', function () {
 														file.iv = iv.toString('hex');
 														file.authTag = tag.toString('hex');
 														global.vault[file.id] = file;
-														console.log(`Done encrypting ${file.name} (${file.id}) to ${destpath}`);
 														global.state.toput.push(file);
 														_.pull(global.state.tocrypt, file);
+														sync.event.emit('encrypted', file);
 														return callback(null, file.id, file.name);
 													} catch (err) {
 														return callback(err, file.id, file.name);
@@ -1216,32 +1228,100 @@ app.on('ready', function () {
 												// All processing will now stop.
 												console.error(`Failed to encrypt ${fileName} (${fileId}), err: ${err.stack}`);
 											} else {
-												console.log(`Done encrypting. To trigger toput for ${fileName} (${fileId})`);
+												console.log(`ENCRYTPTED: ${fileName} (${fileId})`);
 											}
 										});
 									});
 								}
 
 								if (!_.isEmpty(global.state.toput)) {
-									// let fileMetadata = {
-									// 	'name': 'My Report',
-									// 	'mimeType': 'application/vnd.google-apps.spreadsheet'
-									// };
-									// let media = {
-									// 	body: fs.createReadStream('files/report.csv')
-									// };
-									// drive.files.update({
-									// 	fileId: '0B-skmV2...',
+									async.eachLimit(global.state.toput, API_REQ_LIMIT, function (file, callback) {
+										if (!file) return;
+										console.log(`TO PUT: ${file.name} (${file.id})`);
+										global.drive.files.update({
+											fileId: file.id,
+											resource: {
+												name: `${file.name}.crypto`
+											},
+											media: {
+												mimeType: "application/octet-stream",
+												body: fs.createReadStream(file.cryptPath)
+											},
+										}, function (err, res) {
+											if (err) {
+												console.log(`callback: error putting ${file.name}`);
+												return callback(err, file.name, file.id);
+											}
+											console.log(`callback: put ${file.name}`);
+											file.lastSynced = moment().format();
+											// global.state.done.push(file);
+											// _.pull(global.state.tocrypt, file);
+											sync.event.emit('put', file);
+											return callback(null, file.name, file.id, res);
+										});
+									}, function (err, fileName, fileId, res) {
+										if (err) {
+											console.error(`PUT Er ${(fileName) ? fileName : ''} (${(fileId) ? fileId : ''}), err: ${err.stack}`);
+										} else {
+											console.log(`PUT: ${fileName} (${fileId}), res: ${JSON.stringify(res)}`);
+										}
+									});
+
+									// async.each(global.state.toput, function (file, callback) {
+									// 	if (err) callback(err);
+									// 	let parent = file.parents[0];
+									// 	console.log(`TO PUT: ${file.name} (${file.id})`);
+									// 	global.drive.files.create({
+									// 		resource: {
+									// 			name: `lol${file.name}`,
+									// 		},
+									// 		media: {
+									// 			body: fs.createReadStream(file.cryptPath)
+									// 		},
+									// 	}, function (err, response) {
+									// 		if (err) {
+									// 			return callback(err);
+									// 		}
+									// 			return callback(err, rfile, file.id, file.name);
+									// 	});
+									// }, function (err, rfile, fileId, fileName) {
+									// 	if (err) {
+									// 		console.error(`Failed to PUT file ${fileName} (${fileId}), err: ${err.stack}`);
+									// 	} else {
+									// 		console.log(`ENCRYTPTED: ${fileName} (${fileId})`);
+									// 	}
+									// });
+
+									// global.drive.files.create({
 									// 	resource: {
-									// 		title: 'Updated title'
+									// 		name: `${file.name}`,
 									// 	},
 									// 	media: {
-									// 		mimeType: 'text/plain',
-									// 		body: 'Hello World updated with metadata'
+									// 		body: fs.createReadStream(file.cryptPath)
 									// 	},
-									// 	auth: oauth2Client
 									// }, function (err, response) {
-									// 	console.log('error:', err, 'updated:', response.id);
+									// 	if (err) {
+									// 		return console.error(`Error occured while PUTing file ${err.stack}`);
+									// 	}
+									// 	console.log(`UPLOADED TEST, response: ${JSON.stringify(response)}`);
+									// });
+									// global.drive.files.update({
+									// 	fileId: file.id,
+									// 	resource: {
+									// 		name: `${file.name}.crypto`
+									// 	},
+									// 	appProperties: {
+									// 		CryptoSync: true
+									// 	},
+									// 	media: {
+									// 		mimeType: "application/octet-stream",
+									// 		body: fs.createReadStream(file.cryptPath)
+									// 	},
+									// }, function (err, response) {
+									// 	if (err) {
+									// 		return console.error(`Error occurred while PUTing file ${file.name} (${file.id}) to ${file.cryptPath}\n${err.stack}`);
+									// 	}
+									// 	console.log(`UPDATED ${file.name} (${file.id}), response: ${JSON.stringify(response)}`);
 									// });
 								}
 							})

@@ -15,7 +15,7 @@
   },
   "electronVersion": "*",
   "scripts": {
-    "test": "xo",
+    "test": "electron-mocha --renderer --compilers js:babel-core/register 'test/**/*.@(js|jsx)'",
     "start": "electron .",
     "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
   },
@@ -44,7 +44,7 @@
     "fs-extra": "^0.26.7",
     "fs-plus": "*",
     "fstream": "^1.0.8",
-    "google-auth-library": "*",
+    "google-auth-library": "^0.9.7",
     "googleapis": "*",
     "gulp-shell": "*",
     "handlebars": "*",

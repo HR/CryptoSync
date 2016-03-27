@@ -165,7 +165,6 @@ exports.decryptObj = function (obj, origpath, mpkey, viv, vtag, callback) {
 
 	streamToString(JSONstream, function (json) {
 		console.log(`Finished decrypting from ${origpath}`);
-		console.log(`Got json: ${json}`);
 		try {
 			let vault = JSON.parse(json);
 			callback(null, vault);
