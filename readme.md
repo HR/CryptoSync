@@ -7,7 +7,7 @@
 Crypto.Sync an end-to-end encryption cloud synchronisation client that simply manages the encryption of your cloud data for you.
 
 ## Status
-Crypto.Sync is currently in **pre-Alpha** so use at your own risk.
+Crypto.Sync is currently in **Alpha** so use at your own risk.
 Almost all of the UI has been implemented but the core functionality is still a work in progress.
 
 ## Dev
