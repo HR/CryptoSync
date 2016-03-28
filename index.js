@@ -39,10 +39,7 @@ global.accounts = {};
 global.creds = {};
 global.state = {};
 global.files = {};
-// global.state.toget = [];
-// global.state.tocrypt = [];
-// global.state.toput = [];
-// global.state.done = [];
+
 /* Global state
  has three queues:
  - toget: files to download (incl. updated ones)
@@ -943,7 +940,7 @@ function checkMasterPass(masterpass, callback) {
 		}
 		crypto.genPassHash(mpkey, global.creds.mpksalt, function (mpkhash) {
 			// console.log(`creds.mpkhash = ${global.creds.mpkhash}, mpkhash (of entered mp) = ${mpkhash}`);
-			const MATCH = _.isEqual(global.creds.mpkhash, mpkhash); // masterpasskey derived is correct
+			const MATCH = crypto.verifyPassHash(global.creds.mpkhash, mpkhash); // check if masterpasskey derived is correct
 			console.log(`MATCH: ${global.creds.mpkhash} (creds.mpkhash) === ${mpkhash} (mpkhash) = ${MATCH}`);
 			return callback(null, MATCH, mpkey);
 		});
@@ -956,7 +953,6 @@ function Setup() {
 	return new Promise(function (resolve, reject) {
 		fs.makeTreeSync(global.paths.home);
 		fs.makeTreeSync(global.paths.mdb);
-		fs.makeTreeSync(global.paths.vault);
 		resolve();
 	});
 }

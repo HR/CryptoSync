@@ -23,8 +23,11 @@ let defaults = {
 	algorithm: 'aes-256-gcm',
 	salgorithm: 'aes-256-ctr',
 	digest: 'sha256',
+	hash_alg: 'sha256',
 	padLength: 1024,
-	mpk_iterations: 100000 // masterpass key iterations
+	mpk_iterations: 100000, // masterpass key iterations
+	shares: 3,
+	threshold: 2
 };
 
 /*	Crypto
@@ -204,19 +207,41 @@ exports.genPassHash = function (mpass, salt, callback) {
 	const pass = (mpass instanceof Buffer) ? mpass.toString('hex') : mpass;
 
 	if (salt) {
-		let hash = crypto.createHash('sha256').update(`${pass}${salt}`).digest('hex');
+		const hash = crypto.createHash(defaults.hash_alg).update(`${pass}${salt}`).digest('hex');
 		console.log(`genPassHash: S, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
 		callback(hash);
 	} else {
-		let salt = crypto.randomBytes(defaults.keyLength).toString('hex'); // generate 256 random bits
-		let hash = crypto.createHash('sha256').update(`${pass}${salt}`).digest('hex');
+		const salt = crypto.randomBytes(defaults.keyLength).toString('hex');
+		const hash = crypto.createHash(defaults.hash_alg).update(`${pass}${salt}`).digest('hex');
 		console.log(`genPassHash: NS, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
 		callback(hash, salt);
 	}
 };
 
-exports.verifyPassHash = function (key, hash, callback) {
-	return this.genPassHash(key) === hash;
+exports.verifyPassHash = function (mpkhash, gmpkhash) {
+	return _.isEqual(mpkhash, gmpkhash);
+};
+
+exports.genFileHash = function (origpath, callback) {
+	let fd = fs.createReadStream(origpath);
+	const hash = crypto.createHash(defaults.hash_alg);
+	hash.setEncoding('hex');
+	fd.on('end', function () {
+		hash.end();
+		let fhash = hash.read();
+		console.log(`genFileHash: S, salt = ${salt}, fhash = ${fhash}`);
+		callback(null, fhash);
+	});
+
+	fd.on('error', function (e) {
+		callback(e);
+	}).pipe(hash).on('error', function (e) {
+		callback(e);
+	});
+};
+
+exports.verifyFileHash = function (fhash, gfhash) {
+	return _.isEqual(fhash, gfhash);
 };
 
 exports.decrypt = function (ctext, key, iv, callback) {
@@ -227,6 +252,9 @@ exports.decrypt = function (ctext, key, iv, callback) {
 	return decrypted;
 };
 
+/**
+ * @param {array} of at least the threshold length
+ */
 exports.shares2pass = function (sharedata) {
 	// reconstructs the pass from the shares of the pass
 	// using Shamir's Secret Sharing
@@ -248,7 +276,7 @@ exports.shares2pass = function (sharedata) {
 	return pass;
 };
 
-exports.pass2shares = function (pass, N, S) {
+exports.pass2shares = function (pass, N = defaults.shares, S = defaults.threshold) {
 	// splits the pass into shares using Shamir's Secret Sharing
 
 	// convert the text into a hex string
