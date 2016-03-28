@@ -1,149 +1,234 @@
 <!doctype html>
 <html>
 
-<head>
-	<meta charset="utf-8">
-	<title>Crypto.Sync</title>
-	<link rel="stylesheet" href="style/menubar.css">
-</head>
+  <head>
+    <meta charset="utf-8">
+    <title>Crypto.Sync</title>
+    <link rel="stylesheet" href="style/menubar.css">
+  </head>
 
-<body>
-	<section id="menubar">
-		<div class="head">
-			<a class="left navigationLink" data-target="openSyncFolder" id="openSyncFolder">
-				<img class="icon" src="images/icons/folder.svg" alt="" />
-			</a>
-			<a class="right navigationLink" data-target="openVault">
-				<img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt="" />
-			</a>
-		</div>
-		<header>RECENTLY CHANGED</header>
-		<div class="fileList" id="filesList">
-		</div>
-		<footer>
-			<div class="status" id="status">
-			</div>
-			<a class="right navigationLink" data-target="openSettings">
-				<img class="icon" src="images/icons/settings.svg" />
-			</a>
-			<a class="left navigationLink" data-target="quitApp">
-				<img class="icon" src="images/icons/quit.svg" alt="" />
-			</a>
-		</footer>
-	</section>
-	<script id="file-template" type="text/x-handlebars-template">
-		<div class="item">
-			<div class="type">
-				<img class="fileType" src="images/icons/filetypes/{{fileType}}.svg">
-				<div class="cloudType">
-					<img src="images/icons/{{type}}.svg"></img>
-				</div>
-			</div>
-			<div class="content">
-				<div class="name">{{name}}</div>
-				<div class="lastMod">{{lastMod}}</div>
-			</div>
-		</div>
-	</script>
-	<script id="status-template" type="text/x-handlebars-template">
-		<img class="icon left {{spin}}" src="images/icons/status/{{status}}.svg" />
-		<span>{{statusText}}</span>
-	</script>
-	<script type="text/javascript">
-		window.$ = window.jQuery = require('jquery');
-		// load core modules first
-		var remote = require('electron').remote,
-			ipcRenderer = require('electron').ipcRenderer,
-			Handlebars = require('handlebars'),
-			state = remote.getGlobal("state"),
-			drive = remote.getGlobal("drive"), // TODO: check if necessary
-			rconsole = remote.getGlobal("console");
+  <body>
+    <section id="menubar">
+      <div class="head">
+        <a class="left navigationLink" data-target="openSyncFolder" id="openSyncFolder">
+          <img class="icon" src="images/icons/folder.svg" alt=""/>
+        </a>
+        <a class="right navigationLink" data-target="openVault">
+          <img class="icon" src="images/icons/CryptoSyncVault_sl.svg" alt=""/>
+        </a>
+      </div>
+      <header>RECENTLY CHANGED</header>
+      <div class="fileList" id="filesList"></div>
+      <footer>
+        <div class="status" id="status"></div>
+        <a class="right navigationLink" data-target="openSettings">
+          <img class="icon" src="images/icons/settings.svg"/>
+        </a>
+        <a class="left navigationLink" data-target="quitApp">
+          <img class="icon" src="images/icons/quit.svg" alt=""/>
+        </a>
+      </footer>
+    </section>
+    <script id="file-template" type="text/x-handlebars-template">
+      <div class="item">
+        <div class="type">
+          <img class="fileType" src="images/icons/filetypes/{{fileType}}.svg">
+          <div class="cloudType">
+            <img src="images/icons/{{type}}.svg"></img>
+          </div>
+        </div>
+        <div class="content">
+          <div class="name">{{name}}</div>
+          <div class="lastSynced" data-moment="{{moment}}">{{lastSynced}}</div>
+        </div>
+      </div>
+    </script>
+    <script id="status-template" type="text/x-handlebars-template">
+      <img class="icon left {{spin}}" src="images/icons/status/{{status}}.svg"/>
+      <span>{{text}}</span>
+    </script>
+    <script type="text/javascript">
+      window.$ = window.jQuery = require('jquery');
+      // load core modules first
+      var remote = require('electron').remote,
+        ipcRenderer = require('electron').ipcRenderer,
+        Handlebars = require('handlebars'),
+        moment = require('moment');
+      state = remote.getGlobal("state"),
+      drive = remote.getGlobal("drive"), // TODO: check if necessary
+      rconsole = remote.getGlobal("console"),
+      MAX_LIST_LENGTH = 6;
 
-		$(window).on('online', updateOnlineStatus);
-		$(window).on('offline', updateOnlineStatus);
-		updateOnlineStatus();
+      var statusTexts = {
+        getting: 'Fetching...',
+        syncing: 'Syncing...',
+				putting: 'Uploading...',
+				encrypting: 'Encrypting...',
+				encrypted: 'Encrypted!',
+				synced: 'Synced!',
+				notsynced: 'Not synced!'
+      };
 
-		$(window).load(function() {
-			// attach click listners
-			$(".navigationLink").each(function(index) {
-				$(this).click(function() {
-					if (this.hasAttribute("data-target")) emittEvent(this.getAttribute("data-target"));
-				});
-			});
-			if ($.isEmptyObject(status)) {
-				// TODO: render
-			}
-			updateStatus(
-				{
-					status: "syncing",
-					statusText: "Syncing"
-				}
-			);
-		});
+      $(window).on('online', updateOnlineStatus);
+      $(window).on('offline', updateOnlineStatus);
+      updateOnlineStatus();
 
-		/* Helper functions */
-		function updateStatus(status) {
-			status.spin = (status.status === "syncing") ? "spin" : "";
-			var template = Handlebars.compile($("#status-template").html());
-			var statusHTML = template(status);
-			$('#status').html(statusHTML);
-		}
+      $(window).load(function() {
+        // attach click listners
+        $(".navigationLink").each(function(index) {
+          $(this).click(function() {
+            if (this.hasAttribute("data-target"))
+              emittEvent(this.getAttribute("data-target"));
+            }
+          );
+        });
+        if ($.isEmptyObject(status)) {
+          // TODO: render
+        }
+      });
 
-		function addFiles(files) {
-			for (var file in files) {
-				if (files.hasOwnProperty(file)) {
-					var template = Handlebars.compile($("#file-template").html());
-					var file = template(files[file]);
-					$('#filesList').append(file);
-				}
-			}
-		}
+      /* Helper functions */
+      function updateStatus(status) {
+        var sobj = {};
+        if (status === "getting" || status === "putting") {
+          sobj.status = "syncing";
+        } else {
+          sobj.status = status;
+        }
+        sobj.text = statusTexts[status];
+        sobj.spin = (sobj.status === "syncing")
+          ? "spin"
+          : "";
+        var template = Handlebars.compile($("#status-template").html());
+        var statusHTML = template(sobj);
+        $('#status').html(statusHTML);
+      }
 
-		/* Event emitters  */
-		function emittEvent(event) {
-			// send event to main
-			rconsole.log("RENDER: " + event + " event emitted");
-			ipcRenderer.send(event);
-		}
+      function updateList(file) {
+        file.moment = file.lastSynced;
+        file.lastSynced = moment(file.lastSynced).fromNow();
+        var fileList = $('#filesList'),
+          fListItem = fileList.children(),
+          template = Handlebars.compile($("#file-template").html()),
+          fileHTML = template(file);
+        fileList.prepend(fileHTML);
+        if (fListItem.length > MAX_LIST_LENGTH) {
+          while (fListItem.length > MAX_LIST_LENGTH) {
+            fListItem.last().remove();
+            fListItem = $('#filesList').children();
+          }
+        }
+      }
 
-		// Network change event
-		function updateOnlineStatus() {
-			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
-		};
+      function updateMoments() {
+        $('.lastSynced').each(function(index) {
+          var tmoment = $(this).data(),
+            nmoment = moment(tmoment).fromNow();
+          $(this).text(nmoment);
+        });
+      };
 
-		/* Event listeners */
-		ipcRenderer.on("statusChange", function(event, status) {
-			rconsole.log("IPCRENDER: statusChange emitted");
-			updateStatus(status);
-		});
-		var files = {
-			first: {
-				name:"List of secret keys.docx",
-				fileType:"word",
-				type:"gdrive",
-				lastMod:"22min ago.",
-			},
-			sec: {
-				name:"Computing spec.pdf",
-				fileType:"pdf",
-				type:"gdrive",
-				lastMod:"1h ago.",
-			},
-			third: {
-				name:"Ubuntu_16.04x64.zip",
-				fileType:"zip",
-				type:"gdrive",
-				lastMod:"2 days ago.",
-			},
-			fourth: {
-				name:"matrix.png",
-				fileType:"image",
-				type:"dropbox",
-				lastMod:"1 week ago.",
-			}
-		};
-		addFiles(files);
-	</script>
-</body>
+      /* Event emitters  */
+      function emittEvent(event) {
+        // send event to main
+        rconsole.log(`RENDER: ${event} event emitted`);
+        ipcRenderer.send(event);
+      }
+
+      // Network change event
+      function updateOnlineStatus() {
+        ipcRenderer.send('online-status-changed', navigator.onLine
+          ? 'online'
+          : 'offline');
+      };
+
+      /* Event listeners */
+      ipcRenderer.on("statusChange", function(event, status) {
+        rconsole.log("IPCRENDER: statusChange emitted");
+        updateStatus(status);
+      });
+
+      ipcRenderer.on("updateMoments", function(event) {
+        rconsole.log("IPCRENDER: updateMoment emitted");
+        updateMoments();
+      });
+
+      ipcRenderer.on("synced", function(event, file) {
+        rconsole.log("IPCRENDER: synced emitted");
+        switch (file.fileType) {
+          case "png":
+          case "jpg":
+          case "jpeg":
+          case "gif":
+          case "tif":
+            file.fileType = "image";
+            break;
+          case "docx":
+          case "rtf":
+          case "doc":
+            console.log("word");
+            file.fileType = "word";
+            break;
+          case "html":
+          case "js":
+          case "css":
+          case "c":
+          case "cpp":
+          case "py":
+          case "ruby":
+          case "java":
+            console.log("code");
+            file.fileType = "code";
+            break;
+          case "mp4":
+          case "mkv":
+          case "flv":
+            file.fileType = "video";
+            break;
+          case "mp4":
+          case "mkv":
+          case "flv":
+          case "doc":
+          case "gdoc":
+            file.fileType = "word";
+            break;
+          case "ppt":
+            file.fileType = "powerpoint";
+            break;
+          case "ai":
+          case "psd":
+          case "flv":
+            file.fileType = "vector";
+            break;
+          case "mp3":
+          case "flac":
+          case "wav":
+            file.fileType = "audio";
+            break;
+          case "tar":
+          case "zip":
+          case "gz":
+            file.fileType = "vector";
+            break;
+          case "tar":
+          case "zip":
+          case "gz":
+            file.fileType = "zip";
+            break;
+          case "pdf":
+            file.fileType = "pdf";
+            break;
+          case "XLS":
+          case "XLSM":
+          case "XLSX":
+            file.fileType = "excel";
+            break;
+          default:
+            file.fileType = "file";
+        }
+        updateList(file);
+      });
+    </script>
+  </body>
 
 </html>
