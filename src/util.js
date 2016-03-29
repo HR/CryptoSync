@@ -3,7 +3,26 @@
  * util.js
  * Contains essential common utilities required
  ******************************/
-const _ = require('lodash');
+const _ = require('lodash'),
+	fs = require('fs');
+
+exports.checkDirectorySync = function (dir) {
+	try {
+		fs.statSync(filePath);
+	} catch (err) {
+		if (err.code == 'ENOENT') return false;
+	}
+	return true;
+};
+
+exports.checkFileSync = function (path) {
+	try {
+		fs.accessSync(path, fs.F_OK);
+		return true;
+	} catch (e) {
+		return false;
+	}
+};
 
 exports.getValue = function (db, key) {
 	console.log(`PROMISE: getValue for getting ${key}`);

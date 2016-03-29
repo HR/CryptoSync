@@ -23,7 +23,6 @@ const app = electron.app,
 	google = require('googleapis'),
 	async = require('async');
 
-const SETUPTEST = 0; // ? Setup : Menubar
 const API_REQ_LIMIT = 8;
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
@@ -1039,8 +1038,8 @@ app.on('activate', function (win) {
 
 app.on('ready', function () {
 	// TODO: Wrap all this into init();
-	// let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.accessSync(global.paths.vault));
-	if (SETUPTEST) {
+	let setupRun = ((!util.checkDirectorySync(global.paths.mdb)) || (!util.checkFileSync(global.paths.vault)));
+	if (setupRun) {
 		// TODO: Do more extensive FIRST RUN check
 		console.log('First run. Creating Setup wizard...');
 		// Setup();
@@ -1122,6 +1121,10 @@ app.on('ready', function () {
 						}, 0);
 					}
 				});
+				fs.ensureDir(global.paths.home, function (err) {
+					if (err) reject(err);
+					resolve();
+				});
 			});
 		};
 
@@ -1171,30 +1174,96 @@ app.on('ready', function () {
 									// body...
 								})
 							).then(() => {
+								let pushGetQueue = function (file) {
+									console.log(`PROMISE: pushGetQueue for ${file.name}`);
+									return new Promise(function (resolve, reject) {
+										sync.getQueue.push(file, function (err, file) {
+											if (err) {
+												console.error(`ERROR occurred while GETting ${file.name}`);
+												reject(err);
+											}
+											console.log(`DONE GETting ${file.name}. Enqueuing into cryptQueue...`);
+											_.pull(global.state.toget, file); // remove from toget queue
+											global.state.tocrypt.push(file); // add from tocrypt queue
+											resolve(file);
+										});
+									});
+								};
+								let pushCryptQueue = function (file) {
+									console.log(`PROMISE: pushCryptQueue for ${file.name}`);
+									return new Promise(function (resolve, reject) {
+										sync.cryptQueue.push(file, function (err, file) {
+											if (err) {
+												console.error(`ERROR occurred while ENCRYPTting`);
+												reject(err);
+											}
+											global.state.toput.push(file);
+											_.pull(global.state.tocrypt, file);
+											console.log(`DONE ENCRYPTting ${file.name}. Enqueuing into putQueue...`);
+											resolve(file);
+										});
+									});
+								};
+								let pushPutQueue = function (file) {
+									console.log(`PROMISE: pushPutQueue for ${file.name}`);
+									return new Promise(function (resolve, reject) {
+										sync.putQueue.push(file, function (err, file) {
+											if (err) {
+												console.error(`ERROR occurred while PUTting`);
+												reject();
+											}
+											console.log(`DONE PUTting ${file.name}. Removing from global status...`);
+											_.pull(global.state.tocrypt, file);
+											self.event.emit('put', file);
+											resolve();
+										});
+									});
+								};
+
+								// Restore queues on startup
+
 								if (!_.isEmpty(global.state.toget)) {
-									sync.getAll(global.state.toget, function (err) {
-										// if any of the file processing produced an error, err would equal that error
-										if (err) {
-											// One of the iterations produced an error.
-											// All processing will now stop.
-											console.error(`ERROR occurred while GETting ALL`);
-										} else {
-											// TODO: emitt appropriate statusChange event
-											console.log(`DONE GETting ALL`);
-										}
+									sync.event.emit('statusChange', 'getting');
+									global.state.toget.forEach(function (file) {
+										pushGetQueue(file)
+											.then(pushCryptQueue)
+											.then(pushPutQueue)
+											.then(() => {
+												sync.event.emit('statusChange', 'synced');
+											})
+											.catch((err) => {
+												sync.event.emit('statusChange', 'notsynced');
+												console.error(`PROMISE ERR: ${err.stack}`);
+											});
 									});
 								}
 
 								if (!_.isEmpty(global.state.tocrypt)) {
-									sync.cryptAll(global.state.tocrypt, function (err) {
-										if (err) {
-											// One of the iterations produced an error.
-											// All processing will now stop.
-											console.error(`Error occurred while encrypting ALL: ${err.stack}`);
-											// sync.event.emit('statusChange', 'notsynced');
-										} else {
-											console.log(`ENCRYTPTED ALL`);
-										}
+									sync.event.emit('statusChange', 'encrypting');
+									global.state.tocrypt.forEach(function (file) {
+										pushCryptQueue(file)
+											.then(pushPutQueue)
+											.then(() => {
+												sync.event.emit('statusChange', 'synced');
+											})
+											.catch((err) => {
+												sync.event.emit('statusChange', 'notsynced');
+												console.error(`PROMISE ERR: ${err.stack}`);
+											});
+									});
+								}
+
+								if (!_.isEmpty(global.state.tocrypt)) {
+									sync.event.emit('statusChange', 'putting');
+									global.state.tocrypt.forEach(function (file) {
+										pushPutQueue(file)
+											.then(() => {
+												sync.event.emit('statusChange', 'synced');
+											})
+											.catch((err) => {
+												sync.event.emit('statusChange', 'notsynced');
+												console.error(`PROMISE ERR: ${err.stack}`);
+											});
 									});
 								}
 								// TODO: Modularise, write as a seperate script
@@ -1208,7 +1277,7 @@ app.on('ready', function () {
 								// 				upload. See if persistently viable (i.e. can continue where left of on
 								// 				program restart)
 								// 		*/
-								// 		sync.event.emit('statusChange', 'getting');
+										// sync.event.emit('statusChange', 'getting');
 								//
 								// 		getAll()
 								// 			.then(() => {
@@ -1216,7 +1285,7 @@ app.on('ready', function () {
 								// 				return Sync();
 								// 			})
 								// 			.catch((err) => {
-								// 				sync.event.emit('statusChange', 'notsynced');
+												// sync.event.emit('statusChange', 'notsynced');
 								// 				console.log(`getAll PROMISE ERR: ${err.stack}`);
 								// 			});
 								// 	}

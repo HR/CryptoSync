@@ -14,7 +14,7 @@ let levelup = require('levelup'),
 	async = require('async');
 
 const API_REQ_LIMIT = 7;
-const CONCURRENCY = 7;
+const CONCURRENCY = 2;
 // class SyncEmitter extends EventEmitter {};
 
 exports.event = new EventEmitter();
@@ -22,7 +22,6 @@ exports.event = new EventEmitter();
 // first global.state.toget.push(file);
 // then enqueue
 exports.getQueue = async.queue(function (file, callback) {
-	if (!file) return callback(`Error: no file or empty file passed`);
 	let parentPath = global.state.rfs[file.parents[0]].path;
 	const dir = `${global.paths.home}${parentPath}`;
 	const path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
@@ -53,42 +52,79 @@ exports.getQueue = async.queue(function (file, callback) {
 			.on('finish', function () {
 				console.log(`Written ${file.name} to ${path}`);
 				// self.event.emit('got', file);
-				_.pull(toget, file); // remove from toget queue
-				global.state.tocrypt.push(file); // add from tocrypt queue
-				callback();
+				callback(null, file);
 			});
 	});
 }, CONCURRENCY);
-// Sync.getAll(toget, global.drive.files, global.state.rfs);
 
 exports.cryptQueue = async.queue(function (file, callback) {
-	const self = this;
-	if (!file) return;
-	let parentPath = global.state.rfs[file.parents[0]].path;
-	let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
-	let destpath = `${global.paths.crypted}/${file.name}.crypto`;
-	console.log(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`);
-	crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, key, iv, tag) {
-		if (err) {
-			return callback(err);
-		} else {
-			try {
-				file.cryptPath = destpath;
-				file.iv = iv.toString('hex');
-				file.authTag = tag.toString('hex');
-				global.files[file.id] = file;
-				global.vault[file.id] = file;
-				global.vault[file.id].shares = crypto.pass2shares(key);
-				// global.state.toput.push(file);
-				// _.pull(tocrypt, file);
-				// self.event.emit('encrypted', file);
-				callback();
-			} catch (err) {
-				callback(err);
+	fs.mkdirs(global.paths.crypted, function (err) {
+		if (err) return callback(err);
+		const self = this;
+		let parentPath = global.state.rfs[file.parents[0]].path;
+		let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
+		let destpath = `${global.paths.crypted}/${file.name}.crypto`;
+		console.log(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`);
+		crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, key, iv, tag) {
+			if (err) {
+				return callback(err);
+			} else {
+				try {
+					file.cryptPath = destpath;
+					file.iv = iv.toString('hex');
+					file.authTag = tag.toString('hex');
+					global.files[file.id] = file;
+					global.vault[file.id] = _.cloneDeep(file);
+					global.vault[file.id].shares = crypto.pass2shares(key);
+					callback(null, file);
+				} catch (err) {
+					callback(err);
+				}
 			}
-		}
+		});
 	});
 }, CONCURRENCY);
+
+exports.putQueue = async.queue(function (file, callback) {
+	const self = this;
+	console.log(`TO PUT: ${file.name} (${file.id})`);
+	global.drive.files.update({
+		fileId: file.id,
+		resource: {
+			name: `${file.name}.crypto`
+		},
+		media: {
+			mimeType: "application/octet-stream",
+			body: fs.createReadStream(file.cryptPath)
+		},
+	}, function (err, res) {
+		if (err) {
+			console.log(`callback: error putting ${file.name}`);
+			return callback(err);
+		}
+		console.log(`callback: put ${file.name}`);
+		file.lastSynced = moment().format();
+		callback(null, file);
+	});
+
+}, CONCURRENCY);
+
+exports.updateStats = function (file, callback) {
+	fs.Stats(file.path, function (err, stats) {
+		if (err) {
+			console.log(`fs.Stats ERROR: ${err.stack}`);
+			return callback(err);
+		}
+		console.log(`fs.Stats: for ${file.name}, file.mtime = ${stats.mtime}`);
+		console.log(`fs.Stats: for ${file.name}, file.size = ${stats.size}`);
+		file.mtime = stats.mtime;
+		file.size = stats.size;
+		// global.files[file.id] = file;
+		console.log(`GOT fs.Stat of file, mtime = ${file.mtime}`);
+		callback(null, file);
+	});
+
+};
 
 exports.getAll = function (toget, cb) {
 	// const self = this;
@@ -200,47 +236,6 @@ exports.putAll = function (cb) {
 		cb(err);
 	});
 };
-
-exports.updateStats = function (file, callback) {
-	fs.Stats(file.path, function (err, stats) {
-		if (err) {
-			console.log(`fs.Stats ERROR: ${err.stack}`);
-			return callback(err);
-		}
-		console.log(`fs.Stats: for ${file.name}, file.mtime = ${stats.mtime}`);
-		console.log(`fs.Stats: for ${file.name}, file.size = ${stats.size}`);
-		file.mtime = stats.mtime;
-		file.size = stats.size;
-		// global.files[file.id] = file;
-		console.log(`GOT fs.Stat of file, mtime = ${file.mtime}`);
-		callback(null, file);
-	});
-
-};
-// async.each(global.state.toput, function (file, callback) {
-// 	if (err) callback(err);
-// 	let parent = file.parents[0];
-// 	console.log(`TO PUT: ${file.name} (${file.id})`);
-// 	global.drive.files.create({
-// 		resource: {
-// 			name: `lol${file.name}`,
-// 		},
-// 		media: {
-// 			body: fs.createReadStream(file.cryptPath)
-// 		},
-// 	}, function (err, response) {
-// 		if (err) {
-// 			return callback(err);
-// 		}
-// 			return callback(err, rfile, file.id, file.name);
-// 	});
-// }, function (err, rfile, fileId, fileName) {
-// 	if (err) {
-// 		console.error(`Failed to PUT file ${fileName} (${fileId}), err: ${err.stack}`);
-// 	} else {
-// 		console.log(`ENCRYTPTED: ${fileName} (${fileId})`);
-// 	}
-// });
 
 // global.drive.files.create({
 // 	resource: {
