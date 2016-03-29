@@ -1,3 +1,4 @@
+<!doctype html>
 <html>
 
 <head>
@@ -51,7 +52,7 @@
 					<p>Crypto.Sync an end-to-end encryption cloud synchronisation client that simply manages the encryption of your cloud data for you.
 					</p>
 				</header>
-				<button class="fancy" class="navigationLink" onclick="navigate(this.getAttribute('data-target'))" data-target="accounts">GET STARTED</button>
+				<button class="fancy navigationLink" onclick="navigate(this.getAttribute('data-target'))" data-target="accounts">GET STARTED</button>
 			</div>
 			<div id="panel-accounts">
 				<section class="accounts">
@@ -90,7 +91,7 @@
 			<div id="panel-auth">
 				<header class="minimal">
 					<div class="banner">
-						<svg class="spinner" width="65px" height="65px" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+						<svg class="spinner" width="65px" height="65px" viewbox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
 							<circle class="path" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
 						</svg>
 					</div>
@@ -107,7 +108,7 @@
 						<img class="info" src="images/icons/info.svg" alt="" />
 						<p class="info">The Vault contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass.</p>
 					</header>
-					<form onSubmit="return false;">
+					<form onsubmit="return false;">
 						<div class="masterpass">
 							<input type="password" name="name" id="name" class="" placeholder="********" />
 							<label for="password"></label>
@@ -133,7 +134,7 @@
 					<h1>All done!</h1>
 					<p>You have successfully setup Crypto.Sync. It will shortly start doing its magic and protecting your privacy.</p>
 				</header>
-				<button class="fancy" class="done navigationLink" id="done">FINISH</button>
+				<button class="fancy done navigationLink" id="done">FINISH</button>
 				<footer class="credit">
 					<img src="images/icons/code.svg" alt="" class="icon" /> with
 					<img src="images/icons/heart.svg" alt="" class="icon" /> by <a onclick="event.preventDefault();require('shell').openExternal('https://git.io/HR');">Habib Rehman</a>
