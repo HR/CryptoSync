@@ -9,14 +9,15 @@ const app = electron.app,
 	crypto = require('./src/crypto'),
 	OAuth = require('./src/OAuth'),
 	util = require('./src/util'),
+	res = require('./static/js/res'),
 	Account = require('./src/Account'),
-	// sync = require('./src/Sync'),
+	sync = require('./src/sync'),
 	fs = require('fs-extra'),
+	chokidar = require('chokidar'),
 	https = require('https'),
-	EventEmitter = require('events').EventEmitter,
+	sutil = require('util'),
 	moment = require('moment'),
 	base64 = require('base64-stream'),
-	chalk = require('chalk'),
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
 	google = require('googleapis'),
@@ -24,8 +25,6 @@ const app = electron.app,
 
 const SETUPTEST = 0; // ? Setup : Menubar
 const API_REQ_LIMIT = 8;
-const sync = {};
-sync.event = new EventEmitter();
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
 // TODO: consider using 'q' or 'bluebird' promise libs later
 // TODO: consider using arrow callback style I.E. () => {}
@@ -443,76 +442,71 @@ function createSetup(callback) {
 					});
 				};
 
-				// Get auth token from auth code
-				gAuth.getToken(auth_code)
-					.then(storeToken)
-					.then(InitDrive)
-					.then(getAccountInfo)
-					.then(getPhoto)
-					.then(setAccountInfo)
-					.then(function (email) {
-						// get all drive files and start downloading them
-						console.log(`PROMISE for retrieving all of ${email} files`);
-						return new Promise(
-							function (resolve, reject) {
-								let fBtree = [],
-									folders = [],
-									root,
-									rfsTree = {};
-								// TODO: Implement Btree for file directory structure
-								console.log('PROMISE: getAllFiles');
-								console.log(`query is going to be >> 'root' in parents and trashed = false`);
-								global.drive.files.list({
-									q: `'root' in parents and trashed = false`,
-									orderBy: 'folder desc',
-									fields: 'files(fullFileExtension,id,md5Checksum,mimeType,modifiedTime,name,ownedByMe,parents,properties,size,webContentLink,webViewLink),nextPageToken',
-									spaces: 'drive',
-									pageSize: 1000
-								}, function (err, res) {
-									if (err) {
-										reject(err);
-									}
-									if (res.files.length == 0) {
-										console.log('No files found.');
-										reject('No files found so no need to proceed');
-									} else {
-										console.log('Google Drive files (depth 2):');
-										root = res.files[0].parents[0];
-										rfsTree[root] = {};
-										rfsTree[root]['path'] = `/`;
+				let getAllFiles = function (email) {
+					// get all drive files and start downloading them
+					console.log(`PROMISE for retrieving all of ${email} files`);
+					return new Promise(
+						function (resolve, reject) {
+							let fBtree = [],
+								folders = [],
+								root,
+								rfsTree = {};
+							// TODO: Implement Btree for file directory structure
+							console.log('PROMISE: getAllFiles');
+							console.log(`query is going to be >> 'root' in parents and trashed = false`);
+							global.drive.files.list({
+								q: `'root' in parents and trashed = false`,
+								orderBy: 'folder desc',
+								fields: 'files(fullFileExtension,id,md5Checksum,mimeType,name,ownedByMe,parents,properties,webContentLink,webViewLink),nextPageToken',
+								spaces: 'drive',
+								pageSize: 1000
+							}, function (err, res) {
+								if (err) {
+									reject(err);
+								}
+								if (res.files.length == 0) {
+									console.log('No files found.');
+									reject('No files found so no need to proceed');
+								} else {
+									console.log('Google Drive files (depth 2):');
+									root = res.files[0].parents[0];
+									rfsTree[root] = {};
+									rfsTree[root]['path'] = `/`;
 
-										for (let i = 0; i < res.files.length; i++) {
-											let file = res.files[i];
-											if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
-												console.log(`Folder ${file.name} found. Calling fetchFolderItems...`);
-												folders.push(file.id);
-												rfsTree[file.id] = file;
-												rfsTree[file.id]['path'] = `${rfsTree[file.parents[0]]['path']}${file.name}`;
-											} else {
-												console.log('root/ %s (%s)', file.name, file.id);
-												fBtree.push(file);
-											}
+									for (let i = 0; i < res.files.length; i++) {
+										let file = res.files[i];
+										if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
+											console.log(`Folder ${file.name} found. Calling fetchFolderItems...`);
+											folders.push(file.id);
+											rfsTree[file.id] = file;
+											rfsTree[file.id]['path'] = `${rfsTree[file.parents[0]]['path']}${file.name}`;
+										} else {
+											console.log(`root/${file.name} (${file.id})`);
+											fBtree.push(file);
 										}
-										// TODO: map folderIds to their respective files & append to the toget arr
-										async.map(folders, fetchFolderItems, function (err, fsuBtree) {
-											console.log(`Got ids: ${folders}. Calling async.map(folders, fetchFolderItem,...) to map`);
-											if (err) {
-												console.log(`Errpr while mapping folders to file array: ${err}`);
-												reject(err);
-											} else {
-												// console.log(`Post-callback ${JSON.stringify(fsuBtree)}`);
-												fBtree.push(_.flattenDeep(fsuBtree));
-												console.log(`Got fsuBtree: ${fsuBtree}`);
-												resolve([fBtree, rfsTree]);
-											}
-										});
-										// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met
 									}
-								});
-							}
-						);
-					})
-					.then(function (trees) {
+									// TODO: map folderIds to their respective files & append to the toget arr
+									async.map(folders, fetchFolderItems, function (err, fsuBtree) {
+										console.log(`Got ids: ${folders}. Calling async.map(folders, fetchFolderItem,...) to map`);
+										if (err) {
+											console.log(`Errpr while mapping folders to file array: ${err}`);
+											reject(err);
+										} else {
+											// console.log(`Post-callback ${sutil.inspect(fsuBtree)}`);
+											fBtree.push(_.flattenDeep(fsuBtree));
+											console.log(`Got fsuBtree: ${fsuBtree}`);
+											resolve([fBtree, rfsTree]);
+										}
+									});
+									// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met
+								}
+							});
+						}
+					);
+				};
+
+				let initSyncGlobals = function (trees) {
+					return new Promise(function (resolve, reject) {
 						console.log(`\n THEN saving file tree (fBtree) to global.state.toget`);
 						let files = _.flattenDeep(trees[0]);
 						global.state = {};
@@ -520,10 +514,19 @@ function createSetup(callback) {
 						global.state.toget = files;
 						global.state.tocrypt = [];
 						global.state.toput = [];
-						global.state.done = [];
 						global.state.rfs = trees[1];
-					})
-					.then((value) => {})
+					});
+				};
+
+				// Get auth token from auth code
+				gAuth.getToken(auth_code)
+					.then(storeToken)
+					.then(InitDrive)
+					.then(getAccountInfo)
+					.then(getPhoto)
+					.then(setAccountInfo)
+					.then(getAllFiles)
+					.then(initSyncGlobals)
 					.catch(function (error) {
 						console.error(`PROMISE ERR: ${error.stack}`);
 					});
@@ -604,7 +607,7 @@ function initVault(callback) {
 function addAccountPrompt(callback) {
 	function getParam(name, url) {
 		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-		let regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+		let regex = new RegExp(`[\\?&]${name}=([^&#]*)`),
 			results = regex.exec(url);
 		return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 	}
@@ -1050,6 +1053,12 @@ app.on('ready', function () {
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		Init()
+			// .then(
+			// 	global.mdb.del('gdrive-token', function (err) {
+			// 		if (err) console.log(`Error retrieving gdrive-token, ${err}`);
+			// 		console.log("deleted gdrive-token");
+			// 	})
+			// )
 			.then(
 				createSetup(function (err) {
 					if (err) {
@@ -1101,7 +1110,7 @@ app.on('ready', function () {
 							reject(err);
 						}
 					} else {
-						console.log(`SUCCESS: creds FOUND ${json}`);
+						console.log(`SUCCESS: creds FOUND ${json.substr(0, 20)}`);
 						global.creds = JSON.parse(json);
 						setTimeout(function () {
 							console.log(`resolve global.creds called`);
@@ -1127,7 +1136,7 @@ app.on('ready', function () {
 						console.error(`decryptObj ERR: ${err.stack}`);
 					} else {
 						global.vault = vault;
-						console.log(`Decrypted vault, vault's content is ${JSON.stringify(vault).substr(0, 20)}`);
+						console.log(`Decrypted vault, vault's content is ${sutil.inspect(vault).substr(0, 20)}`);
 						Promise.all([
 								restoreGlobalObj('accounts'),
 								restoreGlobalObj('state'),
@@ -1149,9 +1158,6 @@ app.on('ready', function () {
 								// Set initial stats
 								global.stats.startTime = moment().format();
 								global.stats.time = moment();
-								global.state.tocrypt = [];
-								global.state.toput = [];
-								global.state.done = [];
 								return;
 							})
 							.then(() => {
@@ -1161,143 +1167,89 @@ app.on('ready', function () {
 								// and spawn as child process (with shared memory)
 								// Implement with ES6 Generators?
 
-								if (!_.isEmpty(global.state.toget)) {
-									/* TODO: Evaluate the use of async.queues where a queue task is created
-											forEach file and the task is to first get the file then encrypt and then
-											upload. See if persistently viable (i.e. can continue where left of on
-											program restart)
-									*/
-									sync.event.emit('statusChange', 'getting');
-
-									async.eachLimit(global.state.toget, API_REQ_LIMIT, function (file, callback) {
-										if (!file) return;
-										let parentPath = global.state.rfs[file.parents[0]].path;
-										let dir = `${global.paths.home}${parentPath}`;
-										// TODO: replace with mkdirp
-										fs.mkdirs(dir, function (err) {
-											if (err) callback(err);
-											let path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
-											console.log(`GETing ${file.name} at dest ${path}`);
-											let dest = fs.createWriteStream(path);
-											// TODO: figure out a better way of limiting API requests to less than 10/s (Google API limit)
-
-											global.drive.files.get({
-													fileId: file.id,
-													alt: 'media'
-												})
-												.on('error', function (err) {
-													console.log('Error during download', err);
-													callback(err, file.id, file.name);
-												})
-												.on('end', function () {
-													console.log(`GOT ${file.name} ${file.id} at dest ${path}. Moving this file obj to tocrypt`);
-													global.state.tocrypt.push(file); // add from tocrypt queue
-													_.pull(global.state.toget, file); // remove from toget queue
-													// sync.event.emit('got', file);
-													callback(null, file.id, file.name);
-												})
-												.pipe(dest);
-
-										});
-									}, function (err, fileId, fileName) {
-										// if any of the file processing produced an error, err would equal that error
-										if (err) {
-											// One of the iterations produced an error.
-											// All processing will now stop.
-											console.error(`Failed to get ${fileName} (${fileId}), err: ${err.stack}`);
-											sync.event.emit('statusChange', 'notsynced');
-											throw err;
-										} else {
-											// TODO: emitt appropriate statusChange event
-											// sync.event.emit('statusChange', 'synced');
-											console.log(`Done GETting`);
-										}
-									});
-								}
-
-								if (!_.isEmpty(global.state.tocrypt)) {
-									// global.state.tocrypt.push(global.state.toput[0]);
-									// global.state.toput.pop();
-									fs.mkdirs(global.paths.crypted, function (err) {
-										sync.event.emit('statusChange', 'encrypting');
-										async.each(global.state.tocrypt, function (file, callback) {
-											if (err) callback(err);
-											if (!file) return;
-											let parentPath = global.state.rfs[file.parents[0]].path;
-											let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
-											let destpath = `${global.paths.crypted}/${file.name}.crypto`;
-											console.log(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`);
-											crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, key, iv, tag) {
-												if (err) {
-													return callback(err, file.id, file.name);
-												} else {
-													try {
-														file.cryptPath = destpath;
-														file.iv = iv.toString('hex');
-														file.authTag = tag.toString('hex');
-														global.vault[file.id] = file;
-														global.state.toput.push(file);
-														_.pull(global.state.tocrypt, file);
-														sync.event.emit('encrypted', file);
-														return callback(null, file.id, file.name);
-													} catch (err) {
-														return callback(err, file.id, file.name);
-													}
-												}
-											});
-										}, function (err, fileId, fileName) {
-											// if any of the file processing produced an error, err would equal that error
-											if (err) {
-												// One of the iterations produced an error.
-												// All processing will now stop.
-												console.error(`Failed to encrypt ${fileName} (${fileId}), err: ${err.stack}`);
-												sync.event.emit('statusChange', 'notsynced');
-											} else {
-												sync.event.emit('statusChange', 'encrypted');
-												console.log(`ENCRYTPTED: ${fileName} (${fileId})`);
-											}
-										});
-									});
-								}
-
-								if (!_.isEmpty(global.state.toput)) {
-
-									sync.event.emit('statusChange', 'putting');
-
-									async.eachLimit(global.state.toput, API_REQ_LIMIT, function (file, callback) {
-										if (!file) return;
-										console.log(`TO PUT: ${file.name} (${file.id})`);
-										global.drive.files.update({
-											fileId: file.id,
-											resource: {
-												name: `${file.name}.crypto`
-											},
-											media: {
-												mimeType: "application/octet-stream",
-												body: fs.createReadStream(file.cryptPath)
-											},
-										}, function (err, res) {
-											if (err) {
-												console.log(`callback: error putting ${file.name}`);
-												return callback(err, file.name, file.id);
-											}
-											console.log(`callback: put ${file.name}`);
-											file.lastSynced = moment().format();
-											global.state.done.push(file);
-											_.pull(global.state.tocrypt, file);
-											sync.event.emit('put', file);
-											return callback(null);
-										});
-									}, function (err, res) {
-										if (err) {
-											console.error(`Error occured while PUTing: ${err.stack}`);
-											sync.event.emit('statusChange', 'notsynced');
-										} else {
-											console.log(`DONE PUTTING ALL FILES`);
-											sync.event.emit('statusChange', 'synced');
-										}
-									});
-								}
+								// function Syncf() {
+								// 	if (!_.isEmpty(global.state.toget)) {
+								// 		/* TODO: Evaluate the use of async.queues where a queue task is created
+								// 				forEach file and the task is to first get the file then encrypt and then
+								// 				upload. See if persistently viable (i.e. can continue where left of on
+								// 				program restart)
+								// 		*/
+								// 		sync.event.emit('statusChange', 'getting');
+								//
+								// 		getAll()
+								// 			.then(() => {
+								// 				sync.event.emit('statusChange', 'synced');
+								// 				return Sync();
+								// 			})
+								// 			.catch((err) => {
+								// 				sync.event.emit('statusChange', 'notsynced');
+								// 				console.log(`getAll PROMISE ERR: ${err.stack}`);
+								// 			});
+								// 	}
+								//
+								// 	if (!_.isEmpty(global.state.tocrypt)) {
+								// 		// global.state.tocrypt.push(global.state.toput[0]);
+								// 		// global.state.toput.pop();
+								// 		sync.event.emit('statusChange', 'encrypting');
+								//
+								// 		putAll()
+								// 			.then(() => {
+								// 				sync.event.emit('statusChange', 'encrypted');
+								// 				return Sync();
+								// 			})
+								// 			.catch((err) => {
+								// 				// sync.event.emit('statusChange', 'notsynced');
+								// 				console.log(`putAll PROMISE ERR: ${err.stack}`);
+								// 			});
+								// 	}
+								//
+								// 	if (!_.isEmpty(global.state.toput)) {
+								//
+								// 		sync.event.emit('statusChange', 'putting');
+								//
+								// 		cryptAll()
+								// 			.then(() => {
+								// 				sync.event.emit('statusChange', 'encrypted');
+								// 				return Sync();
+								// 			})
+								// 			.catch((err) => {
+								// 				// sync.event.emit('statusChange', 'notsynced');
+								// 				console.log(`cryptAll PROMISE ERR: ${err.stack}`);
+								// 			});
+								// 	}
+								// }
+								// sync.getAll(function (err) {
+								// 	// if any of the file processing produced an error, err would equal that error
+								// 	if (err) {
+								// 		// One of the iterations produced an error.
+								// 		// All processing will now stop.
+								// 		console.error(`ERROR occurred while GETting ALL`);
+								// 	} else {
+								// 		// TODO: emitt appropriate statusChange event
+								// 		console.log(`DONE GETting ALL`);
+								// 	}
+								// });
+								//
+								// sync.cryptAll(function (err) {
+								// 	if (err) {
+								// 		// One of the iterations produced an error.
+								// 		// All processing will now stop.
+								// 		console.error(`Error occurred while encrypting ALL`);
+								// 		// sync.event.emit('statusChange', 'notsynced');
+								// 	} else {
+								// 		console.log(`ENCRYTPTED ALL`);
+								// 	}
+								// });
+								//
+								// sync.putAll(function (err) {
+								// 	if (err) {
+								// 		console.error(`Error occurred while PUTing ALL`);
+								// 		sync.event.emit('statusChange', 'notsynced');
+								// 	} else {
+								// 		console.log(`DONE PUTTING ALL FILES`);
+								// 		sync.event.emit('statusChange', 'synced');
+								// 	}
+								// });
 							})
 							.then(
 								// TODO: start sync daemon
@@ -1305,7 +1257,72 @@ app.on('ready', function () {
 								Cryptobar(function (result) {
 									// body...
 								})
-							)
+							).then(() => {
+								// sync.getAll(function (err) {
+								// 	// if any of the file processing produced an error, err would equal that error
+								// 	if (err) {
+								// 		// One of the iterations produced an error.
+								// 		// All processing will now stop.
+								// 		console.error(`ERROR occurred while GETting ALL`);
+								// 	} else {
+								// 		// TODO: emitt appropriate statusChange event
+								// 		console.log(`DONE GETting ALL`);
+								// 	}
+								// });
+								const dotRegex = /\/\..+/g;
+								const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g;
+
+								const watcher = chokidar.watch(global.paths.home, {
+									ignored: dotRegex,
+									persistent: true,
+									ignoreInitial: true,
+									alwaysStat: true
+								});
+
+								watcher
+									.on('add', (path, stats) => {
+										if (dotRegex.test(path)) {
+											// Ignore dot file
+											console.log(`IGNORE added file ${path}, stats ${JSON.stringify(stats)}`);
+											watcher.unwatch(path);
+										} else {
+											// Queue up to encrypt and put
+											let fileName = path.match(fNameRegex)[0];
+											console.log(`ADD added file ${fileName} to watch ${path}, stats ${sutil.inspect(stats)}`);
+										}
+									})
+									.on('change', (path, stats) => {
+										if (dotRegex.test(path)) {
+											// Ignore dot file
+											console.log(`IGNORE added file ${path}, stats ${sutil.inspect(stats)}`);
+											watcher.unwatch(path);
+										} else {
+											// Queue up to encrypt and put
+											let fileName = path.match(fNameRegex)[0];
+											console.log(`File ${fileName} at ${path} has been changed, stats ${sutil.inspect(stats)}`);
+										}
+									})
+									.on('unlink', (path, stats) => console.log(`File ${path} has been removed, stats ${sutil.inspect(stats)}`))
+									.on('addDir', (path, stats) => console.log(`Directory ${path} has been added, stats ${sutil.inspect(stats)}`))
+									.on('unlinkDir', (path, stats) => console.log(`Directory ${path} has been removed, stats ${sutil.inspect(stats)}`))
+									.on('error', error => console.log(`Watcher error: ${error}`))
+									.on('ready', () => console.log('Initial scan complete. Ready for changes'));
+								// .on('raw', (event, path, details) => {
+								// 	console.log('Raw event info:', event, path, details);
+								// });
+								//
+								// Spawn a child process for sync worker
+								// const cp = require('child_process');
+								// const child = cp.fork('./src/sync_worker');
+								//
+								// child.on('put', function (file) {
+								// 	// Receive results from child process
+								// 	console.log('received: ' + file);
+								// });
+								//
+								// // Send child process some work
+								// child.send('Please up-case this string');
+							})
 							.catch(function (error) {
 								console.error(`PROMISE ERR: ${error.stack}`);
 							});

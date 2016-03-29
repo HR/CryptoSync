@@ -252,10 +252,22 @@ exports.decrypt = function (ctext, key, iv, callback) {
 	return decrypted;
 };
 
+exports.pass2shares = function (pass, total = defaults.shares, th = defaults.threshold) {
+	// splits the pass into shares using Shamir's Secret Sharing
+
+	// convert the text into a hex string
+	let pwHex = secrets.str2hex(pass);
+	// split into N shares, with a threshold of th
+	// Zero padding of defaults.padLength applied to ensure minimal info leak (i.e size of pass)
+	let shares = secrets.share(pwHex, total, th, defaults.padLength);
+
+	return {data: shares, total: total, threshold: th};
+};
+
 /**
  * @param {array} of at least the threshold length
  */
-exports.shares2pass = function (sharedata) {
+exports.shares2pass = function (shares) {
 	// reconstructs the pass from the shares of the pass
 	// using Shamir's Secret Sharing
 	/*	TODO:
@@ -268,24 +280,11 @@ exports.shares2pass = function (sharedata) {
 	// let N = sharedata[1];
 
 	// Extract the shares
-	let shares = sharedata[0];
-	let pass = secrets.combine(shares);
+	const pass = secrets.combine(shares.data);
 	// convert back to str
 	pass = secrets.hex2str(pass);
 
 	return pass;
-};
-
-exports.pass2shares = function (pass, N = defaults.shares, S = defaults.threshold) {
-	// splits the pass into shares using Shamir's Secret Sharing
-
-	// convert the text into a hex string
-	let pwHex = secrets.str2hex(pass);
-	// split into N shares, with a threshold of S
-	// Zero padding of defaults.padLength applied to ensure minimal info leak (i.e size of pass)
-	let shares = secrets.share(key, N, S, defaults.padLength);
-
-	return [shares, N, S];
 };
 
 exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
