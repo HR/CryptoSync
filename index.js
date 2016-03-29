@@ -403,7 +403,7 @@ function createSetup(callback) {
 					global.drive.files.list({
 						q: `'${folderId}' in parents`,
 						orderBy: 'folder desc',
-						fields: 'files(fullFileExtension,id,md5Checksum,mimeType,modifiedTime,name,ownedByMe,parents,properties,size,webContentLink,webViewLink),nextPageToken',
+						fields: 'files(name,id,fullFileExtension,mimeType,md5Checksum,ownedByMe,parents,properties,webContentLink,webViewLink),nextPageToken',
 						spaces: 'drive',
 						pageSize: 1000
 					}, function (err, res) {
@@ -434,6 +434,7 @@ function createSetup(callback) {
 								let file = res.files[i];
 								if (!_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 									console.log(`root/${folderId}/  ${file.name} ${file.id}`);
+									global.files[file.id] = file;
 									fsuBtree.push(file);
 								}
 							}
@@ -482,6 +483,7 @@ function createSetup(callback) {
 											rfsTree[file.id]['path'] = `${rfsTree[file.parents[0]]['path']}${file.name}`;
 										} else {
 											console.log(`root/${file.name} (${file.id})`);
+											global.files[file.id] = file;
 											fBtree.push(file);
 										}
 									}
@@ -510,7 +512,6 @@ function createSetup(callback) {
 						console.log(`\n THEN saving file tree (fBtree) to global.state.toget`);
 						let files = _.flattenDeep(trees[0]);
 						global.state = {};
-						global.files = files;
 						global.state.toget = files;
 						global.state.tocrypt = [];
 						global.state.toput = [];
@@ -1038,7 +1039,7 @@ app.on('activate', function (win) {
 
 app.on('ready', function () {
 	// TODO: Wrap all this into init();
-	// let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.isFileSync(global.paths.mdb));
+	// let firstRun = (!fs.isDirectorySync(global.paths.home)) && (!fs.accessSync(global.paths.vault));
 	if (SETUPTEST) {
 		// TODO: Do more extensive FIRST RUN check
 		console.log('First run. Creating Setup wizard...');
@@ -1047,7 +1048,10 @@ app.on('ready', function () {
 			console.log(`INITIALISATION PROMISE`);
 			return new Promise(function (resolve, reject) {
 				global.mdb = new Db(global.paths.mdb);
-				resolve();
+				fs.ensureDir(global.paths.home, function (err) {
+					if (err) reject(err);
+					resolve();
+				});
 			});
 		};
 		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
@@ -1160,15 +1164,45 @@ app.on('ready', function () {
 								global.stats.time = moment();
 								return;
 							})
-							.then(() => {
+							.then(
+								// TODO: start sync daemon
+								// Start menubar
+								Cryptobar(function (result) {
+									// body...
+								})
+							).then(() => {
+								if (!_.isEmpty(global.state.toget)) {
+									sync.getAll(global.state.toget, function (err) {
+										// if any of the file processing produced an error, err would equal that error
+										if (err) {
+											// One of the iterations produced an error.
+											// All processing will now stop.
+											console.error(`ERROR occurred while GETting ALL`);
+										} else {
+											// TODO: emitt appropriate statusChange event
+											console.log(`DONE GETting ALL`);
+										}
+									});
+								}
 
+								if (!_.isEmpty(global.state.tocrypt)) {
+									sync.cryptAll(global.state.tocrypt, function (err) {
+										if (err) {
+											// One of the iterations produced an error.
+											// All processing will now stop.
+											console.error(`Error occurred while encrypting ALL: ${err.stack}`);
+											// sync.event.emit('statusChange', 'notsynced');
+										} else {
+											console.log(`ENCRYTPTED ALL`);
+										}
+									});
+								}
 								// TODO: Modularise, write as a seperate script
 								// (with check for changes at interval)
 								// and spawn as child process (with shared memory)
 								// Implement with ES6 Generators?
 
 								// function Syncf() {
-								// 	if (!_.isEmpty(global.state.toget)) {
 								// 		/* TODO: Evaluate the use of async.queues where a queue task is created
 								// 				forEach file and the task is to first get the file then encrypt and then
 								// 				upload. See if persistently viable (i.e. can continue where left of on
@@ -1187,7 +1221,6 @@ app.on('ready', function () {
 								// 			});
 								// 	}
 								//
-								// 	if (!_.isEmpty(global.state.tocrypt)) {
 								// 		// global.state.tocrypt.push(global.state.toput[0]);
 								// 		// global.state.toput.pop();
 								// 		sync.event.emit('statusChange', 'encrypting');
@@ -1201,7 +1234,6 @@ app.on('ready', function () {
 								// 				// sync.event.emit('statusChange', 'notsynced');
 								// 				console.log(`putAll PROMISE ERR: ${err.stack}`);
 								// 			});
-								// 	}
 								//
 								// 	if (!_.isEmpty(global.state.toput)) {
 								//
@@ -1230,17 +1262,6 @@ app.on('ready', function () {
 								// 	}
 								// });
 								//
-								// sync.cryptAll(function (err) {
-								// 	if (err) {
-								// 		// One of the iterations produced an error.
-								// 		// All processing will now stop.
-								// 		console.error(`Error occurred while encrypting ALL`);
-								// 		// sync.event.emit('statusChange', 'notsynced');
-								// 	} else {
-								// 		console.log(`ENCRYTPTED ALL`);
-								// 	}
-								// });
-								//
 								// sync.putAll(function (err) {
 								// 	if (err) {
 								// 		console.error(`Error occurred while PUTing ALL`);
@@ -1250,63 +1271,46 @@ app.on('ready', function () {
 								// 		sync.event.emit('statusChange', 'synced');
 								// 	}
 								// });
-							})
-							.then(
-								// TODO: start sync daemon
-								// Start menubar
-								Cryptobar(function (result) {
-									// body...
-								})
-							).then(() => {
-								// sync.getAll(function (err) {
-								// 	// if any of the file processing produced an error, err would equal that error
-								// 	if (err) {
-								// 		// One of the iterations produced an error.
-								// 		// All processing will now stop.
-								// 		console.error(`ERROR occurred while GETting ALL`);
-								// 	} else {
-								// 		// TODO: emitt appropriate statusChange event
-								// 		console.log(`DONE GETting ALL`);
-								// 	}
+								// const dotRegex = /\/\..+/g;
+								// const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g;
+								//
+								// const watcher = chokidar.watch(global.paths.home, {
+								// 	ignored: dotRegex,
+								// 	persistent: true,
+								// 	ignoreInitial: true,
+								// 	alwaysStat: true
 								// });
-								const dotRegex = /\/\..+/g;
-								const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g;
-
-								const watcher = chokidar.watch(global.paths.home, {
-									ignored: dotRegex,
-									persistent: true,
-									ignoreInitial: true,
-									alwaysStat: true
-								});
-
-								watcher
-									.on('add', (path, stats) => {
-										if (dotRegex.test(path)) {
-											// Ignore dot file
-											console.log(`IGNORE added file ${path}, stats ${JSON.stringify(stats)}`);
-											watcher.unwatch(path);
-										} else {
-											// Queue up to encrypt and put
-											let fileName = path.match(fNameRegex)[0];
-											console.log(`ADD added file ${fileName} to watch ${path}, stats ${sutil.inspect(stats)}`);
-										}
-									})
-									.on('change', (path, stats) => {
-										if (dotRegex.test(path)) {
-											// Ignore dot file
-											console.log(`IGNORE added file ${path}, stats ${sutil.inspect(stats)}`);
-											watcher.unwatch(path);
-										} else {
-											// Queue up to encrypt and put
-											let fileName = path.match(fNameRegex)[0];
-											console.log(`File ${fileName} at ${path} has been changed, stats ${sutil.inspect(stats)}`);
-										}
-									})
-									.on('unlink', (path, stats) => console.log(`File ${path} has been removed, stats ${sutil.inspect(stats)}`))
-									.on('addDir', (path, stats) => console.log(`Directory ${path} has been added, stats ${sutil.inspect(stats)}`))
-									.on('unlinkDir', (path, stats) => console.log(`Directory ${path} has been removed, stats ${sutil.inspect(stats)}`))
-									.on('error', error => console.log(`Watcher error: ${error}`))
-									.on('ready', () => console.log('Initial scan complete. Ready for changes'));
+								//
+								// watcher
+								// 	.on('add', (path, stats) => {
+								// 		if (dotRegex.test(path)) {
+								// 			// Ignore dot file
+								// 			console.log(`IGNORE added file ${path}, stats.mtime = ${stats.mtime}`);
+								// 			watcher.unwatch(path);
+								// 		} else {
+								// 			// Queue up to encrypt and put
+								// 			let fileName = path.match(fNameRegex)[0];
+								// 			console.log(`ADD added file ${fileName} to watch ${path}, stats ${stats.mtime}`);
+								// 		}
+								// 	})
+								// 	.on('change', (path, stats) => {
+								// 		if (dotRegex.test(path)) {
+								// 			// Ignore dot file
+								// 			console.log(`IGNORE added file ${path}, stats ${stats.mtime}`);
+								// 			watcher.unwatch(path);
+								// 		} else {
+								// 			// Queue up to encrypt and put
+								// 			let fileName = path.match(fNameRegex)[0];
+								// 			console.log(`File ${fileName} at ${path} has been changed, stats ${stats.mtime}}`);
+								// 		}
+								// 	})
+								// 	.on('unlink', (path, stats) => console.log(`File ${path} has been removed, stats ${stats.mtime}`))
+								// 	.on('addDir', (path, stats) => console.log(`Directory ${path} has been added, stats ${stats.mtime}`))
+								// 	.on('unlinkDir', (path, stats) => console.log(`Directory ${path} has been removed, stats ${stats.mtime}`))
+								// 	.on('error', error => console.log(`Watcher error: ${error}`))
+								// 	.on('ready', () => {
+								// 		console.log('Initial scan complete. Ready for changes');
+								// 	});
 								// .on('raw', (event, path, details) => {
 								// 	console.log('Raw event info:', event, path, details);
 								// });

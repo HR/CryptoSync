@@ -1,6 +1,6 @@
 {
   "name": "Crypto.Sync",
-  "productName": "cryptosync",
+  "productName": "CryptoSync",
   "version": "0.1.0",
   "description": "A cross-platform end-to-end encryption cloud sync client",
   "license": "MIT",

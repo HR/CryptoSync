@@ -254,14 +254,18 @@ exports.decrypt = function (ctext, key, iv, callback) {
 
 exports.pass2shares = function (pass, total = defaults.shares, th = defaults.threshold) {
 	// splits the pass into shares using Shamir's Secret Sharing
-
 	// convert the text into a hex string
-	let pwHex = secrets.str2hex(pass);
-	// split into N shares, with a threshold of th
-	// Zero padding of defaults.padLength applied to ensure minimal info leak (i.e size of pass)
-	let shares = secrets.share(pwHex, total, th, defaults.padLength);
+	// let pwHex = secrets.str2hex(pass);
+	try {
+		let pwHex = pass.toString('hex');
+		// split into N shares, with a threshold of th
+		// Zero padding of defaults.padLength applied to ensure minimal info leak (i.e size of pass)
+		let shares = secrets.share(pwHex, total, th, defaults.padLength);
 
-	return {data: shares, total: total, threshold: th};
+		return {data: shares, total: total, threshold: th};
+	} catch (err) {
+		throw err;
+	}
 };
 
 /**
