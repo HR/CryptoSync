@@ -86,12 +86,12 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 				// Append iv used to encrypt the file to end of file
 				dest.write(`\nCryptoSync#${iv.toString('hex')}#${cipher.getAuthTag().toString('hex')}`);
 				dest.end();
-				console.log(`End (of writestream) for ${destf} called, IV&authTag appended`);
+				// console.log(`End (of writestream) for ${destf} called, IV&authTag appended`);
 			});
 
 			dest.on('finish', () => {
 				const tag = cipher.getAuthTag();
-				console.log(`Finished encrypted/written to ${destf}`);
+				// console.log(`Finished encrypted/written to ${destf}`);
 				callback(null, key, iv, tag);
 			});
 		}
@@ -230,7 +230,7 @@ exports.genFileHash = function (origpath, callback) {
 	fd.on('end', function () {
 		hash.end();
 		let fhash = hash.read();
-		console.log(`genFileHash: fhash = ${fhash}`);
+		// console.log(`genFileHash: fhash = ${fhash}`);
 		callback(null, fhash);
 	});
 

@@ -64,7 +64,7 @@ exports.getQueue = async.queue(function (file, callback) {
 				callback(err);
 			})
 			.on('finish', function () {
-				console.log(`Written ${file.name} to ${path}`);
+				// console.log(`Written ${file.name} to ${path}`);
 				// self.event.emit('got', file);
 				callback(null, file);
 			});
@@ -195,7 +195,7 @@ exports.getAll = function (toGet, cb) {
 					callback(err);
 				})
 				.on('finish', function () {
-					console.log(`Written ${file.name} to ${path}`);
+					// console.log(`Written ${file.name} to ${path}`);
 					// self.event.emit('got', file);
 					_.pull(toGet, file); // remove from toGet queue
 					global.state.toCrypt.push(file); // add from toCrypt queue

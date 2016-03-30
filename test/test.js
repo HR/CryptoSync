@@ -7,14 +7,16 @@ const assert = require('assert'),
 	scrypto = require('crypto'),
 	_ = require('lodash'),
 	google = require('googleapis'),
-	fs = require('fs-extra');
+	fs = require('fs-extra'),
+	exec = require('child_process').exec;
+
 
 process.chdir('test');
 console.log(`cwd: ${process.cwd()}`);
 
 describe('CryptoSync Core Modules\' tests', function () {
 	before(function () {
-		// runs before all tests in this block
+		// Declare globals
 		global.paths = {
 			home: `CryptoSync`,
 			crypted: `CryptoSync/.encrypted`,
@@ -25,6 +27,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 		global.state = {};
 		global.vault = {};
 		global.MasterPass = require('../src/_MasterPass');
+		global.MasterPass.set(scrypto.randomBytes(32));
 
 		const gauth = JSON.parse(fs.readFileSync('.cred/gauth.json', 'utf8'));
 		// global.files = JSON.parse(fs.readFileSync('test/.cred/rfiles.json', 'utf8'));
@@ -38,13 +41,18 @@ describe('CryptoSync Core Modules\' tests', function () {
 			version: 'v3',
 			auth: gAuth
 		});
+
+		global.execute = function (command, callback) {
+			exec(command, function (error, stdout, stderr) {
+				callback(stdout);
+			});
+		};
 	});
 
 	describe('Sync module', function () {
 		let rfile;
 		before(function () {
 			rfile = JSON.parse(fs.readFileSync('.cred/rfile.json', 'utf8'));
-			global.MasterPass.set(scrypto.randomBytes(32));
 		});
 
 		describe('getQueue', function () {
@@ -52,16 +60,16 @@ describe('CryptoSync Core Modules\' tests', function () {
 				fs.removeSync(global.paths.home);
 			});
 
-			it('should get remote (API) file completely', function (done) {
-				sync.getQueue.push(rfile, function (err, file) {
-					if (err) return done(err);
-					crypto.genFileHash(file.path, function (err, hash) {
-						if (err) return done(err);
-						assert.equal(file.md5Checksum, hash);
-						done();
-					});
-				});
-			});
+			// it('should get remote (API) file completely', function (done) {
+			// 	sync.getQueue.push(rfile, function (err, file) {
+			// 		if (err) return done(err);
+			// 		crypto.genFileHash(file.path, function (err, hash) {
+			// 			if (err) return done(err);
+			// 			assert.equal(file.md5Checksum, hash);
+			// 			done();
+			// 		});
+			// 	});
+			// });
 			it('should get file to the correct path', function (done) {
 				sync.getQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
@@ -97,6 +105,72 @@ describe('CryptoSync Core Modules\' tests', function () {
 					done();
 				});
 			});
+		});
+	});
+
+	describe('Crypto module', function () {
+		// let rfile;
+		before(function () {
+			// rfile = JSON.parse(fs.readFileSync('.cred/rfile.json', 'utf8'));
+			// global.MasterPass.set(scrypto.randomBytes(32));
+		});
+
+		describe('Hashing', function () {
+			beforeEach(function () {
+				fs.writeFileSync('test.txt', '#CryptoSync', 'utf8');
+			});
+			it('should get same digest hash for genFileHash as openssl', function (done) {
+				crypto.genFileHash('test.txt', function (err, hash) {
+					if (err) done(err);
+					global.execute('openssl dgst -md5 test.txt', function (stdout, err, stderr) {
+						if (err !== null) done(err);
+						// if (stderr !== null) done(stderr);
+						let ohash = stdout.replace('MD5(test.txt)= ', '');
+						expect(hash).to.equal(ohash);
+						done();
+					});
+				});
+			});
+		});
+
+		describe('Encrypting', function () {
+			beforeEach(function () {
+				fs.writeFileSync('test.txt', '#CryptoSync', 'utf8');
+			});
+			it('should deriveMasterPassKey using a MasterPass correctly', function (done) {
+				const vault = {
+					name: 'crypto',
+					id: 22,
+					secure: true
+				};
+				crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.creds.viv, function (err, tag) {
+					console.log(`crypto.encryptObj callback.`);
+					if (err) {
+						callback(err);
+					} else {
+						console.log(`Encrypted successfully with tag = ${tag.toString('hex')}`);
+						global.creds.authTag = tag;
+						callback(null);
+					}
+				});
+			});
+			// it('should encrypt vault obj successfully with masterpass', function (done) {
+			// 	const vault = {
+			// 		name: 'crypto',
+			// 		id: 22,
+			// 		secure: true
+			// 	};
+			// 	crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.creds.viv, function (err, tag) {
+			// 		console.log(`crypto.encryptObj callback.`);
+			// 		if (err) {
+			// 			callback(err);
+			// 		} else {
+			// 			console.log(`Encrypted successfully with tag = ${tag.toString('hex')}`);
+			// 			global.creds.authTag = tag;
+			// 			callback(null);
+			// 		}
+			// 	});
+			// });
 		});
 	});
 });

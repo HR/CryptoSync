@@ -30,7 +30,7 @@ const API_REQ_LIMIT = 8;
 // YOLO#101
 
 // MasterPass is protected (private var) and only exist in Main memory
-global.MasterPass = require('./src/_MasterPass');
+global.MasterPassKey = require('./src/_MasterPass');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
 global.accounts = {};
@@ -548,7 +548,7 @@ function createSetup(callback) {
 	ipc.on('setMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
 		setMasterPass(masterpass, function (err, mpkey) {
-			global.MasterPass.set(mpkey);
+			global.MasterPassKey.set(mpkey);
 			webContents.send('setMasterPassResult', err);
 		});
 	});
@@ -589,8 +589,8 @@ function initVault(callback) {
 			callback(err);
 		} else {
 			global.creds.viv = iv;
-			console.log(`Encrypting using MasterPass = ${global.MasterPass.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
-			crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.creds.viv, function (err, tag) {
+			console.log(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
+			crypto.encryptObj(global.vault, global.paths.vault, global.MasterPassKey.get(), global.creds.viv, function (err, tag) {
 				console.log(`crypto.encryptObj callback.`);
 				if (err) {
 					callback(err);
@@ -770,7 +770,7 @@ function masterPassPrompt(reset, callback) {
 			if (match) {
 				console.log("IPCMAIN: PASSWORD MATCHES!");
 				// Now derive masterpasskey and set it (temporarily)
-				global.MasterPass.set(mpkey);
+				global.MasterPassKey.set(mpkey);
 				webContents.send('checkMasterPassResult', {
 					err: null,
 					match: match
@@ -803,7 +803,7 @@ function masterPassPrompt(reset, callback) {
 			// TODO: create new Vault, delete old data and start re-encrypting
 			if (!err) {
 				newMPset = true;
-				global.MasterPass.set(mpkey);
+				global.MasterPassKey.set(mpkey);
 				webContents.send('setMasterPassResult', null);
 			} else {
 				webContents.send('setMasterPassResult', err);
@@ -993,10 +993,10 @@ app.on('will-quit', (event) => {
 			saveGlobalObj('files'),
 			saveGlobalObj('stats')
 		]).then(function () {
-			if (global.MasterPass.get() && !_.isEmpty(global.vault)) {
-				console.log(`DEFAULT EXIT. global.MasterPass and global.vault not empty. Calling crypto.encryptObj...`);
-				console.log(`Encrypting using MasterPass = ${global.MasterPass.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
-				crypto.encryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.creds.viv, function (err, tag) {
+			if (global.MasterPassKey.get() && !_.isEmpty(global.vault)) {
+				console.log(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`);
+				console.log(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
+				crypto.encryptObj(global.vault, global.paths.vault, global.MasterPassKey.get(), global.creds.viv, function (err, tag) {
 					console.log(`crypto.encryptObj invoked...`);
 					if (err) {
 						console.error(err.stack);
@@ -1014,7 +1014,7 @@ app.on('will-quit', (event) => {
 					}
 				});
 			} else {
-				console.log(`NORMAL EXIT. global.MasterPass / global.vault empty. Just closing mdb (global.mdb.close())...`);
+				console.log(`NORMAL EXIT. global.MasterPassKey / global.vault empty. Just closing mdb (global.mdb.close())...`);
 				global.mdb.close();
 				exit = true;
 				app.quit();
@@ -1138,7 +1138,7 @@ app.on('ready', function () {
 				throw err;
 			} else {
 				global.vault = {};
-				crypto.decryptObj(global.vault, global.paths.vault, global.MasterPass.get(), global.creds.viv, global.creds.authTag, function (err, vault) {
+				crypto.decryptObj(global.vault, global.paths.vault, global.MasterPassKey.get(), global.creds.viv, global.creds.authTag, function (err, vault) {
 					if (err) {
 						console.error(`decryptObj ERR: ${err.stack}`);
 					} else {
