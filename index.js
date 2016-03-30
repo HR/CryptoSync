@@ -1174,6 +1174,7 @@ app.on('ready', function () {
 									// body...
 								})
 							).then(() => {
+
 								let pushGetQueue = function (file) {
 									console.log(`PROMISE: pushGetQueue for ${file.name}`);
 									return new Promise(function (resolve, reject) {
@@ -1183,12 +1184,13 @@ app.on('ready', function () {
 												reject(err);
 											}
 											console.log(`DONE GETting ${file.name}. Enqueuing into cryptQueue...`);
-											_.pull(global.state.toget, file); // remove from toget queue
-											global.state.tocrypt.push(file); // add from tocrypt queue
+											// _.pull(global.state.toget, file); // remove from toget queue
+											// global.state.tocrypt.push(file); // add from tocrypt queue
 											resolve(file);
 										});
 									});
 								};
+
 								let pushCryptQueue = function (file) {
 									console.log(`PROMISE: pushCryptQueue for ${file.name}`);
 									return new Promise(function (resolve, reject) {
@@ -1199,35 +1201,40 @@ app.on('ready', function () {
 											}
 											global.state.toput.push(file);
 											_.pull(global.state.tocrypt, file);
-											console.log(`DONE ENCRYPTting ${file.name}. Enqueuing into putQueue...`);
+											console.log(`DONE ENCRYPTting ${file.name}. Enqueuing into updateQueue...`);
 											resolve(file);
 										});
 									});
 								};
-								let pushPutQueue = function (file) {
-									console.log(`PROMISE: pushPutQueue for ${file.name}`);
+
+								let pushUpdateQueue = function (file) {
+									console.log(`PROMISE: pushUpdateQueue for ${file.name}`);
 									return new Promise(function (resolve, reject) {
-										sync.putQueue.push(file, function (err, file) {
+										sync.updateQueue.push(file, function (err, file) {
 											if (err) {
-												console.error(`ERROR occurred while PUTting`);
+												console.error(`ERROR occurred while UPDATting`);
 												reject();
 											}
-											console.log(`DONE PUTting ${file.name}. Removing from global status...`);
-											_.pull(global.state.tocrypt, file);
-											self.event.emit('put', file);
+											console.log(`DONE UPDATting ${file.name}. Removing from global status...`);
+											// global.files[file.id] = file;
+											// _.pull(global.state.toput, file);
+											sync.event.emit('put', file);
 											resolve();
 										});
 									});
 								};
 
-								// Restore queues on startup
+								sync.getQueue.drain = function () {
+									console.log('DONE getQueue for ALL items');
+								};
 
+								// Restore queues on startup
 								if (!_.isEmpty(global.state.toget)) {
 									sync.event.emit('statusChange', 'getting');
 									global.state.toget.forEach(function (file) {
 										pushGetQueue(file)
-											.then(pushCryptQueue)
-											.then(pushPutQueue)
+											// .then(pushCryptQueue)
+											// .then(pushUpdateQueue)
 											.then(() => {
 												sync.event.emit('statusChange', 'synced');
 											})
@@ -1242,7 +1249,7 @@ app.on('ready', function () {
 									sync.event.emit('statusChange', 'encrypting');
 									global.state.tocrypt.forEach(function (file) {
 										pushCryptQueue(file)
-											.then(pushPutQueue)
+											.then(pushUpdateQueue)
 											.then(() => {
 												sync.event.emit('statusChange', 'synced');
 											})
@@ -1256,7 +1263,7 @@ app.on('ready', function () {
 								if (!_.isEmpty(global.state.tocrypt)) {
 									sync.event.emit('statusChange', 'putting');
 									global.state.tocrypt.forEach(function (file) {
-										pushPutQueue(file)
+										pushUpdateQueue(file)
 											.then(() => {
 												sync.event.emit('statusChange', 'synced');
 											})
@@ -1272,12 +1279,6 @@ app.on('ready', function () {
 								// Implement with ES6 Generators?
 
 								// function Syncf() {
-								// 		/* TODO: Evaluate the use of async.queues where a queue task is created
-								// 				forEach file and the task is to first get the file then encrypt and then
-								// 				upload. See if persistently viable (i.e. can continue where left of on
-								// 				program restart)
-								// 		*/
-										// sync.event.emit('statusChange', 'getting');
 								//
 								// 		getAll()
 								// 			.then(() => {
@@ -1319,27 +1320,7 @@ app.on('ready', function () {
 								// 			});
 								// 	}
 								// }
-								// sync.getAll(function (err) {
-								// 	// if any of the file processing produced an error, err would equal that error
-								// 	if (err) {
-								// 		// One of the iterations produced an error.
-								// 		// All processing will now stop.
-								// 		console.error(`ERROR occurred while GETting ALL`);
-								// 	} else {
-								// 		// TODO: emitt appropriate statusChange event
-								// 		console.log(`DONE GETting ALL`);
-								// 	}
-								// });
-								//
-								// sync.putAll(function (err) {
-								// 	if (err) {
-								// 		console.error(`Error occurred while PUTing ALL`);
-								// 		sync.event.emit('statusChange', 'notsynced');
-								// 	} else {
-								// 		console.log(`DONE PUTTING ALL FILES`);
-								// 		sync.event.emit('statusChange', 'synced');
-								// 	}
-								// });
+
 								// const dotRegex = /\/\..+/g;
 								// const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g;
 								//

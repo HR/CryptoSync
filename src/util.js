@@ -18,10 +18,11 @@ exports.checkDirectorySync = function (dir) {
 exports.checkFileSync = function (path) {
 	try {
 		fs.accessSync(path, fs.F_OK);
-		return true;
 	} catch (e) {
-		return false;
+		console.log(e.code);
+		if (err.code == 'ENOENT') return false;
 	}
+	return true;
 };
 
 exports.getValue = function (db, key) {

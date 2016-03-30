@@ -8,6 +8,7 @@ let levelup = require('levelup'),
 	fs = require('fs-extra'),
 	_ = require('lodash'),
 	google = require('googleapis'),
+	res = require('../static/js/res'),
 	moment = require('moment'),
 	EventEmitter = require('events').EventEmitter,
 	crypto = require('./crypto'),
@@ -85,7 +86,7 @@ exports.cryptQueue = async.queue(function (file, callback) {
 	});
 }, CONCURRENCY);
 
-exports.putQueue = async.queue(function (file, callback) {
+exports.updateQueue = async.queue(function (file, callback) {
 	const self = this;
 	console.log(`TO PUT: ${file.name} (${file.id})`);
 	global.drive.files.update({
@@ -104,6 +105,7 @@ exports.putQueue = async.queue(function (file, callback) {
 		}
 		console.log(`callback: put ${file.name}`);
 		file.lastSynced = moment().format();
+		global.files[file.id] = file;
 		callback(null, file);
 	});
 
