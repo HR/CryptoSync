@@ -7,7 +7,7 @@ const assert = require('assert'),
 	scrypto = require('crypto'),
 	_ = require('lodash'),
 	google = require('googleapis'),
-	fs = require('fs');
+	fs = require('fs-extra');
 
 process.chdir('test');
 console.log(`cwd: ${process.cwd()}`);
@@ -48,9 +48,12 @@ describe('CryptoSync Core Modules\' tests', function () {
 		});
 
 		describe('getQueue', function () {
-			it('should get remote (API) file completely', function () {
+			beforeEach(function () {
+				fs.removeSync(global.paths.home);
+			});
+
+			it('should get remote (API) file completely', function (done) {
 				sync.getQueue.push(rfile, function (err, file) {
-					done(new Error('something wrong'));
 					if (err) return done(err);
 					crypto.genFileHash(file.path, function (err, hash) {
 						if (err) return done(err);
@@ -59,7 +62,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 					});
 				});
 			});
-			it('should get file to the correct path', function () {
+			it('should get file to the correct path', function (done) {
 				sync.getQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
 				});
@@ -69,24 +72,28 @@ describe('CryptoSync Core Modules\' tests', function () {
 			});
 		});
 		describe('cryptQueue', function () {
-			it('should with remote (API) file without errors', function () {
+			beforeEach(function () {
+				fs.removeSync(global.paths.crypted);
+			});
+
+			it('should with remote (API) file without errors', function (done) {
 				sync.cryptQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
-					assert.equal(file.cryptPath, 'CryptoSync/.encrypted/test.png.crypto');
+					assert.equal('CryptoSync/.encrypted/test.png.crypto', file.cryptPath);
 					done();
 				});
 			});
-			it('should have correct cryptPath', function () {
+			it('should have correct cryptPath', function (done) {
 				sync.cryptQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
-					assert.equal(file.cryptPath, 'CryptoSync/.encrypted/test.png.crypto');
+					expect(file.cryptPath).to.equal('CryptoSync/.encrypted/test.png.crypto');
 					done();
 				});
 			});
-			it('should write to the right location at CryptoSync/.encrypted/', function () {
+			it('should write to the right location at CryptoSync/.encrypted/', function (done) {
 				sync.cryptQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
-					expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto')).to.be.false;
+					expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto')).to.be.true;
 					done();
 				});
 			});

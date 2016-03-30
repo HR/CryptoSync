@@ -230,7 +230,7 @@ exports.genFileHash = function (origpath, callback) {
 	fd.on('end', function () {
 		hash.end();
 		let fhash = hash.read();
-		console.log(`genFileHash: S, salt = ${salt}, fhash = ${fhash}`);
+		console.log(`genFileHash: fhash = ${fhash}`);
 		callback(null, fhash);
 	});
 
