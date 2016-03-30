@@ -41,6 +41,11 @@ gulp.task('mtest', shell.task([
 	"mocha --compilers js:babel-core/register"
 ]));
 
+gulp.task('mntest', shell.task([
+	// Run test stuff
+	"mocha --reporter nyan --compilers js:babel-core/register"
+]));
+
 gulp.task('gmtest', () => {
 	return gulp.src('test/sync.js', {
 			read: false

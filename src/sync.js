@@ -18,6 +18,8 @@ const API_REQ_LIMIT = 7;
 const CONCURRENCY = 2;
 // class SyncEmitter extends EventEmitter {};
 
+// Refer to https://www.googleapis.com/discovery/v1/apis/drive/v3/rest for full request schema
+
 exports.event = new EventEmitter();
 
 exports.genID = function (n = 1) {
@@ -79,7 +81,7 @@ exports.cryptQueue = async.queue(function (file, callback) {
 		let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
 		let destpath = `${global.paths.crypted}/${file.name}.crypto`;
 		// console.log(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`);
-		crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, key, iv, tag) {
+		crypto.encrypt(origpath, destpath, global.MasterPassKey.get(), function (err, key, iv, tag) {
 			if (err) {
 				return callback(err);
 			} else {
@@ -106,6 +108,12 @@ exports.updateQueue = async.queue(function (file, callback) {
 		resource: {
 			name: `${file.name}.crypto`
 		},
+		contentHints: {
+      thumbnail: {
+        image: res.thumbnail,
+        mimeType: 'image/png'
+      }
+    },
 		media: {
 			mimeType: "application/octet-stream",
 			body: fs.createReadStream(file.cryptPath)
@@ -217,7 +225,7 @@ exports.cryptAll = function (toCrypt, cb) {
 			let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
 			let destpath = `${global.paths.crypted}/${file.name}.crypto`;
 			console.log(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`);
-			crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, key, iv, tag) {
+			crypto.encrypt(origpath, destpath, global.MasterPassKey.get(), function (err, key, iv, tag) {
 				if (err) {
 					return callback(err);
 				} else {

@@ -46,7 +46,6 @@ function handler(error, at) {
 
 // TODO: Implement hmac ciphertext authentication (encrypt-then-MAC) to prevent padding oracle attack
 exports.encrypt = function (origpath, destpath, mpkey, callback) {
-	// TODO: Use HMAC to authoritatively add metadata about the encryption
 	// decrypts any arbitrary data passed with the pass
 	let pass = (Array.isArray(mpkey)) ? shares2pass(mpkey) : mpkey;
 	// pass = password;
@@ -132,12 +131,12 @@ exports.encryptObj = function (obj, destpath, mpkey, viv, callback) {
 
 	dest.on('finish', () => {
 		const tag = cipher.getAuthTag();
-		console.log(`Finished encrypted/written to ${destpath} with authtag = ${tag.toString('hex')}`);
+		// console.log(`Finished encrypted/written to ${destpath} with authtag = ${tag.toString('hex')}`);
 		callback(null, tag);
 	});
 };
 
-exports.decryptObj = function (obj, origpath, mpkey, viv, vtag, callback) {
+exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
 	const i = defaults.mpk_iterations,
 		kL = defaults.keyLength,
 		digest = defaults.digest;
@@ -155,7 +154,7 @@ exports.decryptObj = function (obj, origpath, mpkey, viv, vtag, callback) {
 			cb(chunks.join(''));
 		});
 	};
-	console.log(`Decrypting using MasterPass = ${mpkey.toString('hex')}, iv = ${iv.toString('hex')}, tag = ${tag.toString('hex')}`);
+	// console.log(`Decrypting using MasterPass = ${mpkey.toString('hex')}, iv = ${iv.toString('hex')}, tag = ${tag.toString('hex')}`);
 	// pass = (Array.isArray(password)) ? shares2pass(password) : password;
 	const origin = fs.createReadStream(origpath);
 	const decipher = crypto.createDecipheriv(defaults.algorithm, mpkey, iv);
@@ -168,7 +167,7 @@ exports.decryptObj = function (obj, origpath, mpkey, viv, vtag, callback) {
 	});
 
 	streamToString(JSONstream, function (json) {
-		console.log(`Finished decrypting from ${origpath}`);
+		// console.log(`Finished decrypting from ${origpath}`);
 		try {
 			let vault = JSON.parse(json);
 			callback(null, vault);
@@ -191,13 +190,13 @@ exports.genIv = function (callback) {
 };
 
 exports.deriveMasterPassKey = function (masterpass, mpsalt, callback) {
-	const salt = (mpsalt) ? new Buffer(mpsalt.data) : crypto.randomBytes(defaults.keyLength);
+	const salt = (mpsalt) ? ((mpsalt instanceof Buffer) ? mpsalt : new Buffer(mpsalt.data)) : crypto.randomBytes(defaults.keyLength);
 	crypto.pbkdf2(masterpass, salt, defaults.mpk_iterations, defaults.keyLength, defaults.digest, (err, mpkey) => {
 		if (err) {
 			// return error to callback
 			return callback(err);
 		} else {
-			console.log(`Pbkdf2 generated: \nmpkey = ${mpkey.toString('hex')} \nwith salt = ${salt.toString('hex')}`);
+			// console.log(`Pbkdf2 generated: \nmpkey = ${mpkey.toString('hex')} \nwith salt = ${salt.toString('hex')}`);
 			return callback(null, mpkey, salt);
 		}
 	});
@@ -245,12 +244,55 @@ exports.verifyFileHash = function (fhash, gfhash) {
 	return _.isEqual(fhash, gfhash);
 };
 
-exports.decrypt = function (ctext, key, iv, callback) {
+exports.decrypt = function (origpath, destpath, key, iv, authTag, callback) {
 	// encrypts any arbitrary data passed with the pass
-	let decipher = crypto.createDecipheriv(defaults.algorithm, key, iv),
-		decrypted = decipher.update(ctext, 'hex', 'utf8');
-	decrypted += decipher.final('utf8');
-	return decrypted;
+	// const pass = (Array.isArray(key)) ? shares2pass(key) : key;
+	if (!authTag || !iv) {
+		// extract from last line of file
+		fs.readFile(origpath, 'utf-8', function (err, data) {
+			if (err) callback(err);
+
+			let lines = data.trim().split('\n');
+			let lastLine = lines.slice(-1)[0];
+			let fields = lastLine.split('#');
+			if (_.isEqual(fields[0], "CryptoSync")) {
+				const iv = new Buffer(fields[1], 'hex');
+				const authTag = new Buffer(fields[2], 'hex');
+				const mainData = lines.slice(0, -1).join();
+				let origin = new Readable;
+				// read as stream
+				origin.push(mainData);
+				origin.push(null);
+
+				const decipher = crypto.createDecipheriv(defaults.algorithm, key, iv);
+				decipher.setAuthTag(authTag);
+				const dest = fs.createWriteStream(destpath);
+
+				origin.pipe(decipher).pipe(dest);
+
+				decipher.on('error', () => {
+					callback(err);
+				});
+
+				origin.on('error', () => {
+					callback(err);
+				});
+
+				dest.on('error', () => {
+					callback(err);
+				});
+
+				dest.on('finish', () => {
+					console.log(`Finished encrypted/written to ${destf}`);
+					callback(null, iv, tag);
+				});
+			} else {
+				callback(new Error('IV and authTag not supplied'));
+			}
+		});
+	} else {
+		// TODO: Implement normal flow
+	}
 };
 
 exports.pass2shares = function (pass, total = defaults.shares, th = defaults.threshold) {
@@ -263,7 +305,11 @@ exports.pass2shares = function (pass, total = defaults.shares, th = defaults.thr
 		// Zero padding of defaults.padLength applied to ensure minimal info leak (i.e size of pass)
 		let shares = secrets.share(pwHex, total, th, defaults.padLength);
 
-		return {data: shares, total: total, threshold: th};
+		return {
+			data: shares,
+			total: total,
+			threshold: th
+		};
 	} catch (err) {
 		throw err;
 	}

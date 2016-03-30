@@ -1138,7 +1138,7 @@ app.on('ready', function () {
 				throw err;
 			} else {
 				global.vault = {};
-				crypto.decryptObj(global.vault, global.paths.vault, global.MasterPassKey.get(), global.creds.viv, global.creds.authTag, function (err, vault) {
+				crypto.decryptObj(global.paths.vault, global.MasterPassKey.get(), global.creds.viv, global.creds.authTag, function (err, vault) {
 					if (err) {
 						console.error(`decryptObj ERR: ${err.stack}`);
 					} else {
