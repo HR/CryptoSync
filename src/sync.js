@@ -20,22 +20,19 @@ const CONCURRENCY = 2;
 
 exports.event = new EventEmitter();
 
-// first global.state.toget.push(file);
+// first global.state.toGet.push(file);
 // then enqueue
 exports.getQueue = async.queue(function (file, callback) {
 	let parentPath = global.state.rfs[file.parents[0]].path;
 	const dir = `${global.paths.home}${parentPath}`;
 	const path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
 	file.path = path;
-	// not linked list with file.id as key!
 	global.files[file.id].path = path;
 
-	// TODO: replace with mkdirp
 	fs.mkdirs(dir, function (err) {
 		if (err) callback(err);
 		console.log(`GETing ${file.name} at dest ${path}`);
 		let dest = fs.createWriteStream(path);
-		// TODO: figure out a better way of limiting API requests to less than 10/s (Google API limit)
 
 		global.drive.files.get({
 				fileId: file.id,
@@ -128,9 +125,9 @@ exports.updateStats = function (file, callback) {
 
 };
 
-exports.getAll = function (toget, cb) {
+exports.getAll = function (toGet, cb) {
 	// const self = this;
-	async.eachLimit(toget, API_REQ_LIMIT, function (file, callback) {
+	async.eachLimit(toGet, API_REQ_LIMIT, function (file, callback) {
 		if (!file) return;
 		let parentPath = global.state.rfs[file.parents[0]].path;
 		const dir = `${global.paths.home}${parentPath}`;
@@ -162,8 +159,8 @@ exports.getAll = function (toget, cb) {
 				.on('finish', function () {
 					console.log(`Written ${file.name} to ${path}`);
 					// self.event.emit('got', file);
-					_.pull(toget, file); // remove from toget queue
-					global.state.tocrypt.push(file); // add from tocrypt queue
+					_.pull(toGet, file); // remove from toGet queue
+					global.state.toCrypt.push(file); // add from toCrypt queue
 					callback();
 				});
 		});
@@ -172,11 +169,11 @@ exports.getAll = function (toget, cb) {
 	});
 };
 
-exports.cryptAll = function (tocrypt, cb) {
+exports.cryptAll = function (toCrypt, cb) {
 	const self = this;
 	fs.mkdirs(global.paths.crypted, function (err) {
 		if (err) callback(err);
-		async.each(tocrypt, function (file, callback) {
+		async.each(toCrypt, function (file, callback) {
 			if (!file) return;
 			let parentPath = global.state.rfs[file.parents[0]].path;
 			let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
@@ -193,8 +190,8 @@ exports.cryptAll = function (tocrypt, cb) {
 						global.files[file.id] = file;
 						global.vault[file.id] = file;
 						global.vault[file.id].shares = crypto.pass2shares(key);
-						// global.state.toput.push(file);
-						// _.pull(tocrypt, file);
+						// global.state.toUpdate.push(file);
+						// _.pull(toCrypt, file);
 						// self.event.emit('encrypted', file);
 						callback();
 					} catch (err) {
@@ -211,7 +208,7 @@ exports.cryptAll = function (tocrypt, cb) {
 
 exports.putAll = function (cb) {
 	const self = this;
-	async.eachLimit(global.state.toput, API_REQ_LIMIT, function (file, callback) {
+	async.eachLimit(global.state.toUpdate, API_REQ_LIMIT, function (file, callback) {
 		if (!file) return;
 		console.log(`TO PUT: ${file.name} (${file.id})`);
 		global.drive.files.update({
@@ -230,7 +227,7 @@ exports.putAll = function (cb) {
 			}
 			console.log(`callback: put ${file.name}`);
 			file.lastSynced = moment().format();
-			_.pull(global.state.tocrypt, file);
+			_.pull(global.state.toCrypt, file);
 			self.event.emit('put', file);
 			return callback();
 		});

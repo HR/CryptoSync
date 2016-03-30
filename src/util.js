@@ -18,8 +18,7 @@ exports.checkDirectorySync = function (dir) {
 exports.checkFileSync = function (path) {
 	try {
 		fs.accessSync(path, fs.F_OK);
-	} catch (e) {
-		console.log(e.code);
+	} catch (err) {
 		if (err.code == 'ENOENT') return false;
 	}
 	return true;

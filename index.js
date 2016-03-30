@@ -40,9 +40,9 @@ global.files = {};
 
 /* Global state
  has three queues:
- - toget: files to download (incl. updated ones)
- - tocrypt: files to encrypt
- - toput: files to upload (/update)
+ - toGet: files to download (incl. updated ones)
+ - toCrypt: files to encrypt
+ - toUpdate: files to upload (/update)
 */
 // app.setPath('cs', `${app.getPath('home')}/CryptoSync`);
 
@@ -411,7 +411,7 @@ function createSetup(callback) {
 						} else {
 							// if (res.nextPageToken) {
 							// 	console.log("Page token", res.nextPageToken);
-							// 	pageFn(res.nextPageToken, pageFn, callback(null, res.files)); // TODO: replace callback; HANdLE THIS
+							// 	pageFn(res.nextPageToken, pageFn, callback(null, res.files));
 							// }
 							// if (recursive) {
 							// 	console.log('Recursive fetch...');
@@ -486,7 +486,7 @@ function createSetup(callback) {
 											fBtree.push(file);
 										}
 									}
-									// TODO: map folderIds to their respective files & append to the toget arr
+									// TODO: map folderIds to their respective files & append to the toGet arr
 									async.map(folders, fetchFolderItems, function (err, fsuBtree) {
 										console.log(`Got ids: ${folders}. Calling async.map(folders, fetchFolderItem,...) to map`);
 										if (err) {
@@ -508,12 +508,12 @@ function createSetup(callback) {
 
 				let initSyncGlobals = function (trees) {
 					return new Promise(function (resolve, reject) {
-						console.log(`\n THEN saving file tree (fBtree) to global.state.toget`);
+						console.log(`\n THEN saving file tree (fBtree) to global.state.toGet`);
 						let files = _.flattenDeep(trees[0]);
 						global.state = {};
-						global.state.toget = files;
-						global.state.tocrypt = [];
-						global.state.toput = [];
+						global.state.toGet = files;
+						global.state.toCrypt = [];
+						global.state.toUpdate = [];
 						global.state.rfs = trees[1];
 					});
 				};
@@ -1184,8 +1184,8 @@ app.on('ready', function () {
 												reject(err);
 											}
 											console.log(`DONE GETting ${file.name}. Enqueuing into cryptQueue...`);
-											// _.pull(global.state.toget, file); // remove from toget queue
-											// global.state.tocrypt.push(file); // add from tocrypt queue
+											// global.state.toCrypt.push(file); // add from toCrypt queue
+											// _.pull(global.state.toGet, file); // remove from toGet queue
 											resolve(file);
 										});
 									});
@@ -1199,8 +1199,8 @@ app.on('ready', function () {
 												console.error(`ERROR occurred while ENCRYPTting`);
 												reject(err);
 											}
-											global.state.toput.push(file);
-											_.pull(global.state.tocrypt, file);
+											global.state.toUpdate.push(file);
+											_.pull(global.state.toCrypt, file);
 											console.log(`DONE ENCRYPTting ${file.name}. Enqueuing into updateQueue...`);
 											resolve(file);
 										});
@@ -1217,7 +1217,7 @@ app.on('ready', function () {
 											}
 											console.log(`DONE UPDATting ${file.name}. Removing from global status...`);
 											// global.files[file.id] = file;
-											// _.pull(global.state.toput, file);
+											_.pull(global.state.toUpdate, file);
 											sync.event.emit('put', file);
 											resolve();
 										});
@@ -1226,12 +1226,23 @@ app.on('ready', function () {
 
 								sync.getQueue.drain = function () {
 									console.log('DONE getQueue for ALL items');
+									// start encyrpting
+								};
+
+								sync.cryptQueue.drain = function () {
+									console.log('DONE cryptQueue for ALL items');
+									// start putting
+								};
+
+								sync.updateQueue.drain = function () {
+									console.log('DONE updateQueue for ALL items');
+									// start taking off toUpdate
 								};
 
 								// Restore queues on startup
-								if (!_.isEmpty(global.state.toget)) {
+								if (!_.isEmpty(global.state.toGet)) {
 									sync.event.emit('statusChange', 'getting');
-									global.state.toget.forEach(function (file) {
+									global.state.toGet.forEach(function (file) {
 										pushGetQueue(file)
 											// .then(pushCryptQueue)
 											// .then(pushUpdateQueue)
@@ -1245,9 +1256,9 @@ app.on('ready', function () {
 									});
 								}
 
-								if (!_.isEmpty(global.state.tocrypt)) {
+								if (!_.isEmpty(global.state.toCrypt)) {
 									sync.event.emit('statusChange', 'encrypting');
-									global.state.tocrypt.forEach(function (file) {
+									global.state.toCrypt.forEach(function (file) {
 										pushCryptQueue(file)
 											.then(pushUpdateQueue)
 											.then(() => {
@@ -1260,9 +1271,9 @@ app.on('ready', function () {
 									});
 								}
 
-								if (!_.isEmpty(global.state.tocrypt)) {
+								if (!_.isEmpty(global.state.toUpdate)) {
 									sync.event.emit('statusChange', 'putting');
-									global.state.tocrypt.forEach(function (file) {
+									global.state.toUpdate.forEach(function (file) {
 										pushUpdateQueue(file)
 											.then(() => {
 												sync.event.emit('statusChange', 'synced');
@@ -1291,8 +1302,8 @@ app.on('ready', function () {
 								// 			});
 								// 	}
 								//
-								// 		// global.state.tocrypt.push(global.state.toput[0]);
-								// 		// global.state.toput.pop();
+								// 		// global.state.toCrypt.push(global.state.toUpdate[0]);
+								// 		// global.state.toUpdate.pop();
 								// 		sync.event.emit('statusChange', 'encrypting');
 								//
 								// 		putAll()
@@ -1305,7 +1316,7 @@ app.on('ready', function () {
 								// 				console.log(`putAll PROMISE ERR: ${err.stack}`);
 								// 			});
 								//
-								// 	if (!_.isEmpty(global.state.toput)) {
+								// 	if (!_.isEmpty(global.state.toUpdate)) {
 								//
 								// 		sync.event.emit('statusChange', 'putting');
 								//
