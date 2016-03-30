@@ -1183,9 +1183,11 @@ app.on('ready', function () {
 												console.error(`ERROR occurred while GETting ${file.name}`);
 												reject(err);
 											}
-											console.log(`DONE GETting ${file.name}. Enqueuing into cryptQueue...`);
+											// update file globally
+											global.files[file.id] = file;
 											// global.state.toCrypt.push(file); // add from toCrypt queue
 											// _.pull(global.state.toGet, file); // remove from toGet queue
+											console.log(`DONE GETting ${file.name}`);
 											resolve(file);
 										});
 									});
@@ -1199,9 +1201,11 @@ app.on('ready', function () {
 												console.error(`ERROR occurred while ENCRYPTting`);
 												reject(err);
 											}
-											global.state.toUpdate.push(file);
-											_.pull(global.state.toCrypt, file);
-											console.log(`DONE ENCRYPTting ${file.name}. Enqueuing into updateQueue...`);
+											// update file globally
+											global.files[file.id] = file;
+											// global.state.toUpdate.push(file);
+											// _.pull(global.state.toCrypt, file);
+											console.log(`DONE ENCRYPTting ${file.name}`);
 											resolve(file);
 										});
 									});
@@ -1215,10 +1219,12 @@ app.on('ready', function () {
 												console.error(`ERROR occurred while UPDATting`);
 												reject();
 											}
-											console.log(`DONE UPDATting ${file.name}. Removing from global status...`);
-											// global.files[file.id] = file;
+											// update file globally
+											global.files[file.id] = file;
+											// remove file from persistent update queue
 											_.pull(global.state.toUpdate, file);
 											sync.event.emit('put', file);
+											console.log(`DONE UPDATting ${file.name}. Removing from global status...`);
 											resolve();
 										});
 									});
@@ -1289,89 +1295,77 @@ app.on('ready', function () {
 								// and spawn as child process (with shared memory)
 								// Implement with ES6 Generators?
 
-								// function Syncf() {
-								//
-								// 		getAll()
-								// 			.then(() => {
-								// 				sync.event.emit('statusChange', 'synced');
-								// 				return Sync();
-								// 			})
-								// 			.catch((err) => {
-												// sync.event.emit('statusChange', 'notsynced');
-								// 				console.log(`getAll PROMISE ERR: ${err.stack}`);
-								// 			});
-								// 	}
-								//
-								// 		// global.state.toCrypt.push(global.state.toUpdate[0]);
-								// 		// global.state.toUpdate.pop();
-								// 		sync.event.emit('statusChange', 'encrypting');
-								//
-								// 		putAll()
-								// 			.then(() => {
-								// 				sync.event.emit('statusChange', 'encrypted');
-								// 				return Sync();
-								// 			})
-								// 			.catch((err) => {
-								// 				// sync.event.emit('statusChange', 'notsynced');
-								// 				console.log(`putAll PROMISE ERR: ${err.stack}`);
-								// 			});
-								//
-								// 	if (!_.isEmpty(global.state.toUpdate)) {
-								//
-								// 		sync.event.emit('statusChange', 'putting');
-								//
-								// 		cryptAll()
-								// 			.then(() => {
-								// 				sync.event.emit('statusChange', 'encrypted');
-								// 				return Sync();
-								// 			})
-								// 			.catch((err) => {
-								// 				// sync.event.emit('statusChange', 'notsynced');
-								// 				console.log(`cryptAll PROMISE ERR: ${err.stack}`);
-								// 			});
-								// 	}
-								// }
+								const dotRegex = /\/\..+/g;
+								const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g;
 
-								// const dotRegex = /\/\..+/g;
-								// const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g;
-								//
-								// const watcher = chokidar.watch(global.paths.home, {
-								// 	ignored: dotRegex,
-								// 	persistent: true,
-								// 	ignoreInitial: true,
-								// 	alwaysStat: true
-								// });
-								//
-								// watcher
-								// 	.on('add', (path, stats) => {
-								// 		if (dotRegex.test(path)) {
-								// 			// Ignore dot file
-								// 			console.log(`IGNORE added file ${path}, stats.mtime = ${stats.mtime}`);
-								// 			watcher.unwatch(path);
-								// 		} else {
-								// 			// Queue up to encrypt and put
-								// 			let fileName = path.match(fNameRegex)[0];
-								// 			console.log(`ADD added file ${fileName} to watch ${path}, stats ${stats.mtime}`);
-								// 		}
-								// 	})
-								// 	.on('change', (path, stats) => {
-								// 		if (dotRegex.test(path)) {
-								// 			// Ignore dot file
-								// 			console.log(`IGNORE added file ${path}, stats ${stats.mtime}`);
-								// 			watcher.unwatch(path);
-								// 		} else {
-								// 			// Queue up to encrypt and put
-								// 			let fileName = path.match(fNameRegex)[0];
-								// 			console.log(`File ${fileName} at ${path} has been changed, stats ${stats.mtime}}`);
-								// 		}
-								// 	})
-								// 	.on('unlink', (path, stats) => console.log(`File ${path} has been removed, stats ${stats.mtime}`))
-								// 	.on('addDir', (path, stats) => console.log(`Directory ${path} has been added, stats ${stats.mtime}`))
-								// 	.on('unlinkDir', (path, stats) => console.log(`Directory ${path} has been removed, stats ${stats.mtime}`))
-								// 	.on('error', error => console.log(`Watcher error: ${error}`))
-								// 	.on('ready', () => {
-								// 		console.log('Initial scan complete. Ready for changes');
-								// 	});
+								const watcher = chokidar.watch(global.paths.home, {
+									ignored: dotRegex,
+									persistent: true,
+									ignoreInitial: true,
+									alwaysStat: true
+								});
+
+								let createFileObj = function (fileId, fileName) {
+									return new Promise(function (resolve, reject) {
+										let file = {};
+										file.name = fileName;
+										file.id = fileId;
+										file.mtime = stats.mtime;
+										global.files[file.id] = file;
+										resolve(file);
+									});
+								};
+
+								watcher.on('add', (path, stats) => {
+									if (dotRegex.test(path)) {
+										// Ignore dot file
+										console.log(`IGNORE added file ${path}, stats.mtime = ${stats.mtime}`);
+										watcher.unwatch(path);
+									} else {
+										// Queue up to encrypt and put
+										let fileName = path.match(fNameRegex)[0];
+										let relPath = path.replace(global.paths.home, '');
+										console.log(`ADD added file ${fileName}, stats ${stats.mtime}`);
+
+										sync.genID()
+											.then((fileId) => {
+												let file = {};
+												file.name = fileName;
+												file.id = fileId;
+												file.origpath = path;
+												file.mtime = stats.mtime;
+												global.files[file.id] = file;
+												return file;
+											})
+											.then(pushCryptQueue)
+											.then((file) => {
+												console.log(`Done encrypting ${file.name} (${file.id})`);
+											})
+											.catch((err) => {
+												console.error(`Error occured while adding ${fileName}:\n${err.stack}`);
+											});
+									}
+								});
+
+								watcher
+									.on('change', (path, stats) => {
+										if (dotRegex.test(path)) {
+											// Ignore dot file
+											console.log(`IGNORE added file ${path}, stats ${stats.mtime}`);
+											watcher.unwatch(path);
+										} else {
+											// Queue up to encrypt and put
+											let fileName = path.match(fNameRegex)[0];
+											console.log(`File ${fileName} at ${path} has been changed, stats ${stats.mtime}}`);
+										}
+									})
+									.on('unlink', (path, stats) => console.log(`File ${path} has been removed, stats ${stats}`))
+									.on('addDir', (path, stats) => console.log(`Directory ${path} has been added, stats ${stats}`))
+									.on('unlinkDir', (path, stats) => console.log(`Directory ${path} has been removed, stats ${stats}`))
+									.on('error', error => console.log(`Watcher error: ${error}`))
+									.on('ready', () => {
+										console.log('Initial scan complete. Ready for changes');
+									});
 								// .on('raw', (event, path, details) => {
 								// 	console.log('Raw event info:', event, path, details);
 								// });

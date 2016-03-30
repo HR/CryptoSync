@@ -20,6 +20,23 @@ const CONCURRENCY = 2;
 
 exports.event = new EventEmitter();
 
+exports.genID = function (n = 1) {
+	return new Promise(function(resolve, reject) {
+		global.drive.files.generateIds({
+			count: n,
+			space: 'drive'
+		}, function (err, res) {
+			if (err) {
+				console.log(`callback: error genID`);
+				return reject(err);
+			}
+			console.log(`callback: genID`);
+			resolve((res.ids.length === 1) ? res.ids[0] : res.ids);
+		});
+	});
+};
+
+// QUEUES
 // first global.state.toGet.push(file);
 // then enqueue
 exports.getQueue = async.queue(function (file, callback) {
@@ -27,11 +44,10 @@ exports.getQueue = async.queue(function (file, callback) {
 	const dir = `${global.paths.home}${parentPath}`;
 	const path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
 	file.path = path;
-	global.files[file.id].path = path;
 
 	fs.mkdirs(dir, function (err) {
 		if (err) callback(err);
-		console.log(`GETing ${file.name} at dest ${path}`);
+		// console.log(`GETing ${file.name} at dest ${path}`);
 		let dest = fs.createWriteStream(path);
 
 		global.drive.files.get({
@@ -58,11 +74,11 @@ exports.getQueue = async.queue(function (file, callback) {
 exports.cryptQueue = async.queue(function (file, callback) {
 	fs.mkdirs(global.paths.crypted, function (err) {
 		if (err) return callback(err);
-		const self = this;
 		let parentPath = global.state.rfs[file.parents[0]].path;
+		// let parentPath = (_.has(file, parents)) ? global.state.rfs[file.parents[0]].path : file.parentPath;
 		let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
 		let destpath = `${global.paths.crypted}/${file.name}.crypto`;
-		console.log(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`);
+		// console.log(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`);
 		crypto.encrypt(origpath, destpath, global.MasterPass.get(), function (err, key, iv, tag) {
 			if (err) {
 				return callback(err);
@@ -71,7 +87,6 @@ exports.cryptQueue = async.queue(function (file, callback) {
 					file.cryptPath = destpath;
 					file.iv = iv.toString('hex');
 					file.authTag = tag.toString('hex');
-					global.files[file.id] = file;
 					global.vault[file.id] = _.cloneDeep(file);
 					global.vault[file.id].shares = crypto.pass2shares(key);
 					callback(null, file);
@@ -85,7 +100,7 @@ exports.cryptQueue = async.queue(function (file, callback) {
 
 exports.updateQueue = async.queue(function (file, callback) {
 	const self = this;
-	console.log(`TO PUT: ${file.name} (${file.id})`);
+	console.log(`TO UPDATE: ${file.name} (${file.id})`);
 	global.drive.files.update({
 		fileId: file.id,
 		resource: {
@@ -97,15 +112,38 @@ exports.updateQueue = async.queue(function (file, callback) {
 		},
 	}, function (err, res) {
 		if (err) {
+			console.log(`callback: error updating ${file.name}`);
+			return callback(err);
+		}
+		console.log(`callback: update ${file.name}`);
+		file.lastSynced = moment().format();
+		callback(null, file);
+	});
+
+}, CONCURRENCY);
+
+exports.putQueue = async.queue(function (file, callback) {
+	const self = this;
+	console.log(`TO PUT: ${file.name} (${file.id})`);
+	global.drive.files.create({
+		fileId: file.id,
+		resource: {
+			name: `${file.name}.crypto`
+		},
+		media: {
+			mimeType: "application/octet-stream",
+			body: fs.createReadStream(file.cryptPath)
+		},
+	}, function (err, rfile) {
+		if (err) {
 			console.log(`callback: error putting ${file.name}`);
 			return callback(err);
 		}
 		console.log(`callback: put ${file.name}`);
 		file.lastSynced = moment().format();
-		global.files[file.id] = file;
-		callback(null, file);
+		global.files[rfile.id] = rfile;
+		callback(null, file, rfile);
 	});
-
 }, CONCURRENCY);
 
 exports.updateStats = function (file, callback) {
@@ -235,35 +273,3 @@ exports.putAll = function (cb) {
 		cb(err);
 	});
 };
-
-// global.drive.files.create({
-// 	resource: {
-// 		name: `${file.name}`,
-// 	},
-// 	media: {
-// 		body: fs.createReadStream(file.cryptPath)
-// 	},
-// }, function (err, response) {
-// 	if (err) {
-// 		return console.error(`Error occured while PUTing file ${err.stack}`);
-// 	}
-// 	console.log(`UPLOADED TEST, response: ${JSON.stringify(response)}`);
-// });
-// global.drive.files.update({
-// 	fileId: file.id,
-// 	resource: {
-// 		name: `${file.name}.crypto`
-// 	},
-// 	appProperties: {
-// 		CryptoSync: true
-// 	},
-// 	media: {
-// 		mimeType: "application/octet-stream",
-// 		body: fs.createReadStream(file.cryptPath)
-// 	},
-// }, function (err, response) {
-// 	if (err) {
-// 		return console.error(`Error occurred while PUTing file ${file.name} (${file.id}) to ${file.cryptPath}\n${err.stack}`);
-// 	}
-// 	console.log(`UPDATED ${file.name} (${file.id}), response: ${JSON.stringify(response)}`);
-// });

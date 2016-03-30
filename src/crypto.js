@@ -24,6 +24,7 @@ let defaults = {
 	salgorithm: 'aes-256-ctr',
 	digest: 'sha256',
 	hash_alg: 'sha256',
+	check_hash_alg: 'md5',
 	padLength: 1024,
 	mpk_iterations: 100000, // masterpass key iterations
 	shares: 3,
@@ -224,7 +225,7 @@ exports.verifyPassHash = function (mpkhash, gmpkhash) {
 
 exports.genFileHash = function (origpath, callback) {
 	let fd = fs.createReadStream(origpath);
-	const hash = crypto.createHash(defaults.hash_alg);
+	const hash = crypto.createHash(defaults.check_hash_alg);
 	hash.setEncoding('hex');
 	fd.on('end', function () {
 		hash.end();
@@ -284,7 +285,7 @@ exports.shares2pass = function (shares) {
 	// let N = sharedata[1];
 
 	// Extract the shares
-	const pass = secrets.combine(shares.data);
+	let pass = secrets.combine(shares.data);
 	// convert back to str
 	pass = secrets.hex2str(pass);
 

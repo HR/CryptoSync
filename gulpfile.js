@@ -1,5 +1,6 @@
 var gulp = require('gulp'),
-		shell = require('gulp-shell');
+	shell = require('gulp-shell'),
+	mocha = require('gulp-mocha');
 
 gulp.task('default', shell.task([
 	// Absolute path '/usr/local/lib/node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
@@ -35,22 +36,39 @@ gulp.task('test', shell.task([
 	"electron-mocha --renderer --compilers js:babel-core/register 'test/**/*.@(js|jsx)'"
 ]));
 
-gulp.task('watch', function() {
+gulp.task('mtest', shell.task([
+	// Run test stuff
+	"mocha --compilers js:babel-core/register"
+]));
+
+gulp.task('gmtest', () => {
+	return gulp.src('test/sync.js', {
+			read: false
+		})
+		// gulp-mocha needs filepaths so you can't have any plugins before it
+		.pipe(mocha());
+});
+
+gulp.task('watch', function () {
 	gulp.watch(['./static/**/*', './*.js'], ['run']);
 });
 
-gulp.task('run', function(){
-	return gulp.src('*', {read: false})
-	 .pipe(shell([
-		// start electron main and render process
-		'node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
-	]));
+gulp.task('run', function () {
+	return gulp.src('*', {
+			read: false
+		})
+		.pipe(shell([
+			// start electron main and render process
+			'node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
+		]));
 });
 
-gulp.task('lint', function(){
-	return gulp.src('*', {read: false})
-	 .pipe(shell([
-		// lint
-		'eslint src/*.js src/*/*.js *.js'
-	]));
+gulp.task('lint', function () {
+	return gulp.src('*', {
+			read: false
+		})
+		.pipe(shell([
+			// lint
+			'eslint src/*.js src/*/*.js *.js'
+		]));
 });
