@@ -4,6 +4,8 @@ const assert = require('assert'),
 	crypto = require('../src/crypto.js'),
 	sync = require('../src/sync.js'),
 	util = require('../src/util'),
+	Vault = require('../src/Vault'),
+	init = require('../src/init'),
 	sutil = require('util'),
 	scrypto = require('crypto'),
 	_ = require('lodash'),
@@ -18,6 +20,9 @@ console.log(`cwd: ${process.cwd()}`);
 
 describe('CryptoSync Core Modules\' tests', function () {
 	before(function () {
+		// create temp dir
+		fs.ensureDirSync('tmp');
+
 		// Declare globals
 		global.defaults = {
 			iterations: 4096, // file encryption key iterations
@@ -54,6 +59,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 				secure: false
 			}
 		};
+		global.creds = {};
 		global.MasterPassKey = require('../src/_MasterPassKey');
 		global.MasterPassKey.set(scrypto.randomBytes(global.defaults.keyLength));
 		console.log(`global.MasterPassKey = ${global.MasterPassKey.get().toString('hex')}`);
@@ -76,21 +82,16 @@ describe('CryptoSync Core Modules\' tests', function () {
 			auth: gAuth
 		});
 
-		global.drive.files.generateIds({
-			count: 1,
-			space: 'drive'
-		}, function (err, res) {
-			if (err) {
-				console.log(`callback: error genID, ${err.stack}`);
-			}
-			console.log(`callback: genID ${res}`);
-		});
-
 		global.execute = function (command, callback) {
 			exec(command, function (error, stdout, stderr) {
 				callback(stdout);
 			});
 		};
+	});
+
+	after(function () {
+		fs.removeSync('tmp');
+		fs.removeSync('CryptoSync');
 	});
 
 	describe('Sync module', function () {
@@ -152,23 +153,19 @@ describe('CryptoSync Core Modules\' tests', function () {
 	});
 
 	describe('Crypto module', function () {
-		before(function () {
-			fs.writeFileSync('test.txt', '#CryptoSync', 'utf8');
-		});
+		const t1path = 'tmp/test.txt';
 
-		after(function () {
-			fs.removeSync('test.txt');
-			fs.removeSync('test2.txt');
-			fs.removeSync('test.txt.crypto');
+		before(function () {
+			fs.writeFileSync(t1path, '#CryptoSync', 'utf8');
 		});
 
 		describe('Hashing & deriving', function () {
 			const masterpass = "crypto#101";
 
 			it('should get same digest hash for genFileHash as openssl', function (done) {
-				crypto.genFileHash('test.txt', function (err, hash) {
+				crypto.genFileHash(t1path, function (err, hash) {
 					if (err) done(err);
-					global.execute('openssl dgst -md5 test.txt', function (stdout, err, stderr) {
+					global.execute(`openssl dgst -md5 ${t1path}`, function (stdout, err, stderr) {
 						if (err !== null) done(err);
 						// if (stderr !== null) done(stderr);
 						let ohash = stdout.replace('MD5(test.txt)= ', '');
@@ -203,40 +200,46 @@ describe('CryptoSync Core Modules\' tests', function () {
 		});
 
 		describe('Encryption', function () {
-			it('should generate iv, encrypt & decrypt vault obj with MPKey when salt is buffer', function (done) {
-				crypto.genIv(function (err, viv) {
-					if (err) done(err);
-					crypto.encryptObj(global.vault, global.paths.vault, global.MasterPassKey.get(), viv, function (err, authTag) {
+			it('should generate iv, encrypt & decrypt an obj with MPKey when salt is buffer', function (done) {
+				const toCryptObj = _.cloneDeep(global.vault);
+				const fpath = 'tmp/cryptedObj.crypto';
+				crypto.genIV().then(function (viv) {
+					crypto.encryptObj(toCryptObj, fpath, global.MasterPassKey.get(), viv, function (err, authTag) {
 						if (err) done(err);
-						crypto.decryptObj(global.paths.vault, global.MasterPassKey.get(), viv, authTag, function (err, devaulted) {
+						crypto.decryptObj(fpath, global.MasterPassKey.get(), viv, authTag, function (err, devaulted) {
 							if (err) done(err);
-							expect(devaulted).to.deep.equal(global.vault);
+							expect(devaulted).to.deep.equal(toCryptObj);
 							done();
 						});
 					});
+				}).catch((err) => {
+					done(err);
 				});
 			});
 
 			it('should generate iv, encrypt & decrypt vault obj with MPKey with persistent salt', function (done) {
-				crypto.genIv(function (err, viv) {
-					if (err) done(err);
+				const toCryptObj = _.cloneDeep(global.vault);
+				const fpath = 'tmp/cryptedObj2.crypto';
+				crypto.genIV().then(function (viv) {
 					const pviv = JSON.parse(JSON.stringify(viv));
-					crypto.encryptObj(global.vault, global.paths.vault, global.MasterPassKey.get(), pviv, function (err, authTag) {
+					crypto.encryptObj(toCryptObj, fpath, global.MasterPassKey.get(), pviv, function (err, authTag) {
 						if (err) done(err);
-						crypto.decryptObj(global.paths.vault, global.MasterPassKey.get(), viv, authTag, function (err, devaulted) {
+						crypto.decryptObj(fpath, global.MasterPassKey.get(), viv, authTag, function (err, devaulted) {
 							if (err) done(err);
-							expect(devaulted).to.deep.equal(global.vault);
+							expect(devaulted).to.deep.equal(toCryptObj);
 							done();
 						});
 					});
+				}).catch((err) => {
+					done(err);
 				});
 			});
 
 			it('should encrypt file with pass without errors & have all expected creds', function (done) {
 				before(function () {
-					fs.writeFileSync('test.txt', '#CryptoSync', 'utf8');
+					fs.writeFileSync(t1path, '#CryptoSync', 'utf8');
 				});
-				crypto.encrypt('test.txt', 'test.txt.crypto', global.MasterPassKey.get(), function (err, key, iv, tag) {
+				crypto.encrypt(t1path, `${t1path}.crypto`, global.MasterPassKey.get(), function (err, key, iv, tag) {
 					if (err) done(err);
 					try {
 						let file = {};
@@ -250,11 +253,12 @@ describe('CryptoSync Core Modules\' tests', function () {
 			});
 
 			// it('should encrypt and decrypt file with pass', function (done) {
-			// 	crypto.encrypt('test.txt', 'test.txt.crypto', global.MasterPassKey.get(), function (err, key, iv, tag) {
+			// 	let cryptoPath = '${t1path}.crypto';
+			// 	crypto.encrypt(t1path, cryptoPath, global.MasterPassKey.get(), function (err, key, iv, tag) {
 			// 		if (err) done(err);
-			// 		crypto.decrypt('test.txt.crypto', 'test2.txt', key, null, null, function (err, iv, tag) {
+			// 		crypto.decrypt(cryptoPath, 'tmp/test2.txt', key, null, null, function (err, iv, tag) {
 			// 			if (err) done(err);
-			// 			fs.readFile('test2.txt', function read(err, data) {
+			// 			fs.readFile('tmp/test2.txt', function read(err, data) {
 			// 				if (err) done(err);
 			// 				expect(data.toString('utf8')).to.equal('#CryptoSync');
 			// 				done();
@@ -272,6 +276,21 @@ describe('CryptoSync Core Modules\' tests', function () {
 				expect(ckeyArray).to.equal(key);
 				done();
 			});
+		});
+	});
+
+	describe('Vault module', function () {
+		it('should generate iv, encrypt & decrypt vault obj', function (done) {
+			global.creds.viv = scrypto.randomBytes(defaults.ivLength);
+			const beforeEncVault = _.cloneDeep(global.vault);
+			Vault.encrypt(global.MasterPassKey.get())
+				.then(Vault.decrypt(global.MasterPassKey.get().toString('hex')))
+				.then(() => {
+					expect(global.vault).to.deep.equal(beforeEncVault);
+					done();
+				}).catch((err) => {
+					done(err);
+				});
 		});
 	});
 });

@@ -4,7 +4,8 @@
  * Initialisers
  ******************************/
 const _ = require('lodash'),
-	moment = require('./moment'),
+	moment = require('moment'),
+	google = require('googleapis'),
 	util = require('./util'),
 	crypto = require('./crypto');
 
@@ -38,33 +39,6 @@ exports.main = function () {
 			if (err) reject(err);
 			resolve();
 		});
-	});
-};
-
-exports.vault = function (callback) {
-	console.log(`initVault invoked. Creating global vault obj & encrypting...`);
-	global.vault = {};
-	global.vault.creationDate = moment().format();
-	// TODO: decide whether to use crypto.encryptObj or genIvSalt (and then encryptObj
-	// & remove gen functionality from crypto.encryptObj)
-	crypto.genIv(function (err, iv, salt) {
-		console.log(`crypto.genIvSalt callback.`);
-		if (err) {
-			callback(err);
-		} else {
-			global.creds.viv = iv;
-			console.log(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
-			crypto.encryptObj(global.vault, global.paths.vault, global.MasterPassKey.get(), global.creds.viv, function (err, tag) {
-				console.log(`crypto.encryptObj callback.`);
-				if (err) {
-					callback(err);
-				} else {
-					console.log(`Encrypted successfully with tag = ${tag.toString('hex')}`);
-					global.creds.authTag = tag;
-					callback(null);
-				}
-			});
-		}
 	});
 };
 

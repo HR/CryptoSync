@@ -7,6 +7,16 @@
 const crypto = require('./crypto'),
 	util = require('./util'),
 	_ = require('lodash');
+const Main = require('../index');
+
+exports.Prompt = function () {
+	return new Promise(function (resolve, reject) {
+		Main.MasterPassPrompt(false, function (err) {
+			if (err) reject(err);
+			resolve();
+		});
+	});
+};
 
 exports.check = function (masterpass, callback) {
 	crypto.deriveMasterPassKey(masterpass, global.creds.mpsalt, function (err, mpkey, mpsalt) {

@@ -169,15 +169,17 @@ exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
 	});
 };
 
-exports.genIv = function (callback) {
+exports.genIV = function () {
 	// TODO: check whether to callback inside try or outside
 	// TODO: promisify
-	try {
-		const iv = crypto.randomBytes(defaults.ivLength); // generate pseudorandom iv
-		callback(null, iv);
-	} catch (err) {
-		callback(err);
-	}
+	return new Promise(function(resolve, reject) {
+		try {
+			const iv = crypto.randomBytes(defaults.ivLength); // Synchronous gen
+			resolve(iv);
+		} catch (err) {
+			reject(err);
+		}
+	});
 };
 
 exports.deriveMasterPassKey = function (masterpass, mpsalt, callback) {
