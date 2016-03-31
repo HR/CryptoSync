@@ -11,6 +11,7 @@ const app = electron.app,
 	util = require('./src/util'),
 	res = require('./static/js/res'),
 	Account = require('./src/Account'),
+	MasterPass = require('./src/MasterPass'),
 	sync = require('./src/sync'),
 	fs = require('fs-extra'),
 	chokidar = require('chokidar'),
@@ -30,7 +31,7 @@ const API_REQ_LIMIT = 8;
 // YOLO#101
 
 // MasterPass is protected (private var) and only exist in Main memory
-global.MasterPassKey = require('./src/_MasterPass');
+global.MasterPassKey = require('./src/_MasterPassKey');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
 global.accounts = {};
@@ -547,7 +548,7 @@ function createSetup(callback) {
 
 	ipc.on('setMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
-		setMasterPass(masterpass, function (err, mpkey) {
+		MasterPass.set(masterpass, function (err, mpkey) {
 			global.MasterPassKey.set(mpkey);
 			webContents.send('setMasterPassResult', err);
 		});
@@ -761,7 +762,7 @@ function masterPassPrompt(reset, callback) {
 	ipc.on('checkMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
 		// TODO: Clean this up and remove redundancies
-		checkMasterPass(masterpass, function (err, match, mpkey) {
+		MasterPass.check(masterpass, function (err, match, mpkey) {
 			if (err) {
 				//send error
 				webContents.send('checkMasterPassResult', err);
@@ -799,7 +800,7 @@ function masterPassPrompt(reset, callback) {
 	});
 	ipc.on('setMasterPass', function (event, masterpass) {
 		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
-		setMasterPass(masterpass, function (err, mpkey) {
+		MasterPass.set(masterpass, function (err, mpkey) {
 			// TODO: create new Vault, delete old data and start re-encrypting
 			if (!err) {
 				newMPset = true;
@@ -864,92 +865,6 @@ function createErrorPrompt(err, callback) {
  * Functions
  **/
 
-// Restore accounts object from DB promise
-function restoreGlobalObj(objName) {
-	console.log(`PROMISE: restoreGlobalObj for ${objName}`);
-	return new Promise(function (resolve, reject) {
-		global.mdb.get(objName, function (err, json) {
-			if (err) {
-				if (err.notFound) {
-					console.log(`ERROR: Global obj ${objName} NOT FOUND `);
-					reject(err);
-				} else {
-					// I/O or other error, pass it up the callback
-					console.log(`ERROR: mdb.get('${objName}') FAILED`);
-					reject(err);
-				}
-			} else {
-				console.log(`SUCCESS: ${objName} FOUND`);
-				try {
-					global[objName] = JSON.parse(json) || {};
-					setTimeout(function () {
-						console.log(`resolve global.${objName} called`);
-						resolve();
-					}, 0);
-				} catch (e) {
-					return e;
-				}
-			}
-		});
-	});
-};
-
-function saveGlobalObj(objName) {
-	console.log(`PROMISE: saveGlobalObj for ${objName}`);
-	return new Promise(function (resolve, reject) {
-		if (!(_.isEmpty(global[objName]))) {
-			global.mdb.put(objName, JSON.stringify(global[objName]), function (err) {
-				if (err) {
-					console.log(`ERROR: mdb.put('${objName}') failed, ${err}`);
-					// I/O or other error, pass it up the callback
-					reject(err);
-				}
-				console.log(`SUCCESS: mdb.put('${objName}')`);
-				resolve();
-			});
-		} else {
-			console.log('Nothing to save; empty.');
-			resolve();
-		}
-	});
-};
-
-function setMasterPass(masterpass, callback) {
-	// TODO: decide whther to put updated masterpass instantly
-	console.log(`setMasterPass() for ${masterpass}`);
-	crypto.deriveMasterPassKey(masterpass, null, function (err, mpkey, mpsalt) {
-		global.creds.mpsalt = mpsalt;
-		// console.log(`\n global.creds.mpsalt = ${global.creds.mpsalt.toString('hex')}`);
-		crypto.genPassHash(mpkey, null, function (mpkhash, mpksalt) {
-			global.creds.mpkhash = mpkhash;
-			global.creds.mpksalt = mpksalt;
-			console.log(`deriveMasterPassKey callback: \npbkdf2 mpkey = ${mpkey.toString('hex')},\nmpsalt = ${global.creds.mpsalt.toString('hex')},\nmpkhash = ${mpkhash},\nmpksalt = ${mpksalt}`);
-			saveGlobalObj('creds').then(() => {
-				return callback(null, mpkey);
-			}).catch((err) => {
-				return callback(err);
-			});
-		});
-	});
-}
-
-
-function checkMasterPass(masterpass, callback) {
-	crypto.deriveMasterPassKey(masterpass, global.creds.mpsalt, function (err, mpkey, mpsalt) {
-		console.log('checkMasterPass deriveMasterPassKey callback');
-		if (err) {
-			console.error(`ERROR: deriveMasterPassKey failed, ${err.stack}`);
-			return callback(err, null);
-		}
-		crypto.genPassHash(mpkey, global.creds.mpksalt, function (mpkhash) {
-			// console.log(`creds.mpkhash = ${global.creds.mpkhash}, mpkhash (of entered mp) = ${mpkhash}`);
-			const MATCH = crypto.verifyPassHash(global.creds.mpkhash, mpkhash); // check if masterpasskey derived is correct
-			console.log(`MATCH: ${global.creds.mpkhash} (creds.mpkhash) === ${mpkhash} (mpkhash) = ${MATCH}`);
-			return callback(null, MATCH, mpkey);
-		});
-	});
-}
-
 function Setup() {
 	// Guide user through setting up a MPhash and connecting to cloud services
 	// TODO: transform into Async using a Promise
@@ -987,11 +902,11 @@ app.on('will-quit', (event) => {
 		global.stats.endTime = moment().format();
 
 		Promise.all([
-			saveGlobalObj('accounts'),
-			saveGlobalObj('state'),
-			saveGlobalObj('settings'),
-			saveGlobalObj('files'),
-			saveGlobalObj('stats')
+			util.saveGlobalObj('accounts'),
+			util.saveGlobalObj('state'),
+			util.saveGlobalObj('settings'),
+			util.saveGlobalObj('files'),
+			util.saveGlobalObj('stats')
 		]).then(function () {
 			if (global.MasterPassKey.get() && !_.isEmpty(global.vault)) {
 				console.log(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`);
@@ -1003,7 +918,7 @@ app.on('will-quit', (event) => {
 					} else {
 						console.log(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`);
 						global.creds.authTag = tag;
-						saveGlobalObj('creds').then(() => {
+						util.saveGlobalObj('creds').then(() => {
 							global.mdb.close();
 							console.log('Closed vault and mdb (called mdb.close()).');
 							exit = true;
@@ -1145,11 +1060,11 @@ app.on('ready', function () {
 						global.vault = vault;
 						console.log(`Decrypted vault, vault's content is ${sutil.inspect(vault).substr(0, 20)}`);
 						Promise.all([
-								restoreGlobalObj('accounts'),
-								restoreGlobalObj('state'),
-								restoreGlobalObj('settings'),
-								restoreGlobalObj('stats'),
-								restoreGlobalObj('files')
+								util.restoreGlobalObj('accounts'),
+								util.restoreGlobalObj('state'),
+								util.restoreGlobalObj('settings'),
+								util.restoreGlobalObj('stats'),
+								util.restoreGlobalObj('files')
 							])
 							.then(() => {
 								const o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;

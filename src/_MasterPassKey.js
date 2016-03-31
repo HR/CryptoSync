@@ -6,7 +6,7 @@
 
 // private static class member
 var MP = Symbol();
-module.exports = class MasterPass {
+module.exports = class MasterPassKey {
 	static get() {
 		return this[MP];
 	}

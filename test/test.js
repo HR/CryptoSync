@@ -54,7 +54,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 				secure: false
 			}
 		};
-		global.MasterPassKey = require('../src/_MasterPass');
+		global.MasterPassKey = require('../src/_MasterPassKey');
 		global.MasterPassKey.set(scrypto.randomBytes(global.defaults.keyLength));
 		console.log(`global.MasterPassKey = ${global.MasterPassKey.get().toString('hex')}`);
 

@@ -24,7 +24,7 @@ exports.checkFileSync = function (path) {
 	return true;
 };
 
-exports.getValue = function (db, key) {
+exports.getValue = function (key, db = global.mdb) {
 	console.log(`PROMISE: getValue for getting ${key}`);
 	return new Promise(function (resolve, reject) {
 		db.get(key, function (err, json) {
@@ -46,7 +46,7 @@ exports.getValue = function (db, key) {
 };
 
 
-exports.saveGlobalObj = function (db, objName) {
+exports.saveGlobalObj = function (objName, db = global.mdb) {
 	console.log(`PROMISE: saveGlobalObj for ${objName}`);
 	return new Promise(function (resolve, reject) {
 		if (!(_.isEmpty(global[objName]))) {
@@ -66,7 +66,7 @@ exports.saveGlobalObj = function (db, objName) {
 	});
 };
 
-exports.restoreGlobalObj = function (db, objName) {
+exports.restoreGlobalObj = function (objName, db = global.mdb) {
 	console.log(`PROMISE: restoreGlobalObj for ${objName}`);
 	return new Promise(function (resolve, reject) {
 		db.get(objName, function (err, json) {
