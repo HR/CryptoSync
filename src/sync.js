@@ -37,7 +37,7 @@ exports.genID = function (n = 1) {
 				console.log(`callback: error genID`);
 				return reject(err);
 			}
-			console.log(`callback: genID`);
+			// console.log(`callback: genID`);
 			resolve((res.ids.length === 1) ? res.ids[0] : res.ids);
 		});
 	});

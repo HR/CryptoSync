@@ -4,7 +4,7 @@
  * Initialisers
  ******************************/
 const _ = require('lodash'),
-	moment = require('moment'),
+	moment = require('./moment'),
 	util = require('./util'),
 	crypto = require('./crypto');
 
