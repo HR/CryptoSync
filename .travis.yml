@@ -19,6 +19,7 @@ install:
 install:
 #   - export DISPLAY=':99.0'
 #   - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+  - CXX=g++-4.8
   - npm install -g node-gyp
   - npm install --no-optional
   # - npm install -g codeclimate-test-reporter
@@ -54,5 +55,8 @@ notifications:
 
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
     packages:
-    - xvfb
+      - g++-4.8
+      - xvfb
