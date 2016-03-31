@@ -1,29 +1,26 @@
 language: node_js
 node_js:
-  - "5.9.1"
+  - "5.9.0"
 
 branches:
   only:
     - master
 
-before_install:
-  - sudo apt-get install python-software-properties
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update
-  - sudo apt-get install gcc-5 g++-5
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 80 --slave /usr/bin/g++ g++ /usr/bin/g++-5
-  - sudo update-alternatives --set gcc /usr/bin/gcc-5
-sudo: required
-
 install:
   - export DISPLAY=':99.0'
   - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+  - npm install
 # install:
 #   - rm -rf node_modules
 #   - npm install -g node-gyp
 #   - npm install -g electron-rebuild
 #   - npm install && ./node_modules/.bin/electron-rebuild
-
+matrix:
+  include:
+    - os: linux
+      env: NODE_VERSION=5.9.0
+    - os: osx
+      env: NODE_VERSION=5.9.0
 
 
 script:
@@ -41,4 +38,5 @@ notifications:
 addons:
   apt:
     packages:
+      - build-essential
       - xvfb
