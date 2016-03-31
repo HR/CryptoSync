@@ -19,11 +19,8 @@ install:
 install:
 #   - export DISPLAY=':99.0'
 #   - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-  - echo "${TRAVIS_OS_NAME}"
   - npm install -g node-gyp
-  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
   - npm install --no-optional
-  - fi
   # - npm install -g codeclimate-test-reporter
   # - set HOME=~/.electron-gyp && node-gyp rebuild --target=$npm_package_devDependencies_electron_prebuilt --arch=x64 --dist-url=https://atom.io/download/atom-shell
 
