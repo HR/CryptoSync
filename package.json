@@ -69,7 +69,6 @@
     "chai": "*",
     "chromedriver": "*",
     "electron-packager": "*",
-    "electron-rebuild": "*",
     "eslint": "*",
     "eslint-plugin-html": "*",
     "gulp": "*",

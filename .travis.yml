@@ -6,20 +6,20 @@ branches:
   only:
     - master
 
-install:
-  - rm -rf ode_modules
-  - npm install -g node-gyp
-  - npm install -g electron-rebuild
-  - npm install && ./node_modules/.bin/electron-rebuild
+# install:
+#   - rm -rf node_modules
+#   - npm install -g node-gyp
+#   - npm install -g electron-rebuild
+#   - npm install && ./node_modules/.bin/electron-rebuild
 
 
 
 script:
   - npm test
 
-# cache:
-#   directories:
-#     - node_modules
+cache:
+  directories:
+    - node_modules
 
 notifications:
   email:
