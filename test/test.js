@@ -11,6 +11,7 @@ const assert = require('assert'),
 	fs = require('fs-extra'),
 	exec = require('child_process').exec;
 
+require('dotenv').config();
 
 process.chdir('test');
 console.log(`cwd: ${process.cwd()}`);
@@ -57,39 +58,32 @@ describe('CryptoSync Core Modules\' tests', function () {
 		global.MasterPassKey.set(scrypto.randomBytes(global.defaults.keyLength));
 		console.log(`global.MasterPassKey = ${global.MasterPassKey.get().toString('hex')}`);
 
-		try {
-			const gauth = JSON.parse(fs.readFileSync('.cred/gauth.json', 'utf8'));
-		} catch (err) {
-			// not available, skip >>
-		}
-		// global.files = JSON.parse(fs.readFileSync('test/.cred/rfiles.json', 'utf8'));
-		global.state.rfs = JSON.parse(fs.readFileSync('.cred/rfs.json', 'utf8'));
+		// global.files = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'));
+		global.state.rfs = JSON.parse(fs.readFileSync('data/rfs.json', 'utf8'));
 
-		if (gauth) {
-			const o2c = gauth.oauth.oauth2Client;
-			clientId_ = o2c.clientId_;
-			clientSecret_ = o2c.clientSecret_;
-			redirectUri_ = o2c.redirectUri_;
-			credentials = o2c.credentials;
-		} else {
-			// travis ci
-			clientId_ = process.env.clientId_;
-			clientSecret_ = process.env.clientSecret_;
-			redirectUri_ = process.env.redirectUri_;
-			credentials = {
-				access_token: process.env.access_token,
-				token_type: process.env.token_type,
-				refresh_token: process.env.refresh_token,
-				expiry_date: process.env.expiry_date
-			};
-		}
+		const credentials = {
+			access_token: process.env.access_token,
+			token_type: process.env.token_type,
+			refresh_token: process.env.refresh_token,
+			expiry_date: process.env.expiry_date
+		};
 
-		global.gAuth = new google.auth.OAuth2(clientId_, clientSecret_, redirectUri_);
+		const gAuth = new google.auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_);
 		gAuth.setCredentials(credentials);
 
 		global.drive = google.drive({
 			version: 'v3',
 			auth: gAuth
+		});
+
+		global.drive.files.generateIds({
+			count: 1,
+			space: 'drive'
+		}, function (err, res) {
+			if (err) {
+				console.log(`callback: error genID, ${err.stack}`);
+			}
+			console.log(`callback: genID ${res}`);
 		});
 
 		global.execute = function (command, callback) {
@@ -102,7 +96,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 	describe('Sync module', function () {
 		let rfile;
 		before(function () {
-			rfile = JSON.parse(fs.readFileSync('.cred/rfile.json', 'utf8'));
+			rfile = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'));
 		});
 
 		describe('getQueue', function () {
@@ -160,6 +154,11 @@ describe('CryptoSync Core Modules\' tests', function () {
 	describe('Crypto module', function () {
 		before(function () {
 			fs.writeFileSync('test.txt', '#CryptoSync', 'utf8');
+		});
+
+		after(function () {
+			fs.removeSync('test.txt');
+			fs.removeSync('test.txt.crypto');
 		});
 
 		describe('Hashing & deriving', function () {

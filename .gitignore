@@ -4,6 +4,8 @@
 .LSOverride
 .cred
 test/CryptoSync
+.env
+test/test.*
 
 # Icon must end with two \r
 Icon

@@ -1,0 +1,16 @@
+{
+	"0AEpJLMXieC-mUk9PVA": {
+		"path": "/"
+	},
+	"0B0pJLMXieC-makxNdTZwRHNZenc": {
+		"id": "0B0pJLMXieC-makxNdTZwRHNZenc",
+		"name": "test",
+		"mimeType": "application/vnd.google-apps.folder",
+		"parents": [
+			"0AEpJLMXieC-mUk9PVA"
+		],
+		"webViewLink": "https://docs.google.com/folderview?id=0B0pJLMXieC-makxNdTZwRHNZenc&usp=drivesdk",
+		"ownedByMe": true,
+		"path": "/test"
+	}
+}
