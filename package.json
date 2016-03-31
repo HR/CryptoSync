@@ -16,7 +16,7 @@
   "electronVersion": "*",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register",
-    "start": "gulp",
+    "start": "./node_modules/gulp/bin/gulp.js",
     "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
   },
   "xo": {
