@@ -4,7 +4,9 @@ node_js:
 branches:
   only:
     - master
-
+install:
+  - npm install --no-bin-links
+  
 script:
   - npm test
 
