@@ -1,7 +1,6 @@
 language: node_js
 node_js:
-  - '4'
-  - '5'
+  - '5.8.0'
 
 branches:
   only:
@@ -12,17 +11,19 @@ install:
   - echo $CC
   - echo $CXX
   - clang --version
-  - if [ "$CC" = "gcc-4.8" ]; then gcc-4.8 -v; else gcc -v; fi
   - git clone https://github.com/creationix/nvm.git /tmp/.nvm
   - source /tmp/.nvm/nvm.sh
   - nvm install $NODE_VERSION
   - nvm use --delete-prefix $NODE_VERSION
 
-# install:
+install:
 #   - export DISPLAY=':99.0'
 #   - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-#   - npm install -g node-gyp
-#   - npm install
+  - echo "${TRAVIS_OS_NAME}"
+  - npm install -g node-gyp
+  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+  - npm install --no-optional
+  - fi
   # - npm install -g codeclimate-test-reporter
   # - set HOME=~/.electron-gyp && node-gyp rebuild --target=$npm_package_devDependencies_electron_prebuilt --arch=x64 --dist-url=https://atom.io/download/atom-shell
 
@@ -32,9 +33,9 @@ install:
 matrix:
   include:
     - os: linux
-      env: NODE_VERSION=5.9.0
+      env: NODE_VERSION=5.8.0
     - os: osx
-      env: NODE_VERSION=5.9.0
+      env: NODE_VERSION=5.8.0
 
 before_script:
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
