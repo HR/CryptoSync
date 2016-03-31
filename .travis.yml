@@ -7,8 +7,9 @@ branches:
     - master
 
 install:
+  - rm -rf ode_modules
   - npm install -g node-gyp
-  - npm install --save-dev electron-rebuild
+  - npm install -g electron-rebuild
   - npm install && ./node_modules/.bin/electron-rebuild
 
 
@@ -16,9 +17,9 @@ install:
 script:
   - npm test
 
-cache:
-  directories:
-    - node_modules
+# cache:
+#   directories:
+#     - node_modules
 
 notifications:
   email:
