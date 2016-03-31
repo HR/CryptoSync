@@ -1,4 +1,4 @@
-console.log(`cwd: ${process.cwd()}`);
+'use strict';
 const assert = require('assert'),
 	expect = require("chai").expect,
 	crypto = require('../src/crypto.js'),

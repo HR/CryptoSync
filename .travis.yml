@@ -39,6 +39,8 @@ before_script:
 script:
   - npm test
 
+after_success: npm run coverage
+
 cache:
   apt: true
   directories:
