@@ -228,14 +228,14 @@ function Cryptobar(callback) {
 
 	ipc.on('openSettings', function (event) {
 		console.log('IPCMAIN: openSettings event emitted');
-		createSettings(function (result) {
+		Settings(function (result) {
 
 		});
 	});
 
 	ipc.on('openVault', function (event) {
 		console.log('IPCMAIN: openVault event emitted');
-		createVault(null);
+		Vault(null);
 	});
 
 	win.on('closed', function () {
@@ -245,7 +245,7 @@ function Cryptobar(callback) {
 	});
 }
 
-function createVault(callback) {
+function Vault(callback) {
 	let win = new BrowserWindow({
 		width: 800,
 		height: 400,
@@ -255,29 +255,13 @@ function createVault(callback) {
 	win.loadURL(global.views.vault);
 	win.openDevTools();
 	win.on('closed', function () {
-		console.log('win.closed event emitted for createVault.');
+		console.log('win.closed event emitted for Vault.');
 		win = null;
 		if (callback) callback();
 	});
 }
 
-function createSetup(callback) {
-	function getParam(name, url) {
-		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-		let regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-			results = regex.exec(url);
-		return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-	}
-
-	function streamToString(stream, cb) {
-		const chunks = [];
-		stream.on('data', (chunk) => {
-			chunks.push(chunk);
-		});
-		stream.on('end', () => {
-			cb(chunks.join(''));
-		});
-	}
+function Setup(callback) {
 	let win = new BrowserWindow({
 		width: 640,
 		height: 420,
@@ -288,6 +272,7 @@ function createSetup(callback) {
 			// height: 420
 			// resizable: false,
 	});
+
 	let setupComplete = false;
 	let webContents = win.webContents;
 	win.loadURL(global.views.setup);
@@ -311,7 +296,7 @@ function createSetup(callback) {
 	});
 
 	win.on('unresponsive', function (event) {
-		console.log('createSetup UNRESPONSIVE');
+		console.log('Setup UNRESPONSIVE');
 	});
 
 	webContents.on('did-navigate', function (event, url) {
@@ -321,11 +306,11 @@ function createSetup(callback) {
 			console.log("localhost URL matches");
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
 			// console.log('MAIN: url matched, sending to RENDER...');
-			let err = getParam("error", url);
+			let err = util.getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#
 			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
 			if (!err) {
-				let auth_code = getParam("code", url);
+				let auth_code = util.getParam("code", url);
 				console.log(`IPCMAIN: Got the auth_code, ${auth_code}`);
 				console.log("IPCMAIN: Calling callback with the code...");
 
@@ -338,173 +323,6 @@ function createSetup(callback) {
 						console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
 						resolve(gAuth);
 					});
-				};
-
-				let getAccountInfo = function () {
-					return new Promise(function (resolve, reject) {
-						console.log('PROMISE: getAccountInfo');
-						global.drive.about.get({
-							"fields": "storageQuota,user"
-						}, function (err, res) {
-							if (err) {
-								console.log(`IPCMAIN: drive.about.get, ERR occured, ${err}`);
-								reject(err);
-							} else {
-								console.log(`IPCMAIN: drive.about.get, RES:`);
-								console.log(`\nemail: ${res.user.emailAddress}\nname: ${res.user.displayName}\nimage:${res.user.photoLink}\n`);
-								// get the account photo and convert to base64
-								resolve(res);
-							}
-						});
-					});
-				};
-
-				let getPhoto = function (res) {
-					console.log('PROMISE: getPhoto');
-					return new Promise(
-						function (resolve, reject) {
-							https.get(res.user.photoLink, function (pfres) {
-								if (pfres.statusCode === 200) {
-									let stream = pfres.pipe(base64.encode());
-									streamToString(stream, (profileImgB64) => {
-										console.log(`SUCCESS: https.get(res.user.photoLink) retrieved res.user.photoLink and converted into ${profileImgB64.substr(0, 20)}...`);
-										// Now set the account info
-										resolve([profileImgB64, res]);
-									});
-								} else {
-									reject(`ERROR: https.get(res.user.photoLink) failed to retrieve res.user.photoLink, pfres code is ${pfres.statusCode}`);
-								}
-							});
-						}
-					);
-				};
-
-				let setAccountInfo = function (param) {
-					console.log('PROMISE: setAccountInfo');
-					let profileImgB64 = param[0],
-						res = param[1];
-					return new Promise(function (resolve, reject) {
-						let accName = `${res.user.displayName.toLocaleLowerCase().replace(/ /g,'')}_drive`;
-						console.log(`Accounts object key, accName = ${accName}`);
-						// Add account to global acc obj
-						global.accounts[accName] = new Account("gdrive", res.user.displayName, res.user.emailAddress, profileImgB64, {
-							"limit": res.storageQuota.limit,
-							"usage": res.storageQuota.usage,
-							"usageInDrive": res.storageQuota.usageInDrive,
-							"usageInDriveTrash": res.storageQuota.usageInDriveTrash
-						}, gAuth);
-						resolve(res.user.emailAddress);
-					});
-				};
-
-				// TODO: Implement recursive function
-				function fetchFolderItems(folderId, callback) {
-					let fsuBtree = [];
-					global.drive.files.list({
-						q: `'${folderId}' in parents`,
-						orderBy: 'folder desc',
-						fields: 'files(name,id,fullFileExtension,mimeType,md5Checksum,ownedByMe,parents,properties,webContentLink,webViewLink),nextPageToken',
-						spaces: 'drive',
-						pageSize: 1000
-					}, function (err, res) {
-						if (err) {
-							callback(err, null);
-						} else {
-							// if (res.nextPageToken) {
-							// 	console.log("Page token", res.nextPageToken);
-							// 	pageFn(res.nextPageToken, pageFn, callback(null, res.files));
-							// }
-							// if (recursive) {
-							// 	console.log('Recursive fetch...');
-							// 	for (var i = 0; i < res.files.length; i++) {
-							// 		let file = res.files[i];
-							// 		if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
-							// 			console.log('Iteration folder: ', file.name, file.id);
-							// 			fetchFolderItems(file, true, callback, fsuBtree);
-							// 			if (res.files.length === i) {
-							// 				// return the retrieved file list (fsuBtree) to callee
-							// 				return fetchFolderItems(file, true, callback, fsuBtree);
-							// 			}
-							// 		} else {
-							// 			fsuBtree[file.id] = file;
-							// 		}
-							// 	};
-							// } else { // do one Iteration and ignore folders}
-							for (var i = 0; i < res.files.length; i++) {
-								let file = res.files[i];
-								if (!_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
-									console.log(`root/${folderId}/  ${file.name} ${file.id}`);
-									global.files[file.id] = file;
-									fsuBtree.push(file);
-								}
-							}
-							callback(null, fsuBtree);
-						}
-					});
-				};
-
-				let getAllFiles = function (email) {
-					// get all drive files and start downloading them
-					console.log(`PROMISE for retrieving all of ${email} files`);
-					return new Promise(
-						function (resolve, reject) {
-							let fBtree = [],
-								folders = [],
-								root,
-								rfsTree = {};
-							// TODO: Implement Btree for file directory structure
-							console.log('PROMISE: getAllFiles');
-							console.log(`query is going to be >> 'root' in parents and trashed = false`);
-							global.drive.files.list({
-								q: `'root' in parents and trashed = false`,
-								orderBy: 'folder desc',
-								fields: 'files(fullFileExtension,id,md5Checksum,mimeType,name,ownedByMe,parents,properties,webContentLink,webViewLink),nextPageToken',
-								spaces: 'drive',
-								pageSize: 1000
-							}, function (err, res) {
-								if (err) {
-									reject(err);
-								}
-								if (res.files.length == 0) {
-									console.log('No files found.');
-									reject('No files found so no need to proceed');
-								} else {
-									console.log('Google Drive files (depth 2):');
-									root = res.files[0].parents[0];
-									rfsTree[root] = {};
-									rfsTree[root]['path'] = `/`;
-
-									for (let i = 0; i < res.files.length; i++) {
-										let file = res.files[i];
-										if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
-											console.log(`Folder ${file.name} found. Calling fetchFolderItems...`);
-											folders.push(file.id);
-											rfsTree[file.id] = file;
-											rfsTree[file.id]['path'] = `${rfsTree[file.parents[0]]['path']}${file.name}`;
-										} else {
-											console.log(`root/${file.name} (${file.id})`);
-											global.files[file.id] = file;
-											fBtree.push(file);
-										}
-									}
-									// TODO: map folderIds to their respective files & append to the toGet arr
-									async.map(folders, fetchFolderItems, function (err, fsuBtree) {
-										console.log(`Got ids: ${folders}. Calling async.map(folders, fetchFolderItem,...) to map`);
-										if (err) {
-											console.log(`Errpr while mapping folders to file array: ${err}`);
-											reject(err);
-										} else {
-											// console.log(`Post-callback ${sutil.inspect(fsuBtree)}`);
-											fBtree.push(_.flattenDeep(fsuBtree));
-											console.log(`Got fsuBtree: ${fsuBtree}`);
-											resolve([fBtree, rfsTree]);
-										}
-									});
-									// TODO: FIX ASYNC issue >> .then invoked before fetchFolderItems finishes entirely (due to else clause always met
-								}
-							});
-						}
-					);
 				};
 
 				let initSyncGlobals = function (trees) {
@@ -523,10 +341,10 @@ function createSetup(callback) {
 				gAuth.getToken(auth_code)
 					.then(storeToken)
 					.then(InitDrive)
-					.then(getAccountInfo)
-					.then(getPhoto)
-					.then(setAccountInfo)
-					.then(getAllFiles)
+					.then(sync.getAccountInfo)
+					.then(sync.getPhoto)
+					.then(sync.setAccountInfo)
+					.then(sync.getAllFiles)
 					.then(initSyncGlobals)
 					.catch(function (error) {
 						console.error(`PROMISE ERR: ${error.stack}`);
@@ -606,22 +424,6 @@ function initVault(callback) {
 }
 
 function addAccountPrompt(callback) {
-	function getParam(name, url) {
-		name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-		let regex = new RegExp(`[\\?&]${name}=([^&#]*)`),
-			results = regex.exec(url);
-		return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-	}
-
-	function streamToString(stream, cb) {
-		const chunks = [];
-		stream.on('data', (chunk) => {
-			chunks.push(chunk);
-		});
-		stream.on('end', () => {
-			cb(chunks.join(''));
-		});
-	}
 	let win = new BrowserWindow({
 		width: 580,
 		height: 420,
@@ -665,11 +467,11 @@ function addAccountPrompt(callback) {
 			console.log("localhost URL matches");
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
 			// console.log('MAIN: url matched, sending to RENDER...');
-			let err = getParam("error", url);
+			let err = util.getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#
 			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
 			if (!err) {
-				let auth_code = getParam("code", url);
+				let auth_code = util.getParam("code", url);
 				console.log(`IPCMAIN: Got the auth_code, ${auth_code}`);
 				console.log("IPCMAIN: Calling callback with the code...");
 
@@ -698,7 +500,7 @@ function addAccountPrompt(callback) {
 }
 
 
-function createSettings(callback) {
+function Settings(callback) {
 	let win = new BrowserWindow({
 		width: 800,
 		height: 600,
@@ -707,11 +509,11 @@ function createSettings(callback) {
 	win.loadURL(global.views.settings);
 	win.openDevTools();
 	ipc.on('resetMasterPass', function (event, type) {
-		console.log('IPCMAIN: resetMasterPass emitted. Creating masterPassPrompt...');
-		masterPassPrompt(true, function (newMPset) {
+		console.log('IPCMAIN: resetMasterPass emitted. Creating MasterPassPrompt...');
+		MasterPassPrompt(true, function (newMPset) {
 			// if (newMPset) then new new MP was set otherwise it wasn't
 			// TODO: show password was set successfully
-			console.log(`MAIN: masterPassPrompt, newMPset finished? ${newMPset}`);
+			console.log(`MAIN: MasterPassPrompt, newMPset finished? ${newMPset}`);
 			return;
 		});
 	});
@@ -735,13 +537,13 @@ function createSettings(callback) {
 		}
 	});
 	win.on('closed', function () {
-		console.log('win.closed event emitted for createSettings.');
+		console.log('win.closed event emitted for Settings.');
 		win = null;
 		callback();
 	});
 }
 
-function masterPassPrompt(reset, callback) {
+function MasterPassPrompt(reset, callback) {
 	let tries = 0,
 		newMPset = false,
 		gotMP = false;
@@ -812,7 +614,7 @@ function masterPassPrompt(reset, callback) {
 		});
 	});
 	win.on('closed', function () {
-		console.log('win.closed event emitted for createSettings.');
+		console.log('win.closed event emitted for Settings.');
 		win = null;
 		// callback(((reset) ? newMPset : null));
 		if (gotMP) {
@@ -826,7 +628,7 @@ function masterPassPrompt(reset, callback) {
 }
 
 // TODO: replace with dialog.showErrorBox(title, content) for native dialog?
-function createErrorPrompt(err, callback) {
+function ErrorPrompt(err, callback) {
 	let win = new BrowserWindow({
 		width: 240,
 		height: 120,
@@ -865,15 +667,15 @@ function createErrorPrompt(err, callback) {
  * Functions
  **/
 
-function Setup() {
-	// Guide user through setting up a MPhash and connecting to cloud services
-	// TODO: transform into Async using a Promise
-	return new Promise(function (resolve, reject) {
-		fs.makeTreeSync(global.paths.home);
-		fs.makeTreeSync(global.paths.mdb);
-		resolve();
-	});
-}
+// function Setup() {
+// 	// Guide user through setting up a MPhash and connecting to cloud services
+// 	// TODO: transform into Async using a Promise
+// 	return new Promise(function (resolve, reject) {
+// 		fs.makeTreeSync(global.paths.home);
+// 		fs.makeTreeSync(global.paths.mdb);
+// 		resolve();
+// 	});
+// }
 
 /**
  * Event handlers
@@ -968,7 +770,7 @@ app.on('ready', function () {
 				});
 			});
 		};
-		// TODO: Wrap Setup around createSetup and call Setup the way its being called now
+		// TODO: Wrap Setup around Setup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
 		Init()
 			// .then(
@@ -978,14 +780,14 @@ app.on('ready', function () {
 			// 	})
 			// )
 			.then(
-				createSetup(function (err) {
+				Setup(function (err) {
 					if (err) {
 						console.log(err);
-						createErrorPrompt(err, function (response) {
+						ErrorPrompt(err, function (response) {
 							console.log(`ERRPROMT response: ${response}`);
 							if (response === 'retry') {
-								// TODO: new createSetup
-								createSetup(null);
+								// TODO: new Setup
+								Setup(null);
 							} else {
 								// TODO: add persistent flag of firstRun = false
 								app.quit();
@@ -993,7 +795,7 @@ app.on('ready', function () {
 						});
 						// throw err;
 					}
-					console.log('MAIN createSetup successfully completed. Starting menubar...');
+					console.log('MAIN Setup successfully completed. Starting menubar...');
 					// Cryptobar(function (result) {
 					//
 					// });
@@ -1006,7 +808,7 @@ app.on('ready', function () {
 	} else {
 		// start menubar
 		console.log('Normal run. Creating Menubar...');
-		// TODO: Implement masterPassPrompt function
+		// TODO: Implement MasterPassPrompt function
 
 		/* TODO: Implement all objects to restore from persistent storage as a routine to be run on start
 		 * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
@@ -1048,7 +850,7 @@ app.on('ready', function () {
 				console.error(`PROMISE ERR: ${error.stack}`);
 			});
 		// TODO: rewrite as promise
-		masterPassPrompt(null, function (err) {
+		MasterPassPrompt(null, function (err) {
 			if (err) {
 				throw err;
 			} else {

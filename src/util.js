@@ -24,6 +24,19 @@ exports.checkFileSync = function (path) {
 	return true;
 };
 
+exports.streamToString = function(stream, callback) {
+	const chunks = [];
+	stream.on('data', (chunk) => {
+		chunks.push(chunk);
+	});
+	stream.on('error', function (err) {
+		callback(err);
+	});
+	stream.on('end', () => {
+		callback(null, chunks.join(''));
+	});
+};
+
 exports.getValue = function (key, db = global.mdb) {
 	console.log(`PROMISE: getValue for getting ${key}`);
 	return new Promise(function (resolve, reject) {
@@ -93,4 +106,11 @@ exports.restoreGlobalObj = function (objName, db = global.mdb) {
 			}
 		});
 	});
+};
+
+exports.getParam = function (name, url) {
+	name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+	let regex = new RegExp(`[\\?&]${name}=([^&#]*)`),
+		results = regex.exec(url);
+	return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 };

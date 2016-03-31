@@ -6,6 +6,7 @@
 
 const secrets = require('secrets.js'),
 	fs = require('fs-extra'),
+	util = require('./util'),
 	fstream = require('fstream'),
 	tar = require('tar'),
 	_ = require('lodash'),
@@ -142,18 +143,7 @@ exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
 		digest = defaults.digest;
 	const iv = (viv instanceof Buffer) ? viv : new Buffer(viv.data);
 	const tag = (vtag instanceof Buffer) ? vtag : new Buffer(vtag.data);
-	const streamToString = function (stream, cb) {
-		const chunks = [];
-		stream.on('data', (chunk) => {
-			chunks.push(chunk);
-		});
-		stream.on('error', function (e) {
-			callback(e);
-		});
-		stream.on('end', () => {
-			cb(chunks.join(''));
-		});
-	};
+
 	// console.log(`Decrypting using MasterPass = ${mpkey.toString('hex')}, iv = ${iv.toString('hex')}, tag = ${tag.toString('hex')}`);
 	// pass = (Array.isArray(password)) ? shares2pass(password) : password;
 	const origin = fs.createReadStream(origpath);
@@ -166,8 +156,9 @@ exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
 		callback(e);
 	});
 
-	streamToString(JSONstream, function (json) {
+	util.streamToString(JSONstream, function (err, json) {
 		// console.log(`Finished decrypting from ${origpath}`);
+		if (err) callback(err);
 		try {
 			let vault = JSON.parse(json);
 			callback(null, vault);
