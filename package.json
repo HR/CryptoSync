@@ -18,7 +18,7 @@
     "test": "mocha --compilers js:babel-core/register",
     "coverage": "./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover --root src/ ./node_modules/.bin/_mocha --reporter mocha-lcov-reporter",
     "precoveralls": "npm run coverage",
-    "coveralls": "coveralls < coverage/lcov.info",
+    "coveralls": "node ./node_modules/.bin/coveralls < coverage/lcov.info",
     "start": "./node_modules/gulp/bin/gulp.js",
     "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
   },
