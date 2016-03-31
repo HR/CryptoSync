@@ -1,18 +1,18 @@
 language: node_js
 node_js:
   - "5.9.1"
+
 branches:
   only:
     - master
 
-compiler: clang
+install:
+  - rm -rf node_modules
+  - npm install -g node-gyp
+  - npm install -g gulp
+  - npm install
 
-matrix:
-   include:
-    - os: linux
-      env: NODE_VERSION=5.9.1
-    - os: osx
-      env: NODE_VERSION=5.9.1
+
 
 script:
   - npm test
