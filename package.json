@@ -55,7 +55,6 @@
     "levelup": "*",
     "lodash": "*",
     "moment": "*",
-    "pathwatcher": "*",
     "prr": "*",
     "querystring": "*",
     "request": "*",
@@ -75,7 +74,6 @@
     "gulp-mocha": "*",
     "gulp-shell": "*",
     "jshint": "*",
-    "node-inspector": "*",
     "selenium-webdriver": "*",
     "webdriverio": "*",
     "xo": "*"
