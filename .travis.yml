@@ -13,30 +13,23 @@ branches:
 install:
   - echo $CC
   - echo $CXX
-  # - clang --version
   - CXX=g++-4.8
-  # - npm install -g npm@2.15.1
+  - npm install -g codeclimate-test-reporter
   - npm install --no-optional
-
-
-# install:
 #   - export DISPLAY=':99.0'
 #   - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 #   - CXX=g++-4.8
-#   - npm install -g node-gyp
-#   - npm install --no-optional
-#   - npm install -g codeclimate-test-reporter
 #   - set HOME=~/.electron-gyp && node-gyp rebuild --target=$npm_package_devDependencies_electron_prebuilt --arch=x64 --dist-url=https://atom.io/download/atom-shell
 
-# after_script:
-#   - codeclimate-test-reporter < ./coverage/lcov.info
+after_script:
+  - codeclimate-test-reporter < ./coverage/lcov.info
 
-# matrix:
-#   include:
-#     - os: linux
-#       env: NODE_VERSION=5.8.0
-#     - os: osx
-#       env: NODE_VERSION=5.8.0
+matrix:
+  include:
+    - os: linux
+      env: NODE_VERSION=5.8.0
+    - os: osx
+      env: NODE_VERSION=5.8.0
 
 before_script:
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
