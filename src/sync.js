@@ -90,7 +90,7 @@ exports.cryptQueue = async.queue(function (file, callback) {
 					file.iv = iv.toString('hex');
 					file.authTag = tag.toString('hex');
 					global.vault[file.id] = _.cloneDeep(file);
-					global.vault[file.id].shares = crypto.pass2shares(key);
+					global.vault[file.id].shares = crypto.pass2shares(key.toString('hex'));
 					callback(null, file);
 				} catch (err) {
 					callback(err);
@@ -235,7 +235,7 @@ exports.cryptAll = function (toCrypt, cb) {
 						file.authTag = tag.toString('hex');
 						global.files[file.id] = file;
 						global.vault[file.id] = file;
-						global.vault[file.id].shares = crypto.pass2shares(key);
+						global.vault[file.id].shares = crypto.pass2shares(key.toString('hex'));
 						// global.state.toUpdate.push(file);
 						// _.pull(toCrypt, file);
 						// self.event.emit('encrypted', file);

@@ -298,18 +298,17 @@ exports.decrypt = function (origpath, destpath, key, iv, authTag, callback) {
 exports.pass2shares = function (pass, total = defaults.shares, th = defaults.threshold) {
 	// splits the pass into shares using Shamir's Secret Sharing
 	// convert the text into a hex string
-	// let pwHex = secrets.str2hex(pass);
 	try {
-		let pwHex = pass.toString('hex');
+		// pass = secrets.str2hex(pass);
 		// split into N shares, with a threshold of th
 		// Zero padding of defaults.padLength applied to ensure minimal info leak (i.e size of pass)
-		let shares = secrets.share(pwHex, total, th, defaults.padLength);
-
-		return {
+		const shares = secrets.share(pass, total, th, defaults.padLength);
+		const sharesd = {
 			data: shares,
 			total: total,
 			threshold: th
 		};
+		return sharesd;
 	} catch (err) {
 		throw err;
 	}
@@ -318,7 +317,7 @@ exports.pass2shares = function (pass, total = defaults.shares, th = defaults.thr
 /**
  * @param {array} of at least the threshold length
  */
-exports.shares2pass = function (shares) {
+exports.shares2pass = function (sharesd) {
 	// reconstructs the pass from the shares of the pass
 	// using Shamir's Secret Sharing
 	/*	TODO:
@@ -329,13 +328,16 @@ exports.shares2pass = function (shares) {
 	 **/
 	// let S = sharedata[2],
 	// let N = sharedata[1];
-
-	// Extract the shares
-	let pass = secrets.combine(shares.data);
-	// convert back to str
-	pass = secrets.hex2str(pass);
-
-	return pass;
+	try {
+		// Extract the shares
+		const shares = (_.isArray(sharesd)) ? sharesd : sharesd.data;
+		const pass = secrets.combine(shares);
+		// convert back to str
+		const hpass = (pass).toString('hex');
+		return hpass;
+	} catch (err) {
+		throw err;
+	}
 };
 
 exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {

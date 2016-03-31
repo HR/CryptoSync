@@ -158,6 +158,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 
 		after(function () {
 			fs.removeSync('test.txt');
+			fs.removeSync('test2.txt');
 			fs.removeSync('test.txt.crypto');
 		});
 
@@ -262,6 +263,15 @@ describe('CryptoSync Core Modules\' tests', function () {
 			// 	});
 			// });
 
+			it('should convert key to shares and back with shares obj', function (done) {
+				const key = scrypto.randomBytes(defaults.keyLength).toString('hex');
+				const sharesObj = crypto.pass2shares(key);
+				const ckey = crypto.shares2pass(sharesObj);
+				const ckeyArray = crypto.shares2pass(sharesObj.data);
+				expect(ckey).to.equal(key);
+				expect(ckeyArray).to.equal(key);
+				done();
+			});
 		});
 	});
 });
