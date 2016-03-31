@@ -46,9 +46,14 @@ gulp.task('mntest', shell.task([
 	"mocha --reporter nyan --compilers js:babel-core/register"
 ]));
 
-gulp.task('covtest', shell.task([
+gulp.task('testcov', shell.task([
 	// Run test stuff
 	"./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover --root src/ ./node_modules/.bin/_mocha"
+]));
+
+gulp.task('lcov', shell.task([
+	// Run test stuff
+	"./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover --root src/ ./node_modules/.bin/_mocha --reporter mocha-lcov-reporter | ./node_modules/coveralls/bin/coveralls.js"
 ]));
 
 gulp.task('watch', function () {

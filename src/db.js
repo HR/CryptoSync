@@ -5,7 +5,7 @@
  ******************************/
 
 let levelup = require('levelup'),
-	fs = require('fs-plus'),
+	fs = require('fs-extra'),
 	crypto = require('./crypto'),
 	util = require('util');
 
@@ -21,29 +21,7 @@ function readFile(filename, enc) {
 function Db(path, password) {
 	// Initialize necessary methods/properties from levelup in this instance
 	// levelup.call(this);
-
-	var pass = password || false;
-	if (fs.isFileSync(path)) {
-		// prompt user for master password and store temporarily (while running)
-		if (pass) {
-			return readFile(path, 'hex')
-				.then(Db.decrypt(path, pass)) // decrypt Db before opening
-				.then(function (value) {
-					// on fulfillment
-					return levelup(path);
-				}, function (reason) {
-					// rejection
-				})
-				.catch(function (reason) {
-					console.log('Handle rejected promise (' + reason + ') here.');
-				});
-		} else {
-			return levelup(path);
-		}
-	} else {
-		// Invoke SetMasterPass routine
-		return levelup(path);
-	}
+	return levelup(path);
 }
 
 // Inherit functions from levelup's prototype

@@ -14,15 +14,14 @@ install:
   - echo $CC
   - echo $CXX
   - CXX=g++-4.8
-  - npm install -g codeclimate-test-reporter
   - npm install --no-optional
 #   - export DISPLAY=':99.0'
 #   - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 #   - CXX=g++-4.8
 #   - set HOME=~/.electron-gyp && node-gyp rebuild --target=$npm_package_devDependencies_electron_prebuilt --arch=x64 --dist-url=https://atom.io/download/atom-shell
 
-after_script:
-  - codeclimate-test-reporter < ./coverage/lcov.info
+# after_script:
+#   - codeclimate-test-reporter < ./coverage/lcov.info
 
 # matrix:
 #   include:
