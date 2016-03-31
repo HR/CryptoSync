@@ -58,11 +58,4 @@ notifications:
 addons:
   apt:
     packages:
-    - build-essential
-    - clang
-    - fakeroot
-    - g++-4.8
-    - git
-    - libgnome-keyring-dev
     - xvfb
-    - rpm
