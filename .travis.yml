@@ -7,10 +7,9 @@ branches:
     - master
 
 install:
-  - rm -rf node_modules
   - npm install -g node-gyp
-  - HOME=~/.electron-gyp node-gyp rebuild --target=0.37.3 --arch=x64 --dist-url=https://atom.io/download/atom-shell
-  - npm install
+  - npm install --save-dev electron-rebuild
+  - npm install && ./node_modules/.bin/electron-rebuild
 
 
 
