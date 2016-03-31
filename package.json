@@ -15,7 +15,7 @@
   },
   "electronVersion": "*",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register",
+    "test": "./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover --root src/ ./node_modules/.bin/_mocha",
     "start": "./node_modules/gulp/bin/gulp.js",
     "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
   },
@@ -58,6 +58,7 @@
     "tar": "*"
   },
   "devDependencies": {
+    "babel-cli": "^6.6.5",
     "babel-eslint": "*",
     "babel-preset-es2015": "*",
     "chai": "*",
@@ -67,7 +68,9 @@
     "eslint-plugin-html": "*",
     "gulp": "*",
     "gulp-shell": "*",
+    "isparta": "^4.0.0",
     "jshint": "*",
+    "mocha-lcov-reporter": "^1.2.0",
     "webdriverio": "*",
     "xo": "*"
   },

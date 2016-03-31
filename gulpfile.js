@@ -46,13 +46,10 @@ gulp.task('mntest', shell.task([
 	"mocha --reporter nyan --compilers js:babel-core/register"
 ]));
 
-gulp.task('gmtest', () => {
-	return gulp.src('test/sync.js', {
-			read: false
-		})
-		// gulp-mocha needs filepaths so you can't have any plugins before it
-		.pipe(mocha());
-});
+gulp.task('covtest', shell.task([
+	// Run test stuff
+	"./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover --root src/ ./node_modules/.bin/_mocha"
+]));
 
 gulp.task('watch', function () {
 	gulp.watch(['./static/**/*', './*.js'], ['run']);
