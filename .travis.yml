@@ -5,6 +5,14 @@ branches:
   only:
     - master
 
+compiler: clang
+
+matrix:
+   include:
+    - os: linux
+      env: NODE_VERSION=5.9.1
+    - os: osx
+      env: NODE_VERSION=5.9.1
 
 script:
   - npm test
