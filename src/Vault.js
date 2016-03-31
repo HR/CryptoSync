@@ -6,6 +6,7 @@
 const _ = require('lodash'),
 	moment = require('moment'),
 	util = require('./util'),
+	sutil = require('util'),
 	crypto = require('./crypto');
 
 const self = this;
@@ -19,20 +20,21 @@ const self = this;
 
 // TODO: fully promisify
 exports.init = function (mpkey, callback) {
-	console.log(`initVault invoked. Creating global vault obj & encrypting...`);
+	// console.log(`initVault invoked. Creating global vault obj & encrypting...`);
 	global.vault = {};
 	global.vault.creationDate = moment().format();
 	// TODO: decide whether to use crypto.encryptObj or genIvSalt (and then encryptObj
 	// & remove gen functionality from crypto.encryptObj)
 	crypto.genIV()
 	.then(function (iv) {
-		console.log(`crypto.genIvSalt callback.`);
+		// console.log(`crypto.genIvSalt callback.`);
 		global.creds.viv = iv;
-		console.log(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
+		// console.log(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
 	})
-	.then(self.encrypt(mpkey))
 	.then(() => {
-		callback();
+		exports.encrypt(mpkey).then(() => {
+			callback();
+		});
 	})
 	.catch((err) => {
 		callback(err);

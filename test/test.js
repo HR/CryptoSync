@@ -280,17 +280,33 @@ describe('CryptoSync Core Modules\' tests', function () {
 	});
 
 	describe('Vault module', function () {
-		it('should generate iv, encrypt & decrypt vault obj', function (done) {
+		it('should generate encrypt & decrypt vault obj', function (done) {
 			global.creds.viv = scrypto.randomBytes(defaults.ivLength);
 			const beforeEncVault = _.cloneDeep(global.vault);
 			Vault.encrypt(global.MasterPassKey.get())
-				.then(Vault.decrypt(global.MasterPassKey.get().toString('hex')))
+				.then(Vault.decrypt(global.MasterPassKey.get()))
 				.then(() => {
 					expect(global.vault).to.deep.equal(beforeEncVault);
 					done();
 				}).catch((err) => {
 					done(err);
 				});
+		});
+
+		it('should generate iv, encrypt & decrypt vault obj', function (done) {
+			global.creds.viv = null;
+			Vault.init(global.MasterPassKey.get(), function (err) {
+				if (err) done(err);
+				expect(global.creds.viv instanceof Buffer).to.be.true;
+				expect(global.creds.authTag instanceof Buffer).to.be.true;
+				Vault.decrypt(global.MasterPassKey.get())
+				.then(() => {
+					expect(global.vault).to.have.property('creationDate');
+					done();
+				}).catch((err) => {
+					done(err);
+				});
+			});
 		});
 	});
 });

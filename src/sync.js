@@ -20,7 +20,6 @@ let levelup = require('levelup'),
 
 const API_REQ_LIMIT = 7;
 const CONCURRENCY = 2;
-const self = this;
 // class SyncEmitter extends EventEmitter {};
 
 // Refer to https://www.googleapis.com/discovery/v1/apis/drive/v3/rest for full request schema
@@ -72,7 +71,7 @@ exports.getQueue = async.queue(function (file, callback) {
 			})
 			.on('finish', function () {
 				// console.log(`Written ${file.name} to ${path}`);
-				// self.event.emit('got', file);
+				// exports.event.emit('got', file);
 				callback(null, file);
 			});
 	});
@@ -200,10 +199,10 @@ exports.fetchFolderItems = function (folderId, callback) {
 			// 		let file = res.files[i];
 			// 		if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
 			// 			console.log('Iteration folder: ', file.name, file.id);
-			// 			self.fetchFolderItems(file, true, callback, fsuBtree);
+			// 			exports.fetchFolderItems(file, true, callback, fsuBtree);
 			// 			if (res.files.length === i) {
 			// 				// return the retrieved file list (fsuBtree) to callee
-			// 				return self.fetchFolderItems(file, true, callback, fsuBtree);
+			// 				return exports.fetchFolderItems(file, true, callback, fsuBtree);
 			// 			}
 			// 		} else {
 			// 			fsuBtree[file.id] = file;
@@ -287,7 +286,7 @@ exports.getAllFiles = function (email) {
 						}
 					}
 					// TODO: map folderIds to their respective files & append to the toGet arr
-					async.map(folders, self.fetchFolderItems, function (err, fsuBtree) {
+					async.map(folders, exports.fetchFolderItems, function (err, fsuBtree) {
 						console.log(`Got ids: ${folders}. Calling async.map(folders, fetchFolderItem,...) to map`);
 						if (err) {
 							console.log(`Errpr while mapping folders to file array: ${err}`);
@@ -378,7 +377,7 @@ exports.getAll = function (toGet, cb) {
 				})
 				.on('finish', function () {
 					// console.log(`Written ${file.name} to ${path}`);
-					// self.event.emit('got', file);
+					// exports.event.emit('got', file);
 					_.pull(toGet, file); // remove from toGet queue
 					global.state.toCrypt.push(file); // add from toCrypt queue
 					callback();
@@ -412,7 +411,7 @@ exports.cryptAll = function (toCrypt, cb) {
 						global.vault[file.id].shares = crypto.pass2shares(key.toString('hex'));
 						// global.state.toUpdate.push(file);
 						// _.pull(toCrypt, file);
-						// self.event.emit('encrypted', file);
+						// exports.event.emit('encrypted', file);
 						callback();
 					} catch (err) {
 						callback(err);
@@ -448,7 +447,7 @@ exports.putAll = function (cb) {
 			console.log(`callback: put ${file.name}`);
 			file.lastSynced = moment().format();
 			_.pull(global.state.toCrypt, file);
-			self.event.emit('put', file);
+			exports.event.emit('put', file);
 			return callback();
 		});
 	}, function (err) {
