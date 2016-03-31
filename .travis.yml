@@ -24,12 +24,12 @@ install:
 after_script:
   - codeclimate-test-reporter < ./coverage/lcov.info
 
-matrix:
-  include:
-    - os: linux
-      env: NODE_VERSION=5.8.0
-    - os: osx
-      env: NODE_VERSION=5.8.0
+# matrix:
+#   include:
+#     - os: linux
+#       env: NODE_VERSION=5.8.0
+#     - os: osx
+#       env: NODE_VERSION=5.8.0
 
 before_script:
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
