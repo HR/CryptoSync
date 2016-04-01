@@ -7,7 +7,7 @@ gulp.task('default', shell.task([
 	// Run electron
 	// TODO: add compile less bash command > "for i in static/style/*.less; do lessc $i ${i:0:${#i} - 5}.css; done"
 	// 'ELECTRON_RUN_AS_NODE=true node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron node_modules/node-inspector/bin/inspector.js'
-	'node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron --debug=5858 .'
+	'unset TEST_RUN && node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron --debug=5858 .'
 	// 'node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron --debug-brk=5858 .'
 ]));
 

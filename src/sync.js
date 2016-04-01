@@ -175,56 +175,9 @@ exports.updateStats = function (file, callback) {
 
 };
 
-// TODO: Implement recursive function
-exports.fetchFolderItems = function (folderId, callback) {
-	let fsuBtree = [];
-	//
-	global.drive.files.list({
-		q: `'${folderId}' in parents`,
-		orderBy: 'folder desc',
-		fields: 'files(name,id,fullFileExtension,mimeType,md5Checksum,ownedByMe,parents,properties,webContentLink,webViewLink),nextPageToken',
-		spaces: 'drive',
-		pageSize: 1000
-	}, function (err, res) {
-		if (err) {
-			callback(err, null);
-		} else {
-			// if (res.nextPageToken) {
-			// 	console.log("Page token", res.nextPageToken);
-			// 	pageFn(res.nextPageToken, pageFn, callback(null, res.files));
-			// }
-			// if (recursive) {
-			// 	console.log('Recursive fetch...');
-			// 	for (var i = 0; i < res.files.length; i++) {
-			// 		let file = res.files[i];
-			// 		if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
-			// 			console.log('Iteration folder: ', file.name, file.id);
-			// 			exports.fetchFolderItems(file, true, callback, fsuBtree);
-			// 			if (res.files.length === i) {
-			// 				// return the retrieved file list (fsuBtree) to callee
-			// 				return exports.fetchFolderItems(file, true, callback, fsuBtree);
-			// 			}
-			// 		} else {
-			// 			fsuBtree[file.id] = file;
-			// 		}
-			// 	};
-			// } else { // do one Iteration and ignore folders}
-			for (var i = 0; i < res.files.length; i++) {
-				let file = res.files[i];
-				if (!_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
-					console.log(`root/${folderId}/  ${file.name} ${file.id}`);
-					global.files[file.id] = file;
-					fsuBtree.push(file);
-				}
-			}
-			callback(null, fsuBtree);
-		}
-	});
-};
-
 exports.getAccountInfo = function () {
 	return new Promise(function (resolve, reject) {
-		console.log('PROMISE: getAccountInfo');
+		// console.log('PROMISE: getAccountInfo');
 		global.drive.about.get({
 			"fields": "storageQuota,user"
 		}, function (err, res) {
@@ -232,8 +185,8 @@ exports.getAccountInfo = function () {
 				console.log(`IPCMAIN: drive.about.get, ERR occured, ${err}`);
 				reject(err);
 			} else {
-				console.log(`IPCMAIN: drive.about.get, RES:`);
-				console.log(`\nemail: ${res.user.emailAddress}\nname: ${res.user.displayName}\nimage:${res.user.photoLink}\n`);
+				// console.log(`IPCMAIN: drive.about.get, RES:`);
+				// console.log(`\nemail: ${res.user.emailAddress}\nname: ${res.user.displayName}\nimage:${res.user.photoLink}\n`);
 				// get the account photo and convert to base64
 				resolve(res);
 			}
@@ -385,6 +338,53 @@ exports.getAll = function (toGet, cb) {
 		});
 	}, function (err) {
 		cb(err);
+	});
+};
+
+// TODO: Implement recursive function
+exports.fetchFolderItems = function (folderId, callback) {
+	let fsuBtree = [];
+	//
+	global.drive.files.list({
+		q: `'${folderId}' in parents`,
+		orderBy: 'folder desc',
+		fields: 'files(name,id,fullFileExtension,mimeType,md5Checksum,ownedByMe,parents,properties,webContentLink,webViewLink),nextPageToken',
+		spaces: 'drive',
+		pageSize: 1000
+	}, function (err, res) {
+		if (err) {
+			callback(err, null);
+		} else {
+			// if (res.nextPageToken) {
+			// 	console.log("Page token", res.nextPageToken);
+			// 	pageFn(res.nextPageToken, pageFn, callback(null, res.files));
+			// }
+			// if (recursive) {
+			// 	console.log('Recursive fetch...');
+			// 	for (var i = 0; i < res.files.length; i++) {
+			// 		let file = res.files[i];
+			// 		if (_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
+			// 			console.log('Iteration folder: ', file.name, file.id);
+			// 			exports.fetchFolderItems(file, true, callback, fsuBtree);
+			// 			if (res.files.length === i) {
+			// 				// return the retrieved file list (fsuBtree) to callee
+			// 				return exports.fetchFolderItems(file, true, callback, fsuBtree);
+			// 			}
+			// 		} else {
+			// 			fsuBtree[file.id] = file;
+			// 		}
+			// 	};
+			// } else { // do one Iteration and ignore folders}
+			for (var i = 0; i < res.files.length; i++) {
+				let file = res.files[i];
+				if (!_.isEqual("application/vnd.google-apps.folder", file.mimeType)) {
+					console.log(`root/${folderId}/  ${file.name} ${file.id}`);
+					global.files[file.id] = file;
+					fsuBtree.push(file);
+				}
+			}
+			callback(null, fsuBtree);
+		}
 	});
 };
 

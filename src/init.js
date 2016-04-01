@@ -44,6 +44,8 @@ exports.main = function () {
 
 exports.drive = function (gAuth) {
 	// store auth token in mdb
+	console.log(`init.drive: `);
+	// console.log(require('util').inspect(gAuth, { depth: null }));
 	return new Promise(function (resolve, reject) {
 		global.drive = google.drive({
 			version: 'v3',
@@ -61,5 +63,6 @@ exports.syncGlobals = function (trees) {
 		global.state.toCrypt = [];
 		global.state.toUpdate = [];
 		global.state.rfs = trees[1];
+		resolve();
 	});
 };

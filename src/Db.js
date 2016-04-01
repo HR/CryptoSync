@@ -68,15 +68,15 @@ Db.prototype.restoreGlobalObj = function (objName) {
 	});
 };
 
-Db.prototype.getValue = function (key) {
+Db.prototype.onlyGetValue = function (key) {
 	const self = this;
 	console.log(`PROMISE: getValue for getting ${key}`);
 	return new Promise(function (resolve, reject) {
-		self.get(key, function (err, json) {
+		self.get(key, function (err, value) {
 			if (err) {
 				if (err.notFound) {
 					console.log(`ERROR: key ${key} NOT FOUND `);
-					reject(err);
+					resolve(null);
 				} else {
 					// I/O or other error, pass it up the callback
 					console.log(`ERROR: mdb.get('${key}') FAILED`);
@@ -84,7 +84,28 @@ Db.prototype.getValue = function (key) {
 				}
 			} else {
 				console.log(`SUCCESS: ${key} FOUND`);
-				resolve(json);
+				resolve(value);
+			}
+		});
+	});
+};
+
+Db.prototype.getValue = function (key) {
+	const self = this;
+	console.log(`PROMISE: getValue for getting ${key}`);
+	return new Promise(function (resolve, reject) {
+		self.get(key, function (err, value) {
+			if (err) {
+				if (err.notFound) {
+					resolve(null);
+				} else {
+					// I/O or other error, pass it up the callback
+					console.log(`ERROR: mdb.get('${key}') FAILED`);
+					reject(err);
+				}
+			} else {
+				console.log(`SUCCESS: ${key} FOUND`);
+				resolve(value);
 			}
 		});
 	});
@@ -93,13 +114,12 @@ Db.prototype.getValue = function (key) {
 Db.prototype.storeToken = function (token) {
 	const self = this;
 	return new Promise(function (resolve, reject) {
-		self.put(`${global.gAuth.type}-token`, JSON.stringify(token), function (err) {
+		self.put(`gdrive-token`, JSON.stringify(token), function (err) {
 			if (err) reject(err); // some kind of I/O error
 			console.log(`Token stored in mdb`);
-			resolve(global.gAuth);
+			resolve();
 		});
 	});
-
 };
 
 Db.prototype.closeW = function (path) {

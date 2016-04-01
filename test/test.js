@@ -6,8 +6,10 @@ const assert = require('assert'),
 	util = require('../src/util'),
 	Db = require('../src/Db'),
 	Vault = require('../src/Vault'),
+	OAuth = require('../src/OAuth'),
 	init = require('../src/init'),
 	MasterPass = require('../src/MasterPass'),
+	googleAuth = require('google-auth-library'),
 	levelup = require('levelup'),
 	sutil = require('util'),
 	scrypto = require('crypto'),
@@ -74,7 +76,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 		// global.files = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'));
 		global.state.rfs = JSON.parse(fs.readFileSync('data/rfs.json', 'utf8'));
 
-		const credentials = {
+		global.credentials = {
 			access_token: process.env.access_token,
 			token_type: process.env.token_type,
 			refresh_token: process.env.refresh_token,
@@ -83,6 +85,8 @@ describe('CryptoSync Core Modules\' tests', function () {
 
 		const gAuth = new google.auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_);
 		gAuth.setCredentials(credentials);
+
+		global.mdb = new Db('tmp/mdb');
 
 		global.drive = google.drive({
 			version: 'v3',
@@ -170,29 +174,16 @@ describe('CryptoSync Core Modules\' tests', function () {
 
 			it('retrieve the user\'s account info', function (done) {
 				sync.getAccountInfo().then((res) => {
-					expect(res).to.have.property('user');
-					expect(res).to.have.property('storageQuota');
-					done();
-				})
-				.catch((err) => {
-					done(err);
-				});
+						expect(res).to.have.property('user');
+						expect(res).to.have.property('storageQuota');
+						done();
+					})
+					.catch((err) => {
+						done(err);
+					});
 			});
 
-			// it('get the user\'s thumbnail', function (done) {
-			// 	global.gAuth =
-			// 	global.gAuth.getToken(auth_code) // Get auth token from auth code
-			// 		.then(global.mdb.storeToken) // store auth token in mdb
-			// 		.then(init.drive)
-			// 		.then(sync.getAccountInfo)
-			// 		.then(sync.getPhoto)
-			// 		.then(sync.setAccountInfo)
-			// 		.then(sync.getAllFiles)
-			// 		.then(init.syncGlobals)
-			// 		.catch(function (err) {
-			// 			done(err);
-			// 		});
-			// });
+
 			it('should write to the right location at CryptoSync/.encrypted/', function (done) {
 				sync.cryptQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
@@ -200,6 +191,54 @@ describe('CryptoSync Core Modules\' tests', function () {
 					done();
 				});
 			});
+		});
+	});
+
+	describe('OAuth2 retrieve user data and save', function () {
+		beforeEach(function () {
+			global.gAuth = new OAuth('gdrive');
+		});
+		it('should create correct authUrl', function (done) {
+			global.gAuth.authorize(null, function (authUrl) {
+				expect(authUrl).to.be.a('string');
+				expect(util.getParam('access_type', authUrl)).to.equal('offline');
+				done();
+			});
+		});
+
+		it('should follow through OAuth flow', function (done) {
+			// this.timeout(2000);
+			global.accounts = {};
+			global.files = {};
+			const auth = new googleAuth();
+			global.gAuth.oauth2Client = new auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_);
+			// global.gAuth.getToken(process.env.auth_code) // Get auth token from auth code
+			const token = process.env.access_token;
+			global.gAuth.oauth2Client.credentials = token;
+			expect(global.gAuth.oauth2Client.credentials).to.equal(token);
+			// expect(global.drive).to.equal(token);
+			sync.getAccountInfo()
+				.then(sync.getPhoto)
+				.then(sync.setAccountInfo)
+				.then(sync.getAllFiles)
+				.then(init.syncGlobals)
+				.then(global.mdb.storeToken(token).then(() => {
+					expect(global.accounts).to.have.property('cryptosync_drive');
+					expect(global.files).to.have.property('0B0pJLMXieC-mTWJpT3hiWjRoems');
+					global.mdb.getValue('gdrive-token').then((dbtoken) => {
+						expect(dbtoken).to.deep.equal(token);
+					})
+					.catch(function (e) {
+						done(e);
+					});
+				}))
+				.then(done())
+				.catch(function (e) {
+					done(e);
+				})
+				.catch(function (e) {
+					done(e);
+				});
 		});
 	});
 

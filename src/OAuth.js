@@ -4,9 +4,6 @@
  * Establish a authorised OAuth 2 client
  ******************************/
 
-/* TODO:
- * - REWRITE MODULE TO SUPPORT MULTIPLE ACCOUNTS
- */
 const fs = require('fs'),
 	dropbox = require('dropbox'),
 	google = require('googleapis'),
@@ -14,73 +11,29 @@ const fs = require('fs'),
 	request = require('request'),
 	SCOPES = ['https://www.googleapis.com/auth/drive'];
 
-function OAuth(type, secretPath) {
+function OAuth(type) {
 	// TODO: Check type and accordingly init oauth2
 	this.type = type;
-	this.secretPath = secretPath;
 	this.oauth2Client;
-	this.isGDrive = Boolean(type === 'gdrive'); // Cloud type flag
-	// prr(OAuth, 'isGDrive', 'bar');
 }
 
-OAuth.prototype.authorize = function (mdb, callback) {
+OAuth.prototype.authorize = function (token, callback) {
 	var self = this;
-	fs.readFile(this.secretPath, function (err, content) {
-		if (err) {
-			console.log(`Error loading client secret file: ${err}`);
-			return;
-		}
-		// Authorize a client with the loaded credentials, then call the
-		// Drive API.
-		console.log(`Got credentials file content`);
-		console.log(`Is gdrive: ${self.isGDrive}`);
-		if (self.isGDrive) {
-			// Google Drive Auth
-			console.log(`Google Drive auth initiated`);
-			var credentials = JSON.parse(content).gdrive;
-			var auth = new googleAuth();
-			self.oauth2Client = new auth.OAuth2(credentials.client_id, credentials.client_secret, credentials.redirect_uris[1]);
+	// Authorize a client with the loaded credentials, then call the
+	// Drive API.
 
-			mdb.get('gdrive-token', function (err, token) {
-				if (err) {
-					console.log(err);
-					// if (err.notFound) {
-					// handle a `NotFoundError` here
-					console.log(`TOKEN DOES NOT EXIST, Calling getNewToken...`);
-					getNewToken(self, callback);
-					return;
-					// }
-					// I/O or other error, pass it up the callback
-				}
-				console.log(`TOKEN FOUND: ` + token);
-				self.oauth2Client.credentials = JSON.parse(token);
-				callback();
-			});
-		} else {
-			// Drobpox Auth
-			console.log(`Dropbox auth initiated`);
-			var credentials = JSON.parse(content).dropbox;
-			self.oauth2Client = new dropbox.Client({
-				key: credentials.client_id,
-				secret: credentials.client_secret
-			});
-			mdb.get('dropbox-token', function (err, token) {
-				if (err) {
-					console.log(err);
-					// if (err.notFound) {
-					// handle a `NotFoundError` here
-					console.log(`TOKEN DOES NOT EXIST, Calling getNewToken...`);
-					getNewToken(self, callback);
-					return;
-					// }
-					// I/O or other error, pass it up the callback
-				}
-				console.log(`TOKEN FOUND: ${token}`);
-				self.oauth2Client.credentials = JSON.parse(token);
-				callback();
-			});
-		}
-	});
+	// Google Drive Auth
+	// console.log(`Google Drive auth initiated`);
+	const auth = new googleAuth();
+	self.oauth2Client = new auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_);
+
+	if (!token) {
+		getNewToken(self, callback);
+	} else {
+		console.log(`TOKEN FOUND: ${token}`);
+		self.oauth2Client.credentials = JSON.parse(token);
+		callback();
+	}
 };
 
 /**
@@ -92,43 +45,30 @@ OAuth.prototype.authorize = function (mdb, callback) {
  *		 client.
  */
 function getNewToken(self, callback) {
-	console.log(`getNewToken, isGDrive = ${self.isGDrive}`);
-	if (self.isGDrive) {
-		var authUrl = self.oauth2Client.generateAuthUrl({
-			access_type: 'offline',
-			scope: SCOPES
-		});
-		// GO TO URL `authUrl` in BrowserWindow to auth user
-		callback(authUrl);
-	} else {
-		// TODO: IMPLEMENT .generateAuthUrl in /dropbox/src/
-		self.oauth2Client.generateAuthUrl(function (authUrl) {
-
-		});
-	}
+	console.log(`getNewToken`);
+	const authUrl = self.oauth2Client.generateAuthUrl({
+		access_type: 'offline',
+		scope: SCOPES
+	});
+	// GO TO URL `authUrl` in BrowserWindow to auth user
+	callback(authUrl);
 }
 
 OAuth.prototype.getToken = function (auth_code) {
 	var self = this;
 	return new Promise(function (resolve, reject) {
-		// if (this.isGDrive) {
 		// Google Drive
-		console.log(`gDrive getToken`);
+		// console.log(`getToken`);
 		self.oauth2Client.getToken(auth_code, function (err, token) {
 			if (err) {
-				console.log(`Error while trying to retrieve access token ${err}`);
-				reject(`Error while trying to retrieve access token ${err}`);
+				reject(new Error(`Error while trying to retrieve access token ${err}`));
 				throw err;
 			}
-			console.log(`Got the ACCESS_TOKEN: ${token}`);
+			console.log(`Got the ACCESS_TOKEN:\n ${require('util').inspect(token, { depth: null })}`);
 			self.oauth2Client.credentials = token;
 			resolve(token);
 		});
 	});
-	// } else {
-	// 	// Drobpox
-	// 	console.log(`Drobpox getToken TO IMPLEMENT`);
-	// }
 };
 
 module.exports = OAuth;

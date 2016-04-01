@@ -6,11 +6,8 @@
 
 const crypto = require('./crypto'),
 	util = require('./util'),
-	_ = require('lodash');
-
-if (!process.env.TEST_RUN) {
-	const Main = require('../index');
-}
+	_ = require('lodash'),
+	Main = (process.env.TEST_RUN) ?  null : require('../index');
 
 exports.Prompt = function () {
 	return new Promise(function (resolve, reject) {
