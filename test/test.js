@@ -4,8 +4,10 @@ const assert = require('assert'),
 	crypto = require('../src/crypto.js'),
 	sync = require('../src/sync.js'),
 	util = require('../src/util'),
+	Db = require('../src/Db'),
 	Vault = require('../src/Vault'),
 	init = require('../src/init'),
+	levelup = require('levelup'),
 	sutil = require('util'),
 	scrypto = require('crypto'),
 	_ = require('lodash'),
@@ -19,6 +21,8 @@ process.chdir('test');
 console.log(`cwd: ${process.cwd()}`);
 
 describe('CryptoSync Core Modules\' tests', function () {
+
+	// Before all tests have run
 	before(function () {
 		// create temp dir
 		fs.ensureDirSync('tmp');
@@ -42,9 +46,11 @@ describe('CryptoSync Core Modules\' tests', function () {
 		global.paths = {
 			home: `CryptoSync`,
 			crypted: `CryptoSync/.encrypted`,
-			mdb: `mdb`,
+			mdb: `CryptoSync/mdb`,
 			vault: `CryptoSync/vault.crypto`,
 		};
+
+		// global.mdb = new Db(global.paths.mdb);
 
 		global.state = {};
 		global.vault = {
@@ -89,10 +95,15 @@ describe('CryptoSync Core Modules\' tests', function () {
 		};
 	});
 
+	// After all tests have run
 	after(function () {
 		fs.removeSync('tmp');
 		fs.removeSync('CryptoSync');
 	});
+
+
+	/** Crypto module.js
+	 ******************************/
 
 	describe('Sync module', function () {
 		let rfile;
@@ -152,9 +163,11 @@ describe('CryptoSync Core Modules\' tests', function () {
 		});
 	});
 
+	/** Crypto module.js
+	 ******************************/
+
 	describe('Crypto module', function () {
 		const t1path = 'tmp/test.txt';
-
 		before(function () {
 			fs.writeFileSync(t1path, '#CryptoSync', 'utf8');
 		});
@@ -279,6 +292,9 @@ describe('CryptoSync Core Modules\' tests', function () {
 		});
 	});
 
+	/**
+	 * Vault module.js
+	 ******************************/
 	describe('Vault module', function () {
 		it('should generate encrypt & decrypt vault obj', function (done) {
 			global.creds.viv = scrypto.randomBytes(defaults.ivLength);
@@ -300,13 +316,98 @@ describe('CryptoSync Core Modules\' tests', function () {
 				expect(global.creds.viv instanceof Buffer).to.be.true;
 				expect(global.creds.authTag instanceof Buffer).to.be.true;
 				Vault.decrypt(global.MasterPassKey.get())
+					.then(() => {
+						expect(global.vault).to.have.property('creationDate');
+						done();
+					}).catch((err) => {
+						done(err);
+					});
+			});
+		});
+	});
+
+	/**
+	 * Db module.js
+	 ******************************/
+	describe('Db module', function () {
+		let db;
+		beforeEach(function () {
+			db = new Db('tmp/db');
+			global.testo = {
+				"RAND0M-ID3": {
+					name: 'crypto',
+					id: 22,
+					secure: true
+				}
+			};
+		});
+		it('should save and restore obj', function (done) {
+			const beforeSaveObj = _.cloneDeep(global.testo);
+			db.saveGlobalObj('testo')
 				.then(() => {
-					expect(global.vault).to.have.property('creationDate');
-					done();
-				}).catch((err) => {
+					global.testo = null;
+					db.restoreGlobalObj('testo').then(() => {
+						expect(global.testo).to.deep.equal(beforeSaveObj);
+						db.close();
+						done();
+					});
+				})
+				.catch((err) => {
 					done(err);
 				});
+		});
+		it('should save and restore obj persistently', function (done) {
+			const beforeSaveObj = _.cloneDeep(global.testo);
+			db.saveGlobalObj('testo')
+				.then(() => {
+					global.testo = null;
+					db.close();
+					db = new Db('tmp/db');
+					db.restoreGlobalObj('testo').then(() => {
+						expect(global.testo).to.deep.equal(beforeSaveObj);
+						db.close();
+						done();
+					});
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+	});
+	/**
+	 * Util module.js
+	 ******************************/
+	describe('Util module', function () {
+		const t1path = 'tmp/atest.txt';
+		const t1data = '#CryptoSync';
+		before(function () {
+			fs.writeFileSync(t1path, t1data, 'utf8');
+		});
+
+		it('should convert ReadableStream into a valid utf-8 string for streamToString', function (done) {
+			const readStream = fs.createReadStream(t1path);
+			readStream.on('error', (e) => {
+				done(e);
 			});
+			util.streamToString(readStream, function (err, string) {
+				if (err) done(err);
+				expect(string).to.deep.equal(t1data);
+				done();
+			});
+		});
+
+		it('should parse OAuth url params correctly for getParam', function (done) {
+			const url1 = 'https://accounts.google.com/o/oauth2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive&response_type=code&client_id=2000868638782-lvmfqubhuv0fv1ld2egyk5sbfvsmvc.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost';
+			expect(util.getParam('access_type', url1)).to.equal('offline');
+			expect(util.getParam('scope', url1)).to.equal('https://www.googleapis.com/auth/drive');
+			expect(util.getParam('response_type', url1)).to.equal('code');
+			expect(util.getParam('client_id', url1)).to.equal('2000868638782-lvmfqubhuv0fv1ld2egyk5sbfvsmvc.apps.googleusercontent.com');
+			expect(util.getParam('redirect_uri', url1)).to.equal('http://localhost');
+			const url2 = 'http://localhost/?code=4/Ps0nJS352ueSwDn1i5Qzn0KNm-5GDy8Ck-BMaof0#';
+			expect(util.getParam('code', url2)).to.equal('4/Ps0nJS352ueSwDn1i5Qzn0KNm-5GDy8Ck-BMaof0');
+			const url3 = 'http://localhost/?code=access_denied';
+			expect(util.getParam('code', url3)).to.equal('access_denied');
+			done();
 		});
 	});
 });

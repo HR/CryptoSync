@@ -581,11 +581,11 @@ app.on('will-quit', (event) => {
 		global.stats.endTime = moment().format();
 
 		Promise.all([
-			util.saveGlobalObj('accounts'),
-			util.saveGlobalObj('state'),
-			util.saveGlobalObj('settings'),
-			util.saveGlobalObj('files'),
-			util.saveGlobalObj('stats')
+			global.mdb.saveGlobalObj('accounts'),
+			global.mdb.saveGlobalObj('state'),
+			global.mdb.saveGlobalObj('settings'),
+			global.mdb.saveGlobalObj('files'),
+			global.mdb.saveGlobalObj('stats')
 		]).then(function () {
 			if (global.MasterPassKey.get() && !_.isEmpty(global.vault)) {
 				console.log(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`);
@@ -597,7 +597,7 @@ app.on('will-quit', (event) => {
 					} else {
 						console.log(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`);
 						global.creds.authTag = tag;
-						util.saveGlobalObj('creds').then(() => {
+						global.mdb.saveGlobalObj('creds').then(() => {
 							global.mdb.close();
 							console.log('Closed vault and mdb (called mdb.close()).');
 							exit = true;
@@ -727,11 +727,11 @@ app.on('ready', function () {
 			.then(()=>{
 				Vault.decrypt(global.MasterPassKey.get()).then(() => {
 					Promise.all([
-							util.restoreGlobalObj('accounts'),
-							util.restoreGlobalObj('state'),
-							util.restoreGlobalObj('settings'),
-							util.restoreGlobalObj('stats'),
-							util.restoreGlobalObj('files')
+							global.mdb.restoreGlobalObj('accounts'),
+							global.mdb.restoreGlobalObj('state'),
+							global.mdb.restoreGlobalObj('settings'),
+							global.mdb.restoreGlobalObj('stats'),
+							global.mdb.restoreGlobalObj('files')
 						])
 						.then(() => {
 							const o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;

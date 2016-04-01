@@ -6,58 +6,87 @@
 
 let levelup = require('levelup'),
 	fs = require('fs-extra'),
+	_ = require('lodash'),
 	crypto = require('./crypto'),
 	util = require('util');
 
-function readFile(filename, enc) {
-	return new Promise(function (fulfill, reject) {
-		fs.readFile(filename, enc, function (err, res) {
-			if (err) reject(err);
-			else fulfill(res);
-		});
-	});
-}
 
-function Db(path, password) {
+function Db(location) {
 	// Initialize necessary methods/properties from levelup in this instance
-	// levelup.call(this);
-	return levelup(path);
+	levelup.call(this, location);
 }
 
 // Inherit functions from levelup's prototype
 util.inherits(Db, levelup);
 
-/*	Crypto
- *
- *	TODO:
- *	- Differentiate between MasterPass and secret share as arguments
- *	- Implement treatment accordingly
- */
 
-Db.prototype.decrypt = function (path, pass, callback) {
-	// decrypt Db
-	// TODO;
-	crypto.decrypt(path, mpass, true, function (decrypted, err) {
-		if (err) {
-			callback(null, err);
+Db.prototype.saveGlobalObj = function (objName) {
+	const self = this;
+	// console.log(`PROMISE: saveGlobalObj for ${objName}`);
+	return new Promise(function (resolve, reject) {
+		if (!(_.isEmpty(global[objName]))) {
+			self.put(objName, JSON.stringify(global[objName]), function (err) {
+				if (err) {
+					console.log(`ERROR: mdb.put('${objName}') failed, ${err}`);
+					// I/O or other error, pass it up the callback
+					reject(err);
+				}
+				// console.log(`SUCCESS: mdb.put('${objName}')`);
+				resolve();
+			});
 		} else {
-			callback(decrypted);
+			// console.log('Nothing to save; empty.');
+			resolve();
 		}
 	});
 };
 
-Db.prototype.encrypt = function (path, pass, callback) {
-	// encrypt Db
-	let mpass = (Array.isArray(pass)) ? crypto.shares2pass(pass) : pass;
-	let encrypted = fs.readFileSync(path, 'utf8', function (err, data) {
-		if (err) throw err;
-		console.log(`Opened ${path}`);
-		return crypto.encrypt(data, mpass, 5000, 256);
+Db.prototype.restoreGlobalObj = function (objName) {
+	const self = this;
+	// console.log(`PROMISE: restoreGlobalObj for ${objName}`);
+	return new Promise(function (resolve, reject) {
+		self.get(objName, function (err, json) {
+			if (err) {
+				if (err.notFound) {
+					console.log(`ERROR: Global obj ${objName} NOT FOUND `);
+					reject(err);
+				} else {
+					// I/O or other error, pass it up the callback
+					console.log(`ERROR: mdb.get('${objName}') FAILED`);
+					reject(err);
+				}
+			} else {
+				// console.log(`SUCCESS: ${objName} FOUND`);
+				try {
+					global[objName] = JSON.parse(json) || {};
+					resolve();
+				} catch (e) {
+					return e;
+				}
+			}
+		});
 	});
-	fs.writeFileSync(path, encrypted, 'hex', function (err) {
-		if (err) throw err;
-		console.log(`Written ${path}`);
-		callback();
+};
+
+Db.prototype.getValue = function (key) {
+	const self = this;
+	console.log(`PROMISE: getValue for getting ${key}`);
+	return new Promise(function (resolve, reject) {
+		self.get(key, function (err, json) {
+			if (err) {
+				if (err.notFound) {
+					console.log(`ERROR: key ${key} NOT FOUND `);
+					reject(err);
+				} else {
+					// I/O or other error, pass it up the callback
+					console.log(`ERROR: mdb.get('${key}') FAILED`);
+					reject(err);
+				}
+			} else {
+				console.log(`SUCCESS: ${key} FOUND`);
+				resolve(json);
+			}
+		});
 	});
 };
 

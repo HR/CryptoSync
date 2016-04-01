@@ -49,7 +49,7 @@ exports.decrypt = function (mpkey) {
 				reject(err);
 			} else {
 				global.vault = vault;
-				console.log(`Decrypted vault, vault's content is ${sutil.inspect(vault).substr(0, 20)}`);
+				// console.log(`Decrypted vault, vault's content is ${sutil.inspect(vault).substr(0, 20)}`);
 				resolve();
 			}
 		});
@@ -59,11 +59,11 @@ exports.decrypt = function (mpkey) {
 exports.encrypt = function (mpkey) {
 	return new Promise(function (resolve, reject) {
 		crypto.encryptObj(global.vault, global.paths.vault, mpkey, global.creds.viv, function (err, tag) {
-			console.log(`crypto.encryptObj invoked...`);
+			// console.log(`crypto.encryptObj invoked...`);
 			if (err) {
 				reject(err);
 			} else {
-				console.log(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`);
+				// console.log(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`);
 				global.creds.authTag = tag;
 				resolve();
 			}
