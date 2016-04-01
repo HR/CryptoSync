@@ -7,12 +7,7 @@ const _ = require('lodash'),
 	fs = require('fs');
 
 exports.checkDirectorySync = function (dir) {
-	try {
-		fs.statSync(filePath);
-	} catch (err) {
-		if (err.code == 'ENOENT') return false;
-	}
-	return true;
+	return exports.checkFileSync(dir);
 };
 
 exports.checkFileSync = function (path) {

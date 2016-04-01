@@ -196,17 +196,17 @@ exports.deriveMasterPassKey = function (masterpass, mpsalt, callback) {
 };
 
 exports.genPassHash = function (mpass, salt, callback) {
-	console.log(`crypto.genPassHash() invoked`);
+	// console.log(`crypto.genPassHash() invoked`);
 	const pass = (mpass instanceof Buffer) ? mpass.toString('hex') : mpass;
 
 	if (salt) {
 		const hash = crypto.createHash(defaults.hash_alg).update(`${pass}${salt}`).digest('hex');
-		console.log(`genPassHash: S, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
+		// console.log(`genPassHash: S, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
 		callback(hash);
 	} else {
 		const salt = crypto.randomBytes(defaults.keyLength).toString('hex');
 		const hash = crypto.createHash(defaults.hash_alg).update(`${pass}${salt}`).digest('hex');
-		console.log(`genPassHash: NS, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
+		// console.log(`genPassHash: NS, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
 		callback(hash, salt);
 	}
 };

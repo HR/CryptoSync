@@ -347,6 +347,10 @@ function Setup(callback) {
 		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
 		MasterPass.set(masterpass, function (err, mpkey) {
 			global.MasterPassKey.set(mpkey);
+			global.mdb.saveGlobalObj('creds')
+				.catch((err) => {
+					throw err;
+				});
 			webContents.send('setMasterPassResult', err);
 		});
 	});
@@ -1038,6 +1042,10 @@ exports.MasterPassPrompt = function (reset, callback) {
 			if (!err) {
 				newMPset = true;
 				global.MasterPassKey.set(mpkey);
+				global.mdb.saveGlobalObj('creds')
+					.catch((err) => {
+						throw err;
+					});
 				webContents.send('setMasterPassResult', null);
 			} else {
 				webContents.send('setMasterPassResult', err);

@@ -7,6 +7,7 @@ const assert = require('assert'),
 	Db = require('../src/Db'),
 	Vault = require('../src/Vault'),
 	init = require('../src/init'),
+	MasterPass = require('../src/MasterPass'),
 	levelup = require('levelup'),
 	sutil = require('util'),
 	scrypto = require('crypto'),
@@ -161,6 +162,8 @@ describe('CryptoSync Core Modules\' tests', function () {
 				});
 			});
 		});
+
+		
 	});
 
 	/** Crypto module.js
@@ -183,6 +186,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 						// if (stderr !== null) done(stderr);
 						let ohash = stdout.replace('MD5(test.txt)= ', '');
 						expect(hash).to.equal(ohash);
+						expect(crypto.verifyFileHash(hash, ohash)).to.be.true;
 						done();
 					});
 				});
@@ -408,6 +412,36 @@ describe('CryptoSync Core Modules\' tests', function () {
 			const url3 = 'http://localhost/?code=access_denied';
 			expect(util.getParam('code', url3)).to.equal('access_denied');
 			done();
+		});
+
+		it('should check if file exists', function (done) {
+			expect(util.checkFileSync('data/rfile.json')).to.be.true;
+			expect(util.checkFileSync('data/rfs.json')).to.be.true;
+			expect(util.checkDirectorySync('data')).to.be.true;
+			expect(util.checkFileSync('data')).to.be.true;
+			expect(util.checkDirectorySync('data/rfs.json')).to.be.true;
+			expect(util.checkFileSync('any.file')).to.be.false;
+			expect(util.checkFileSync('anydir/file')).to.be.false;
+			expect(util.checkFileSync('anydir')).to.be.false;
+			done();
+		});
+	});
+
+	/**
+	 * MasterPass module.js
+	 ******************************/
+	describe('MasterPass module', function () {
+		it('should set and check masterpass', function (done) {
+			const pass = 'V1R3$1NNUM3RI$';
+			MasterPass.set(pass, function (err, mpkey) {
+				if (err) done(err);
+				MasterPass.check(pass, function (err, MATCH, dmpkey) {
+					if (err) done(err);
+					expect(MATCH).to.be.true;
+					expect(dmpkey.toString('hex')).to.equal(mpkey.toString('hex'));
+					done();
+				});
+			});
 		});
 	});
 });
