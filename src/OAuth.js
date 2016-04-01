@@ -5,7 +5,6 @@
  ******************************/
 
 const fs = require('fs'),
-	dropbox = require('dropbox'),
 	google = require('googleapis'),
 	googleAuth = require('google-auth-library'),
 	request = require('request'),
