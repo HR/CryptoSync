@@ -306,19 +306,9 @@ function Setup(callback) {
 				console.log("IPCMAIN: Calling callback with the code...");
 
 				// Send code to call back and redirect
-				let storeToken = function (token) {
-					// store auth token in mdb
-					return new Promise(function (resolve, reject) {
-						gAuth.storeToken(token, mdb);
-						console.log(`IPCMAIN: token retrieved and stored: ${token}`);
-						console.log(`IPCMAIN: oauth2Client retrieved: ${gAuth.oauth2Client}`);
-						resolve(gAuth);
-					});
-				};
 
-				// Get auth token from auth code
-				gAuth.getToken(auth_code)
-					.then(storeToken)
+				global.gAuth.getToken(auth_code) // Get auth token from auth code
+					.then(global.mdb.storeToken) // store auth token in mdb
 					.then(init.drive)
 					.then(sync.getAccountInfo)
 					.then(sync.getPhoto)

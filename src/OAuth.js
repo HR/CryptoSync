@@ -131,17 +131,4 @@ OAuth.prototype.getToken = function (auth_code) {
 	// }
 };
 
-/**
- * Store token to disk be used in later program executions.
- *
- * @param {Object} token The token to store to disk.
- */
-
-OAuth.prototype.storeToken = function (token, mdb) {
-	mdb.put('gdrive-token', JSON.stringify(token), function (err) {
-		if (err) throw err; // some kind of I/O error
-		console.log(`Token stored in mdb`);
-	});
-};
-
 module.exports = OAuth;

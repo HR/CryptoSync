@@ -163,7 +163,44 @@ describe('CryptoSync Core Modules\' tests', function () {
 			});
 		});
 
-		
+		describe('retrieval of user data @Setup', function () {
+			beforeEach(function () {
+				fs.removeSync(global.paths.crypted);
+			});
+
+			it('retrieve the user\'s account info', function (done) {
+				sync.getAccountInfo().then((res) => {
+					expect(res).to.have.property('user');
+					expect(res).to.have.property('storageQuota');
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+			});
+
+			// it('get the user\'s thumbnail', function (done) {
+			// 	global.gAuth =
+			// 	global.gAuth.getToken(auth_code) // Get auth token from auth code
+			// 		.then(global.mdb.storeToken) // store auth token in mdb
+			// 		.then(init.drive)
+			// 		.then(sync.getAccountInfo)
+			// 		.then(sync.getPhoto)
+			// 		.then(sync.setAccountInfo)
+			// 		.then(sync.getAllFiles)
+			// 		.then(init.syncGlobals)
+			// 		.catch(function (err) {
+			// 			done(err);
+			// 		});
+			// });
+			it('should write to the right location at CryptoSync/.encrypted/', function (done) {
+				sync.cryptQueue.push(rfile, function (err, file) {
+					if (err) return done(err);
+					expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto')).to.be.true;
+					done();
+				});
+			});
+		});
 	});
 
 	/** Crypto module.js

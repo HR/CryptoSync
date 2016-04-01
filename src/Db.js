@@ -90,6 +90,18 @@ Db.prototype.getValue = function (key) {
 	});
 };
 
+Db.prototype.storeToken = function (token) {
+	const self = this;
+	return new Promise(function (resolve, reject) {
+		self.put(`${global.gAuth.type}-token`, JSON.stringify(token), function (err) {
+			if (err) reject(err); // some kind of I/O error
+			console.log(`Token stored in mdb`);
+			resolve(global.gAuth);
+		});
+	});
+
+};
+
 Db.prototype.closeW = function (path) {
 	// encrypt Db after closing using the temporarily store MasterPass
 	levelup.close();
