@@ -207,7 +207,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 		});
 
 		it('should follow through OAuth flow', function (done) {
-			// this.timeout(2000);
+			// this.timeout(3000);
 			global.accounts = {};
 			global.files = {};
 			const auth = new googleAuth();
@@ -216,6 +216,8 @@ describe('CryptoSync Core Modules\' tests', function () {
 			const token = process.env.access_token;
 			global.gAuth.oauth2Client.credentials = token;
 			expect(global.gAuth.oauth2Client.credentials).to.equal(token);
+			global.state.rfs = null;
+			const rfs = _.cloneDeep(global.state.rfs);
 			// expect(global.drive).to.equal(token);
 			sync.getAccountInfo()
 				.then(sync.getPhoto)
@@ -225,6 +227,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 				.then(global.mdb.storeToken(token).then(() => {
 					expect(global.accounts).to.have.property('cryptosync_drive');
 					expect(global.files).to.have.property('0B0pJLMXieC-mTWJpT3hiWjRoems');
+					expect(global.state.rfs).to.deep.equal(rfs);
 					global.mdb.getValue('gdrive-token').then((dbtoken) => {
 						expect(dbtoken).to.deep.equal(token);
 					})
