@@ -443,22 +443,22 @@ describe('CryptoSync Core Modules\' tests', function () {
 				});
 		});
 
-		it('should generate iv, encrypt & decrypt vault obj', function (done) {
+		it('should generate iv, encrypt & decrypt vault obj', function () {
 			global.creds.viv = null;
-			Vault.init(global.MasterPassKey.get(), function (err) {
-				if (err) done(err);
+			return Vault.init(global.MasterPassKey.get(), function (err) {
+				if (err) throw err;
 				expect(global.creds.viv instanceof Buffer)
 					.to.be.true;
 				expect(global.creds.authTag instanceof Buffer)
 					.to.be.true;
-				Vault.decrypt(global.MasterPassKey.get())
+				return Vault.decrypt(global.MasterPassKey.get())
 					.then(() => {
+						throw 'error';
 						expect(global.vault)
 							.to.have.property('creationDate');
-						done();
 					})
 					.catch((err) => {
-						done(err);
+						throw err;
 					});
 			});
 		});
