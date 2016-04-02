@@ -1,6 +1,7 @@
 'use strict';
 const assert = require('assert'),
-	expect = require("chai").expect,
+	expect = require("chai")
+	.expect,
 	crypto = require('../src/crypto.js'),
 	sync = require('../src/sync.js'),
 	util = require('../src/util'),
@@ -16,9 +17,11 @@ const assert = require('assert'),
 	_ = require('lodash'),
 	google = require('googleapis'),
 	fs = require('fs-extra'),
-	exec = require('child_process').exec;
+	exec = require('child_process')
+	.exec;
 
-require('dotenv').config();
+require('dotenv')
+	.config();
 
 process.chdir('test');
 console.log(`cwd: ${process.cwd()}`);
@@ -134,7 +137,8 @@ describe('CryptoSync Core Modules\' tests', function () {
 			it('should get file with correct keys', function (done) {
 				sync.getQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
-					expect(file).to.include.keys('path');
+					expect(file)
+						.to.include.keys('path');
 					done();
 				});
 			});
@@ -154,14 +158,16 @@ describe('CryptoSync Core Modules\' tests', function () {
 			it('should have correct cryptPath', function (done) {
 				sync.cryptQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
-					expect(file.cryptPath).to.equal('CryptoSync/.encrypted/test.png.crypto');
+					expect(file.cryptPath)
+						.to.equal('CryptoSync/.encrypted/test.png.crypto');
 					done();
 				});
 			});
 			it('should write to the right location at CryptoSync/.encrypted/', function (done) {
 				sync.cryptQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
-					expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto')).to.be.true;
+					expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto'))
+						.to.be.true;
 					done();
 				});
 			});
@@ -173,9 +179,12 @@ describe('CryptoSync Core Modules\' tests', function () {
 			});
 
 			it('retrieve the user\'s account info', function (done) {
-				sync.getAccountInfo().then((res) => {
-						expect(res).to.have.property('user');
-						expect(res).to.have.property('storageQuota');
+				sync.getAccountInfo()
+					.then((res) => {
+						expect(res)
+							.to.have.property('user');
+						expect(res)
+							.to.have.property('storageQuota');
 						done();
 					})
 					.catch((err) => {
@@ -187,7 +196,8 @@ describe('CryptoSync Core Modules\' tests', function () {
 			it('should write to the right location at CryptoSync/.encrypted/', function (done) {
 				sync.cryptQueue.push(rfile, function (err, file) {
 					if (err) return done(err);
-					expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto')).to.be.true;
+					expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto'))
+						.to.be.true;
 					done();
 				});
 			});
@@ -200,8 +210,10 @@ describe('CryptoSync Core Modules\' tests', function () {
 		});
 		it('should create correct authUrl', function (done) {
 			global.gAuth.authorize(null, function (authUrl) {
-				expect(authUrl).to.be.a('string');
-				expect(util.getParam('access_type', authUrl)).to.equal('offline');
+				expect(authUrl)
+					.to.be.a('string');
+				expect(util.getParam('access_type', authUrl))
+					.to.equal('offline');
 				done();
 			});
 		});
@@ -216,7 +228,8 @@ describe('CryptoSync Core Modules\' tests', function () {
 			// global.gAuth.getToken(process.env.auth_code) // Get auth token from auth code
 			const token = process.env.access_token;
 			global.gAuth.oauth2Client.credentials = token;
-			expect(global.gAuth.oauth2Client.credentials).to.equal(token);
+			expect(global.gAuth.oauth2Client.credentials)
+				.to.equal(token);
 			const rfs = _.cloneDeep(global.state.rfs);
 			const files = _.cloneDeep(global.files);
 			global.state.rfs = {};
@@ -225,24 +238,32 @@ describe('CryptoSync Core Modules\' tests', function () {
 			sync.getAccountInfo()
 				.then(sync.getPhoto)
 				.then((param) => {
-					expect(b64Regex.test(param[0])).to.be.true;
-					expect(param[1].user).to.have.property('displayName');
+					expect(b64Regex.test(param[0]))
+						.to.be.true;
+					expect(param[1].user)
+						.to.have.property('displayName');
 					return param;
 				})
 				.then(sync.setAccountInfo)
 				.then(sync.getAllFiles)
 				.then(init.syncGlobals)
-				.then(global.mdb.storeToken(token).then(() => {
-					expect(global.accounts).to.have.property('cryptosync_drive');
-					expect(global.files).to.deep.equal(files);
-					expect(global.state.rfs).to.deep.equal(rfs);
-					global.mdb.getValue('gdrive-token').then((dbtoken) => {
-						expect(dbtoken).to.deep.equal(token);
-					})
-					.catch(function (e) {
-						done(e);
-					});
-				}))
+				.then(global.mdb.storeToken(token)
+					.then(() => {
+						expect(global.accounts)
+							.to.have.property('cryptosync_drive');
+						expect(global.files)
+							.to.deep.equal(files);
+						expect(global.state.rfs)
+							.to.deep.equal(rfs);
+						global.mdb.getValue('gdrive-token')
+							.then((dbtoken) => {
+								expect(dbtoken)
+									.to.deep.equal(token);
+							})
+							.catch(function (e) {
+								done(e);
+							});
+					}))
 				.then(done())
 				.catch(function (e) {
 					done(e);
@@ -272,8 +293,10 @@ describe('CryptoSync Core Modules\' tests', function () {
 						if (err !== null) done(err);
 						// if (stderr !== null) done(stderr);
 						let ohash = stdout.replace('MD5(test.txt)= ', '');
-						expect(hash).to.equal(ohash);
-						expect(crypto.verifyFileHash(hash, ohash)).to.be.true;
+						expect(hash)
+							.to.equal(ohash);
+						expect(crypto.verifyFileHash(hash, ohash))
+							.to.be.true;
 						done();
 					});
 				});
@@ -284,7 +307,8 @@ describe('CryptoSync Core Modules\' tests', function () {
 					if (err) done(err);
 					crypto.deriveMasterPassKey(masterpass, dmpsalt, function (err, mpkey, mpsalt) {
 						if (err) done(err);
-						expect(dmpkey.toString('hex')).to.equal(mpkey.toString('hex'));
+						expect(dmpkey.toString('hex'))
+							.to.equal(mpkey.toString('hex'));
 						done();
 					});
 				});
@@ -296,7 +320,8 @@ describe('CryptoSync Core Modules\' tests', function () {
 					const pdmpsalt = JSON.parse(JSON.stringify(dmpsalt));
 					crypto.deriveMasterPassKey(masterpass, pdmpsalt, function (err, mpkey, mpsalt) {
 						if (err) done(err);
-						expect(dmpkey.toString('hex')).to.equal(mpkey.toString('hex'));
+						expect(dmpkey.toString('hex'))
+							.to.equal(mpkey.toString('hex'));
 						done();
 					});
 				});
@@ -307,36 +332,42 @@ describe('CryptoSync Core Modules\' tests', function () {
 			it('should generate iv, encrypt & decrypt an obj with MPKey when salt is buffer', function (done) {
 				const toCryptObj = _.cloneDeep(global.vault);
 				const fpath = 'tmp/cryptedObj.crypto';
-				crypto.genIV().then(function (viv) {
-					crypto.encryptObj(toCryptObj, fpath, global.MasterPassKey.get(), viv, function (err, authTag) {
-						if (err) done(err);
-						crypto.decryptObj(fpath, global.MasterPassKey.get(), viv, authTag, function (err, devaulted) {
+				crypto.genIV()
+					.then(function (viv) {
+						crypto.encryptObj(toCryptObj, fpath, global.MasterPassKey.get(), viv, function (err, authTag) {
 							if (err) done(err);
-							expect(devaulted).to.deep.equal(toCryptObj);
-							done();
+							crypto.decryptObj(fpath, global.MasterPassKey.get(), viv, authTag, function (err, devaulted) {
+								if (err) done(err);
+								expect(devaulted)
+									.to.deep.equal(toCryptObj);
+								done();
+							});
 						});
+					})
+					.catch((err) => {
+						done(err);
 					});
-				}).catch((err) => {
-					done(err);
-				});
 			});
 
 			it('should generate iv, encrypt & decrypt vault obj with MPKey with persistent salt', function (done) {
 				const toCryptObj = _.cloneDeep(global.vault);
 				const fpath = 'tmp/cryptedObj2.crypto';
-				crypto.genIV().then(function (viv) {
-					const pviv = JSON.parse(JSON.stringify(viv));
-					crypto.encryptObj(toCryptObj, fpath, global.MasterPassKey.get(), pviv, function (err, authTag) {
-						if (err) done(err);
-						crypto.decryptObj(fpath, global.MasterPassKey.get(), viv, authTag, function (err, devaulted) {
+				crypto.genIV()
+					.then(function (viv) {
+						const pviv = JSON.parse(JSON.stringify(viv));
+						crypto.encryptObj(toCryptObj, fpath, global.MasterPassKey.get(), pviv, function (err, authTag) {
 							if (err) done(err);
-							expect(devaulted).to.deep.equal(toCryptObj);
-							done();
+							crypto.decryptObj(fpath, global.MasterPassKey.get(), viv, authTag, function (err, devaulted) {
+								if (err) done(err);
+								expect(devaulted)
+									.to.deep.equal(toCryptObj);
+								done();
+							});
 						});
+					})
+					.catch((err) => {
+						done(err);
 					});
-				}).catch((err) => {
-					done(err);
-				});
 			});
 
 			it('should encrypt file with pass without errors & have all expected creds', function (done) {
@@ -372,12 +403,15 @@ describe('CryptoSync Core Modules\' tests', function () {
 			// });
 
 			it('should convert key to shares and back with shares obj', function (done) {
-				const key = scrypto.randomBytes(defaults.keyLength).toString('hex');
+				const key = scrypto.randomBytes(defaults.keyLength)
+					.toString('hex');
 				const sharesObj = crypto.pass2shares(key);
 				const ckey = crypto.shares2pass(sharesObj);
 				const ckeyArray = crypto.shares2pass(sharesObj.data);
-				expect(ckey).to.equal(key);
-				expect(ckeyArray).to.equal(key);
+				expect(ckey)
+					.to.equal(key);
+				expect(ckeyArray)
+					.to.equal(key);
 				done();
 			});
 		});
@@ -393,9 +427,11 @@ describe('CryptoSync Core Modules\' tests', function () {
 			Vault.encrypt(global.MasterPassKey.get())
 				.then(Vault.decrypt(global.MasterPassKey.get()))
 				.then(() => {
-					expect(global.vault).to.deep.equal(beforeEncVault);
+					expect(global.vault)
+						.to.deep.equal(beforeEncVault);
 					done();
-				}).catch((err) => {
+				})
+				.catch((err) => {
 					done(err);
 				});
 		});
@@ -404,16 +440,39 @@ describe('CryptoSync Core Modules\' tests', function () {
 			global.creds.viv = null;
 			Vault.init(global.MasterPassKey.get(), function (err) {
 				if (err) done(err);
-				expect(global.creds.viv instanceof Buffer).to.be.true;
-				expect(global.creds.authTag instanceof Buffer).to.be.true;
+				expect(global.creds.viv instanceof Buffer)
+					.to.be.true;
+				expect(global.creds.authTag instanceof Buffer)
+					.to.be.true;
 				Vault.decrypt(global.MasterPassKey.get())
 					.then(() => {
-						expect(global.vault).to.have.property('creationDate');
+						expect(global.vault)
+							.to.have.property('creationDate');
 						done();
-					}).catch((err) => {
+					})
+					.catch((err) => {
 						done(err);
 					});
 			});
+		});
+
+		it('should throw error when authtag is wrong', function (done) {
+			global.creds.viv = scrypto.randomBytes(defaults.ivLength);
+			Vault.encrypt(global.MasterPassKey.get())
+				.then((value) => {
+					global.creds.authTag = scrypto.randomBytes(defaults.ivLength);
+					Vault.decrypt(global.MasterPassKey.get())
+						.catch((err) => {
+							expect(err)
+								.to.throw(new Error);
+							expect(false)
+								.to.be.true;
+						})
+						.then(done());
+				})
+				.catch((err) => {
+					done(err);
+				});
 		});
 	});
 
@@ -437,11 +496,13 @@ describe('CryptoSync Core Modules\' tests', function () {
 			db.saveGlobalObj('testo')
 				.then(() => {
 					global.testo = null;
-					db.restoreGlobalObj('testo').then(() => {
-						expect(global.testo).to.deep.equal(beforeSaveObj);
-						db.close();
-						done();
-					});
+					db.restoreGlobalObj('testo')
+						.then(() => {
+							expect(global.testo)
+								.to.deep.equal(beforeSaveObj);
+							db.close();
+							done();
+						});
 				})
 				.catch((err) => {
 					done(err);
@@ -455,11 +516,13 @@ describe('CryptoSync Core Modules\' tests', function () {
 					global.testo = null;
 					db.close();
 					db = new Db('tmp/db');
-					db.restoreGlobalObj('testo').then(() => {
-						expect(global.testo).to.deep.equal(beforeSaveObj);
-						db.close();
-						done();
-					});
+					db.restoreGlobalObj('testo')
+						.then(() => {
+							expect(global.testo)
+								.to.deep.equal(beforeSaveObj);
+							db.close();
+							done();
+						});
 				})
 				.catch((err) => {
 					done(err);
@@ -467,10 +530,12 @@ describe('CryptoSync Core Modules\' tests', function () {
 		});
 
 		it('should return null if key not found for onlyGetValue', function (done) {
-			db.onlyGetValue('notExist').then((token) => {
-				expect(token).to.equal(null);
-				done();
-			});
+			db.onlyGetValue('notExist')
+				.then((token) => {
+					expect(token)
+						.to.equal(null);
+					done();
+				});
 		});
 	});
 	/**
@@ -490,34 +555,50 @@ describe('CryptoSync Core Modules\' tests', function () {
 			});
 			util.streamToString(readStream, function (err, string) {
 				if (err) done(err);
-				expect(string).to.deep.equal(t1data);
+				expect(string)
+					.to.deep.equal(t1data);
 				done();
 			});
 		});
 
 		it('should parse OAuth url params correctly for getParam', function (done) {
 			const url1 = 'https://accounts.google.com/o/oauth2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive&response_type=code&client_id=2000868638782-lvmfqubhuv0fv1ld2egyk5sbfvsmvc.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost';
-			expect(util.getParam('access_type', url1)).to.equal('offline');
-			expect(util.getParam('scope', url1)).to.equal('https://www.googleapis.com/auth/drive');
-			expect(util.getParam('response_type', url1)).to.equal('code');
-			expect(util.getParam('client_id', url1)).to.equal('2000868638782-lvmfqubhuv0fv1ld2egyk5sbfvsmvc.apps.googleusercontent.com');
-			expect(util.getParam('redirect_uri', url1)).to.equal('http://localhost');
+			expect(util.getParam('access_type', url1))
+				.to.equal('offline');
+			expect(util.getParam('scope', url1))
+				.to.equal('https://www.googleapis.com/auth/drive');
+			expect(util.getParam('response_type', url1))
+				.to.equal('code');
+			expect(util.getParam('client_id', url1))
+				.to.equal('2000868638782-lvmfqubhuv0fv1ld2egyk5sbfvsmvc.apps.googleusercontent.com');
+			expect(util.getParam('redirect_uri', url1))
+				.to.equal('http://localhost');
 			const url2 = 'http://localhost/?code=4/Ps0nJS352ueSwDn1i5Qzn0KNm-5GDy8Ck-BMaof0#';
-			expect(util.getParam('code', url2)).to.equal('4/Ps0nJS352ueSwDn1i5Qzn0KNm-5GDy8Ck-BMaof0');
+			expect(util.getParam('code', url2))
+				.to.equal('4/Ps0nJS352ueSwDn1i5Qzn0KNm-5GDy8Ck-BMaof0');
 			const url3 = 'http://localhost/?code=access_denied';
-			expect(util.getParam('code', url3)).to.equal('access_denied');
+			expect(util.getParam('code', url3))
+				.to.equal('access_denied');
 			done();
 		});
 
 		it('should check if file exists', function (done) {
-			expect(util.checkFileSync('data/rfile.json')).to.be.true;
-			expect(util.checkFileSync('data/rfs.json')).to.be.true;
-			expect(util.checkDirectorySync('data')).to.be.true;
-			expect(util.checkFileSync('data')).to.be.true;
-			expect(util.checkDirectorySync('data/rfs.json')).to.be.true;
-			expect(util.checkFileSync('any.file')).to.be.false;
-			expect(util.checkFileSync('anydir/file')).to.be.false;
-			expect(util.checkFileSync('anydir')).to.be.false;
+			expect(util.checkFileSync('data/rfile.json'))
+				.to.be.true;
+			expect(util.checkFileSync('data/rfs.json'))
+				.to.be.true;
+			expect(util.checkDirectorySync('data'))
+				.to.be.true;
+			expect(util.checkFileSync('data'))
+				.to.be.true;
+			expect(util.checkDirectorySync('data/rfs.json'))
+				.to.be.true;
+			expect(util.checkFileSync('any.file'))
+				.to.be.false;
+			expect(util.checkFileSync('anydir/file'))
+				.to.be.false;
+			expect(util.checkFileSync('anydir'))
+				.to.be.false;
 			done();
 		});
 	});
@@ -532,8 +613,10 @@ describe('CryptoSync Core Modules\' tests', function () {
 				if (err) done(err);
 				MasterPass.check(pass, function (err, MATCH, dmpkey) {
 					if (err) done(err);
-					expect(MATCH).to.be.true;
-					expect(dmpkey.toString('hex')).to.equal(mpkey.toString('hex'));
+					expect(MATCH)
+						.to.be.true;
+					expect(dmpkey.toString('hex'))
+						.to.equal(mpkey.toString('hex'));
 					done();
 				});
 			});

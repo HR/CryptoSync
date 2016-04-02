@@ -35,6 +35,9 @@ exports.init = function (mpkey, callback) {
 	.then(() => {
 		exports.encrypt(mpkey).then(() => {
 			callback();
+		})
+		.catch((err) => {
+			callback(err);
 		});
 	})
 	.catch((err) => {
