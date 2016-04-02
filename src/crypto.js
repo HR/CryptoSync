@@ -17,7 +17,6 @@ const secrets = require('secrets.js'),
 
 // Crypto default constants
 // TODO: change accordingly when changed in settings
-// TODO: add defaults for db/vault encryption
 let defaults = {
 	iterations: 4096, // file encryption key iterations
 	keyLength: 32, // in bytes
@@ -37,7 +36,7 @@ let defaults = {
  *
  *	TODO:
  *	- Implement bitcoin blockchain as source of randomness (in iv generation)
- * - rewrite as promises
+ *  - rewrite as promises
  */
 
 // Error handler
@@ -100,7 +99,6 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 };
 
 exports.encryptObj = function (obj, destpath, mpkey, viv, callback) {
-	// TODO: Use HMAC to authoritatively add metadata about the encryption
 	// decrypts any arbitrary data passed with the pass
 	const i = defaults.mpk_iterations,
 		kL = defaults.keyLength,
@@ -171,8 +169,6 @@ exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
 };
 
 exports.genIV = function () {
-	// TODO: check whether to callback inside try or outside
-	// TODO: promisify
 	return new Promise(function(resolve, reject) {
 		try {
 			const iv = crypto.randomBytes(defaults.ivLength); // Synchronous gen
@@ -314,12 +310,6 @@ exports.pass2shares = function (pass, total = defaults.shares, th = defaults.thr
 exports.shares2pass = function (sharesd) {
 	// reconstructs the pass from the shares of the pass
 	// using Shamir's Secret Sharing
-	/*	TODO:
-	 *	Parsing shares[type = Array]:
-	 *	- shares = [["s1", "s2",..., "sS"], "S", "N"]
-	 *	- N = total number of shares originally generated
-	 *	- S = number of shares (threshold) required to reconstruct key and decrypt
-	 **/
 	// let S = sharedata[2],
 	// let N = sharedata[1];
 	try {
@@ -332,96 +322,4 @@ exports.shares2pass = function (sharesd) {
 	} catch (err) {
 		throw err;
 	}
-};
-
-exports.encryptDir = function (origpath, mpkey, viv, vsalt, callback) {
-	// Encrypts a directory (after compressing it) with the masterpasskey
-	const i = defaults.mpk_iterations,
-		kL = defaults.keyLength,
-		ivL = defaults.ivLength,
-		digest = defaults.digest;
-	// pass = (Array.isArray(password)) ? shares2pass(password) : password,
-	const salt = (vsalt) ? new Buffer(vsalt, 'utf8') : crypto.randomBytes(kL); // generate pseudorandom salt
-	const iv = (viv) ? new Buffer(viv, 'utf8') : crypto.randomBytes(ivL); // generate pseudorandom iv
-	crypto.pbkdf2(mpkey, salt, i, kL, digest, (err, key) => {
-		if (err) {
-			// return error to callback YOLO#101
-			callback(err);
-		} else {
-			// logger.verbose(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
-			let destpath = `${origpath}.crypto`;
-			const origin = fstream.Reader({
-				'path': origpath,
-				'type': 'Directory'
-			});
-			const dest = fstream.Writer({
-				'path': destpath
-			});
-			const cipher = crypto.createCipheriv(defaults.algorithm, key, iv);
-			// Read the source directory
-			origin.pipe(tar.Pack()) // Convert the directory to a .tar file
-				.pipe(zlib.Gzip()) // Compress the .tar file
-				.pipe(cipher) // Encrypt
-				.pipe(dest); // Give the output file name
-			// origin.pipe(zip).pipe(cipher).pipe(dest);
-			origin.on('error', () => {
-				logger.error(`Error while encrypting/writting file to ${destpath}`);
-				callback(err);
-			});
-
-			// origin.on('end', () => {
-			// 	// Append iv used to encrypt the file to end of file
-			// 	dest.write(`\nCryptoSync#${iv.toString('hex')}`);
-			// 	dest.end();
-			// 	logger.verbose(`End for ${destf} called`);
-			// });
-
-			origin.on('end', () => {
-				logger.verbose(`Finished encrypted/written to ${destpath}`);
-				callback(null, [iv, salt]);
-			});
-		}
-	});
-};
-
-exports.decryptDir = function (origpath, mpkey, viv, vsalt, callback) {
-	// Decrypts a directory (after decompressing it) with the masterpasskey
-	const i = defaults.mpk_iterations,
-		kL = defaults.keyLength,
-		digest = defaults.digest;
-	const iv = new Buffer(viv, 'utf8');
-	const salt = new Buffer(vsalt, 'utf8');
-	// pass = (Array.isArray(password)) ? shares2pass(password) : password;
-	crypto.pbkdf2(mpkey, salt, i, kL, digest, (err, key) => {
-		if (err) {
-			// return error to callback YOLO#101
-			callback(err);
-		} else {
-			// logger.verbose(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
-			let destpath = origpath.replace(/[\.]{1}(crypto)/g, '');
-			const origin = fstream.Reader({
-				'path': origpath,
-			});
-			const dest = fstream.Writer({
-				'path': destpath,
-				'type': 'Directory'
-			});
-			const decipher = crypto.createDecipheriv(defaults.algorithm, key, iv);
-
-			origin.pipe(zlib.Unzip()) // uncompress archive to a .tar file
-				.pipe(tar.Extract()) // Convert .tar file to directory
-				.pipe(decipher) // Decrypt
-				.pipe(dest); // Give the output file name
-
-			origin.on('error', () => {
-				logger.error(`Error while encrypting/writting file to ${destpath}`);
-				callback(err);
-			});
-
-			origin.on('end', () => {
-				logger.verbose(`Finished encrypted/written to ${destpath}`);
-				callback(null, [iv, salt]);
-			});
-		}
-	});
 };
