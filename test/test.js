@@ -74,7 +74,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 		global.creds = {};
 		global.MasterPassKey = require('../src/_MasterPassKey');
 		global.MasterPassKey.set(scrypto.randomBytes(global.defaults.keyLength));
-		console.log(`global.MasterPassKey = ${global.MasterPassKey.get().toString('hex')}`);
+		// console.log(`global.MasterPassKey = ${global.MasterPassKey.get().toString('hex')}`);
 
 		global.files = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'));
 		global.state.rfs = JSON.parse(fs.readFileSync('data/rfs.json', 'utf8'));
@@ -173,12 +173,12 @@ describe('CryptoSync Core Modules\' tests', function () {
 			});
 		});
 
-		describe('retrieval of user data @Setup', function () {
+		describe('Setup', function () {
 			beforeEach(function () {
 				fs.removeSync(global.paths.crypted);
 			});
 
-			it('retrieve the user\'s account info', function (done) {
+			it('should retrieve the user\'s account info', function (done) {
 				sync.getAccountInfo()
 					.then((res) => {
 						expect(res)
@@ -218,10 +218,9 @@ describe('CryptoSync Core Modules\' tests', function () {
 			});
 		});
 
-		it('should follow through OAuth flow', function (done) {
-			// this.timeout(3000);
+		it('should follow through OAuth flow', function () {
+			this.timeout(4000);
 			global.accounts = {};
-			global.files = {};
 			const auth = new googleAuth();
 			const b64Regex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/g;
 			global.gAuth.oauth2Client = new auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_);
@@ -235,7 +234,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 			global.state.rfs = {};
 			global.files = {};
 			// expect(global.drive).to.equal(token);
-			sync.getAccountInfo()
+			return sync.getAccountInfo()
 				.then(sync.getPhoto)
 				.then((param) => {
 					expect(b64Regex.test(param[0]))
@@ -247,29 +246,36 @@ describe('CryptoSync Core Modules\' tests', function () {
 				.then(sync.setAccountInfo)
 				.then(sync.getAllFiles)
 				.then(init.syncGlobals)
-				.then(global.mdb.storeToken(token)
-					.then(() => {
-						expect(global.accounts)
-							.to.have.property('cryptosync_drive');
-						expect(global.files)
-							.to.deep.equal(files);
-						expect(global.state.rfs)
-							.to.deep.equal(rfs);
-						global.mdb.getValue('gdrive-token')
-							.then((dbtoken) => {
-								expect(dbtoken)
-									.to.deep.equal(token);
-							})
-							.catch(function (e) {
-								done(e);
-							});
-					}))
-				.then(done())
-				.catch(function (e) {
-					done(e);
+				.then(() => {
+					return global.mdb.storeToken(token)
+						.then(() => {
+							expect(global.accounts)
+								.to.have.property('cryptosync_drive');
+							expect(global.files)
+								.to.have.property('0B0pJLMXieC-mTWJpT3hiWjRoems');
+							expect(global.files)
+								.to.have.property('0B0pJLMXieC-mUV9LTkJqOHJPcFU');
+							expect(global.files)
+								.to.have.property('0B0pJLMXieC-mWElPMEtJT1Q1dDg');
+							expect(global.state.rfs)
+								.to.deep.equal(rfs);
+							global.mdb.getValue('gdrive-token')
+								.then((dbtoken) => {
+									expect(dbtoken)
+										.to.deep.equal(token);
+									expect(false)
+										.to.be.true;
+								})
+								.catch(function (e) {
+									throw e;
+								});
+						});
 				})
 				.catch(function (e) {
-					done(e);
+					throw e;
+				})
+				.catch(function (e) {
+					throw e;
 				});
 		});
 	});
@@ -421,18 +427,19 @@ describe('CryptoSync Core Modules\' tests', function () {
 	 * Vault module.js
 	 ******************************/
 	describe('Vault module', function () {
-		it('should generate encrypt & decrypt vault obj', function (done) {
+		it('should generate encrypt & decrypt vault obj', function () {
 			global.creds.viv = scrypto.randomBytes(defaults.ivLength);
 			const beforeEncVault = _.cloneDeep(global.vault);
-			Vault.encrypt(global.MasterPassKey.get())
-				.then(Vault.decrypt(global.MasterPassKey.get()))
+			return Vault.encrypt(global.MasterPassKey.get())
 				.then(() => {
-					expect(global.vault)
-						.to.deep.equal(beforeEncVault);
-					done();
+					return Vault.decrypt(global.MasterPassKey.get())
+						.then(() => {
+							expect(global.vault)
+								.to.deep.equal(beforeEncVault);
+						});
 				})
 				.catch((err) => {
-					done(err);
+					throw err;
 				});
 		});
 

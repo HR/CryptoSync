@@ -334,9 +334,8 @@ exports.shares2pass = function (sharesd) {
 	}
 };
 
-exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
-	// TODO: Use HMAC to authoritatively add metadata about the encryption
-	// decrypts any arbitrary data passed with the pass
+exports.encryptDir = function (origpath, mpkey, viv, vsalt, callback) {
+	// Encrypts a directory (after compressing it) with the masterpasskey
 	const i = defaults.mpk_iterations,
 		kL = defaults.keyLength,
 		ivL = defaults.ivLength,
@@ -385,7 +384,8 @@ exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 	});
 };
 
-exports.decryptDB = function (origpath, mpkey, viv, vsalt, callback) {
+exports.decryptDir = function (origpath, mpkey, viv, vsalt, callback) {
+	// Decrypts a directory (after decompressing it) with the masterpasskey
 	const i = defaults.mpk_iterations,
 		kL = defaults.keyLength,
 		digest = defaults.digest;

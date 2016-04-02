@@ -29,7 +29,7 @@ exports.check = function (masterpass, callback) {
 		crypto.genPassHash(mpkey, global.creds.mpksalt, function (mpkhash) {
 			// logger.verbose(`creds.mpkhash = ${global.creds.mpkhash}, mpkhash (of entered mp) = ${mpkhash}`);
 			const MATCH = crypto.verifyPassHash(global.creds.mpkhash, mpkhash); // check if masterpasskey derived is correct
-			logger.verbose(`MATCH: ${global.creds.mpkhash} (creds.mpkhash) === ${mpkhash} (mpkhash) = ${MATCH}`);
+			logger.info(`MATCH: ${global.creds.mpkhash} (creds.mpkhash) === ${mpkhash} (mpkhash) = ${MATCH}`);
 			return callback(null, MATCH, mpkey);
 		});
 	});
