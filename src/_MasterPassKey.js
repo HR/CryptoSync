@@ -5,12 +5,37 @@
  ******************************/
 
 // private static class member
-var MP = Symbol();
-module.exports = class MasterPassKey {
-	static get() {
-		return this[MP];
+// var MP = Symbol();
+// module.exports = class MasterPassKey {
+// 	static get() {
+// 		return this[MP];
+// 	}
+// 	static set(mp) {
+// 		this[MP] = mp;
+// 	}
+// };
+
+const MasterPassKey = (function () {
+	const mpk = new WeakMap();
+
+	function MasterPassKey(key) {
+		mpk.set(this, key);
 	}
-	static set(mp) {
-		this[MP] = mp;
-	}
-};
+
+	MasterPassKey.prototype.get = function () {
+		return mpk.get(this);
+	};
+
+	MasterPassKey.prototype.set = function (key) {
+		mpk.set(this, key);
+	};
+
+	MasterPassKey.prototype.delete = function (key) {
+		mpk.delete(this);
+	};
+
+	return MasterPassKey;
+}());
+
+
+module.exports = MasterPassKey;

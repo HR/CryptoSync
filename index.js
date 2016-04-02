@@ -11,8 +11,9 @@ const app = electron.app,
 	util = require('./src/util'),
 	res = require('./static/js/res'),
 	Account = require('./src/Account'),
-	Vault = require('./src/Vault'),
+	vault = require('./src/vault'),
 	MasterPass = require('./src/MasterPass'),
+	MasterPassKey = require('./src/_MasterPassKey'),
 	sync = require('./src/sync'),
 	init = require('./src/init'),
 	synker = require('./src/synker'),
@@ -57,7 +58,6 @@ const API_REQ_LIMIT = 8;
 
 // MasterPassKey is protected (private var) and only exist in Main memory
 // MasterPassKey is a derived key of the actual user MasterPass
-global.MasterPassKey = require('./src/_MasterPassKey');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
 global.accounts = {};
@@ -345,7 +345,7 @@ function Setup(callback) {
 	ipc.on('setMasterPass', function (event, masterpass) {
 		logger.verbose('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
 		MasterPass.set(masterpass, function (err, mpkey) {
-			global.MasterPassKey.set(mpkey);
+			global.MasterPassKey = new MasterPassKey(mpkey);
 			global.mdb.saveGlobalObj('creds')
 				.catch((err) => {
 					throw err;
@@ -357,7 +357,7 @@ function Setup(callback) {
 	ipc.on('done', function (event, masterpass) {
 		logger.info('IPCMAIN: done emitted, setup complete. Closing this window and opening menubar...');
 		setupComplete = true;
-		Vault.init(global.MasterPassKey.get())
+		vault.init(global.MasterPassKey.get())
 			.then(() => {
 				return win.close();
 			})
@@ -365,7 +365,7 @@ function Setup(callback) {
 				return app.quit();
 			})
 			.catch((err) => {
-				logger.error(`Vault.init ERR: ${err.stack}`);
+				logger.error(`vault.init ERR: ${err.stack}`);
 				throw (err);
 			});
 		// TODO: restart the application in default mode
@@ -572,7 +572,8 @@ app.on('will-quit', (event) => {
 			if (global.MasterPassKey.get() && !_.isEmpty(global.vault)) {
 				logger.info(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`);
 				logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
-				Vault.encrypt(global.MasterPassKey.get())
+
+				vault.encrypt(global.MasterPassKey.get())
 					.then((tag) => {
 						logger.verbose(`crypto.encryptObj invoked...`);
 						logger.info(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`);
@@ -669,7 +670,7 @@ app.on('ready', function () {
 				return MasterPass.Prompt();
 			})
 			.then(() => {
-				return Vault.decrypt(global.MasterPassKey.get());
+				return vault.decrypt(global.MasterPassKey.get());
 			})
 			.then(() => {
 				return Promise.all([
@@ -830,7 +831,7 @@ exports.MasterPassPrompt = function (reset, callback) {
 			if (match) {
 				logger.info("IPCMAIN: PASSWORD MATCHES!");
 				// Now derive masterpasskey and set it (temporarily)
-				global.MasterPassKey.set(mpkey);
+				global.MasterPassKey = new MasterPassKey(mpkey);
 				webContents.send('checkMasterPassResult', {
 					err: null,
 					match: match
@@ -855,10 +856,10 @@ exports.MasterPassPrompt = function (reset, callback) {
 	ipc.on('setMasterPass', function (event, masterpass) {
 		logger.verbose('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
 		MasterPass.set(masterpass, function (err, mpkey) {
-			// TODO: create new Vault, delete old data and start re-encrypting
+			// TODO: create new vault, delete old data and start re-encrypting
 			if (!err) {
 				newMPset = true;
-				global.MasterPassKey.set(mpkey);
+				gglobal.MasterPassKey = new MasterPassKey(mpkey);
 				global.mdb.saveGlobalObj('creds')
 					.catch((err) => {
 						throw err;

@@ -17,22 +17,21 @@
 		</section>
 	</div>
 	<script type="text/javascript">
-		// TODO: style all of this
-		var ipcRenderer = require('electron').ipcRenderer;
-		window.$ = window.jQuery = require('jquery');
+	var ipcRenderer = require('electron').ipcRenderer;
+	window.$ = window.jQuery = require('jquery');
 
-		/* Event listeners */
-		ipcRenderer.on("error", function(event, error) {
-			$("h1").text(error);
+	/* Event listeners */
+	ipcRenderer.on("error", function(event, error) {
+		$("h1").text(error);
+	});
+	$(window).load(function() {
+		$("#quit").click(function() {
+			ipcRenderer.send("response", "quit");
 		});
-		$(window).load(function() {
-			$("#quit").click(function() {
-				ipcRenderer.send("response", "quit");
-			});
-			$("#retry").click(function() {
-				ipcRenderer.send("response", "retry");
-			});
+		$("#retry").click(function() {
+			ipcRenderer.send("response", "retry");
 		});
+	});
 	</script>
 </body>
 

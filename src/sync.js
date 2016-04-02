@@ -169,11 +169,12 @@ exports.cryptQueue = async.queue(function (file, callback) {
 				return callback(err);
 			} else {
 				try {
+					global.vault.files = global.vault.files || {};
 					file.cryptPath = destpath;
 					file.iv = iv.toString('hex');
 					file.authTag = tag.toString('hex');
-					global.vault[file.id] = _.cloneDeep(file);
-					global.vault[file.id].shares = crypto.pass2shares(key.toString('hex'));
+					global.vault.files[file.id] = _.cloneDeep(file);
+					global.vault.files[file.id].shares = crypto.pass2shares(key.toString('hex'));
 					callback(null, file);
 				} catch (err) {
 					callback(err);

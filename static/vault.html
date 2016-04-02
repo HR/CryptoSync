@@ -1,188 +1,204 @@
+<!doctype html>
 <html>
 
-<head>
-	<meta charset="utf-8">
-	<title>The Vault</title>
-	<link rel="stylesheet" href="style/vault.css" charset="utf-8">
-	<!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
-</head>
+  <head>
+    <meta charset="utf-8">
+    <title>The Vault</title>
+    <link rel="stylesheet" href="style/vault.css" charset="utf-8">
+    <!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
+  </head>
 
-<body>
-	<section id="vault">
-		<header class="top">
-			<img src="images/icons/CryptoSyncVault.svg" class="icon centre" alt="">
-			<a class="right">
-				<img src="images/icons/folder.svg" class="icon" alt="" />
-			</a>
-			<a class="left">
-				<img src="images/icons/settings.svg" class="icon" alt="" />
-			</a>
-		</header>
-		<div class="main">
-			<div class="segment" id="accounts">
-				<div class="table" id="accountsList">
-				</div>
-			</div>
-			<div class="segment" id="files">
-				<input type="text" placeholder="    Search files" />
-				<div class="table">
-					<header>
-						<h4>Home</h4>
-					</header>
-					<div class="row selected">
-						<div class="name">InnovationBlue....psd</div>
-						<div class="lastMod">2 days ago.</div>
-					</div>
-					<div class="row">
-						<div class="name">Secret_selfie.jpeg</div>
-						<div class="lastMod">2 days ago.</div>
-					</div>
-					<div class="row">
-						<div class="name">EM_induction.pdf</div>
-						<div class="lastMod">2 days ago.</div>
-					</div>
-					<div class="row">
-						<div class="name">ACvsDC_lecture....pdf</div>
-						<div class="lastMod">3 days ago.</div>
-					</div>
-					<header>
-						<h4>Home/png</h4>
-					</header>
-					<div class="row">
-						<div class="name">tesla.psd</div>
-						<div class="lastMod">3 days ago.</div>
-					</div>
-					<div class="row">
-						<div class="name">random.psd</div>
-						<div class="lastMod">4 days ago.</div>
-					</div>
-					<div class="row">
-						<div class="name">true.png</div>
-						<div class="lastMod">5 days ago.</div>
-					</div>
-					<div class="row">
-						<div class="name">true.png</div>
-						<div class="lastMod">5 days ago.</div>
-					</div>
-					<div class="row">
-						<div class="name">true.png</div>
-						<div class="lastMod">5 days ago.</div>
-					</div>
-					<div class="row">
-						<div class="name">true.png</div>
-						<div class="lastMod">5 days ago.</div>
-					</div>
-				</div>
-			</div>
-			<div class="segment" id="info">
-				<div id="content">
-					<h3>InnovationBlueprint.psd</h3>
-					<table>
-						<tr>
-							<td>Creation date</td>
-							<td>12 may 2015</td>
-						</tr>
-						<tr>
-							<td>Last Modified</td>
-							<td>12 may 2015</td>
-						</tr>
-						<tr>
-							<td>Checksum</td>
-							<td>
-								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
-								<a data-action="clip">
-									<img src="images/icons/clippy.svg" alt="" />
-								</a>
-							</td>
-						</tr>
-						<tr>
-							<td>Shares</td>
-							<td>
-								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
-								<a data-action="clip">
-									<img src="images/icons/clippy.svg" alt="" />
-								</a>
-								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
-								<a data-action="clip">
-									<img src="images/icons/clippy.svg" alt="" />
-								</a>
-								<input type="text" value="n9987Nh87hHBVJjv4frtrx389n898n98y" />
-								<a data-action="clip">
-									<img src="images/icons/clippy.svg" alt="" />
-								</a>
-							</td>
-						</tr>
-						<tr>
-							<td class="bttline">Encryption key</td>
-							<td>
-								<button class="default">Reconstruct</button>
-							</td>
-						</tr>
-					</table>
-				</div>
-				<footer>
-					<a class="right">
-						<img src="images/icons/trashcan.svg" alt="" />
-					</a>
-				</footer>
-			</div>
-		</div>
-	</section>
-	<script id="account-template" type="text/x-handlebars-template">
-		<div class="row">
-			<div class="type">
-				<div class="profile" style="background:
+  <body>
+    <section id="vault">
+      <header class="top">
+        <img src="images/icons/CryptoSyncVault.svg" class="icon centre" alt="">
+        <a class="right">
+          <img src="images/icons/folder.svg" class="icon" alt=""/>
+        </a>
+        <a class="left">
+          <img src="images/icons/settings.svg" class="icon" alt=""/>
+        </a>
+      </header>
+      <div class="main">
+        <div class="segment" id="accounts">
+          <div class="table" id="accountsList"></div>
+        </div>
+        <div class="segment" id="files">
+          <input type="text" placeholder="    Search files"/>
+          <div class="table" id="filesList">
+          </div>
+        </div>
+        <div class="segment" id="info">
+          <div id="content"></div>
+          <footer>
+            <a class="right">
+              <img src="images/icons/trashcan.svg" alt=""/>
+            </a>
+          </footer>
+        </div>
+      </div>
+    </section>
+
+    <script id="account-template" type="text/x-handlebars-template">
+      <div class="row">
+        <div class="type">
+          <div class="profile" style="background:
     url(data:image/gif;base64,{{profileImg}})
     no-repeat
     center center;"></div>
-				<div class="cloudType">
-					<img src="images/icons/{{type}}.svg"></img>
-				</div>
-			</div>
-			<div class="content">
-				<div class="name">{{name}}</div>
-				<div class="email">{{email}}</div>
-			</div>
-		</div>
-	</script>
-	<script id="file-template" type="text/x-handlebars-template">
-		<div class="row">
-			<div class="name">{{name}}</div>
-			<div class="lastMod">{{lastMod}}</div>
-		</div>
-	</script>
-	<script type="text/javascript">
-		window.$ = window.jQuery = require('jquery');
-		// load core modules first
-		var remote = require('electron').remote,
-			ipcRenderer = require('electron').ipcRenderer,
-			accounts = remote.getGlobal("accounts"),
-			Handlebars = require('handlebars'),
-			mdb = remote.getGlobal("mdb"),
-			rconsole = remote.getGlobal("console");
+          <div class="cloudType">
+            <img src="images/icons/{{type}}.svg"></img>
+          </div>
+        </div>
+        <div class="content">
+          <div class="name">{{name}}</div>
+          <div class="email">{{email}}</div>
+        </div>
+      </div>
+    </script>
 
-		$(window).on('online', updateOnlineStatus);
-		$(window).on('offline', updateOnlineStatus);
-		updateOnlineStatus();
+    <script id="file-template" type="text/x-handlebars-template">
+      <div class="row" data-fid="{{id}}">
+        <div class="name">{{name}}</div>
+        <div class="lastMod">{{lastSyncedText}}</div>
+      </div>
+    </script>
 
-		$(window).load(function() {
-			/* Render accounts */
-			for (var account in accounts) {
-				if (accounts.hasOwnProperty(account)) {
- 					var template = Handlebars.compile($("#account-template").html());
-					var account = template(accounts[account]);
-					$('#accountsList').append(account);
-					$('#accountsList').find('.row').first().addClass( "selected" );
-				}
-			}
-		});
+    <script id="share-template" type="text/x-handlebars-template">
+      <input type="text" value="{{share}}"/>
+      <a data-action="clip">
+        <img src="images/icons/clippy.svg" alt=""/>
+      </a>
+    </script>
 
-		/* Helper functions */
-		// Network change event
-		function updateOnlineStatus() {
-			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
-		};
-	</script>
-</body>
+    <script id="info-template" type="text/x-handlebars-template">
+      <h3>{{name}}</h3>
+      <table>
+        <tr>
+          <td>Last Synced</td>
+          <td>{{lastSyncedText}}</td>
+        </tr>
+        <tr>
+          <td>Path</td>
+          <td>{{path}}</td>
+        </tr>
+        <tr></tr>
+        <tr>
+          <td>Checksum</td>
+          <td>
+            <input type="text" value="{{md5Checksum}}"/>
+            <a data-action="clip">
+              <img src="images/icons/clippy.svg" alt=""/>
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td>Initialisation Vector</td>
+          <td>
+            <input type="text" value="{{iv}}"/>
+            <a data-action="clip">
+              <img src="images/icons/clippy.svg" alt=""/>
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td>Authentication Tag</td>
+          <td>
+            <input type="text" value="{{authTag}}"/>
+            <a data-action="clip">
+              <img src="images/icons/clippy.svg" alt=""/>
+            </a>
+          </td>
+        </tr>
+				<tr>
+          <td>threshold</td>
+          <td>{{shares.total}}</td>
+        </tr>
+        <tr>
+          <td>Shares</td>
+          <td>
+            {{#each shares.data}}
+							<input type="text" value="{{this}}"/>
+							<a data-action="clip" data-share="{{this}}"><img src="images/icons/clippy.svg" alt=""/></a>
+            {{/each}}
+          </td>
+        </tr>
+        <tr>
+          <td class="bttline">Encryption key</td>
+          <td>
+            <button class="default">Reconstruct</button>
+          </td>
+        </tr>
+      </table>
+    </script>
+
+    <script type="text/javascript">
+      window.$ = window.jQuery = require('jquery');
+      // load core modules first
+      var remote = require('electron').remote,
+        ipcRenderer = require('electron').ipcRenderer,
+        accounts = remote.getGlobal("accounts"),
+				// TODO: ENCAPSULATE files var!
+				vault = remote.getGlobal("vault"),
+        files = remote.getGlobal("files"),
+        Handlebars = require('handlebars'),
+        mdb = remote.getGlobal("mdb"),
+        rconsole = remote.getGlobal("console");
+
+      $(window).on('online', updateOnlineStatus);
+      $(window).on('offline', updateOnlineStatus);
+      updateOnlineStatus();
+
+      // Handlebars.registerHelper('shareList', function(shares, options) {
+      //   var out;
+			//
+      //   for (var i = 0, l = shares.length; i < l; i++) {
+      //     out += '<input type="text" value="' + options.fn(shares[i]) + '"/>';
+      //     out += '<a data-action="clip" data-share="' + options.fn(shares[i]) + '"><img src="images/icons/clippy.svg" alt=""/></a>';
+      //   }
+			//
+      //   return out;
+      // });
+
+			function renderSelFileInfo() {
+        var fid = $('#filesList > .selected').first().data('fid');
+        var template = Handlebars.compile($("#info-template").html());
+        var info = template(files[fid]);
+        $('#info > #content').html(info);
+      };
+
+      $(window).load(function() {
+        /* Render accounts */
+        for (var account in accounts) {
+          if (accounts.hasOwnProperty(account)) {
+            var template = Handlebars.compile($("#account-template").html());
+            var account = template(accounts[account]);
+            $('#accountsList').append(account);
+          }
+        }
+        $('#accountsList').find('.row').first().addClass("selected");
+
+        for (var file in files) {
+          if (files.hasOwnProperty(file)) {
+            files[file].lastSyncedText = file.lastSyncedText || 'not synced yet';
+            var template = Handlebars.compile($("#file-template").html());
+            var file = template(files[file]);
+            $('#filesList').append(file);
+          }
+        }
+        $('#filesList').find('.row').first().addClass("selected");
+				renderSelFileInfo();
+      });
+
+
+      /* Helper functions */
+      // Network change event
+      function updateOnlineStatus() {
+        ipcRenderer.send('online-status-changed', navigator.onLine
+          ? 'online'
+          : 'offline');
+      };
+    </script>
+  </body>
 
 </html>

@@ -69,8 +69,6 @@
     "babel-eslint": "*",
     "babel-preset-es2015": "*",
     "chai": "*",
-    "chai-as-promised": "^5.3.0",
-    "chai-things": "^0.2.0",
     "chromedriver": "*",
     "codeclimate-test-reporter": "^0.3.1",
     "coveralls": "^2.11.9",

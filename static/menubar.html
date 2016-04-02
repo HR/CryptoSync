@@ -39,7 +39,7 @@
         </div>
         <div class="content">
           <div class="name">{{name}}</div>
-          <div class="lastSynced" data-moment="{{moment}}">{{lastSynced}}</div>
+          <div class="lastSynced" data-moment="{{moment}}">{{lastSyncedText}}</div>
         </div>
       </div>
     </script>
@@ -53,11 +53,9 @@
       var remote = require('electron').remote,
         ipcRenderer = require('electron').ipcRenderer,
         Handlebars = require('handlebars'),
-        moment = require('moment');
-      state = remote.getGlobal("state"),
-      drive = remote.getGlobal("drive"), // TODO: check if necessary
-      rconsole = remote.getGlobal("console"),
-      MAX_LIST_LENGTH = 6;
+        moment = require('moment'),
+      	logger = require('../logger.js'),
+      	MAX_LIST_LENGTH = 6;
 
       var statusTexts = {
         getting: 'Fetching...',
@@ -106,7 +104,7 @@
 
       function updateList(file) {
         file.moment = file.lastSynced;
-        file.lastSynced = moment(file.lastSynced).fromNow();
+        file.lastSyncedText = moment(file.lastSynced).fromNow();
         var fileList = $('#filesList'),
           fListItem = fileList.children(),
           template = Handlebars.compile($("#file-template").html()),
@@ -131,7 +129,7 @@
       /* Event emitters  */
       function emittEvent(event) {
         // send event to main
-        rconsole.log(`RENDER: ${event} event emitted`);
+        logger.verbose(`RENDER: ${event} event emitted`);
         ipcRenderer.send(event);
       }
 
@@ -144,88 +142,18 @@
 
       /* Event listeners */
       ipcRenderer.on("statusChange", function(event, status) {
-        rconsole.log("IPCRENDER: statusChange emitted");
+        logger.verbose("IPCRENDER: statusChange emitted");
         updateStatus(status);
       });
 
       ipcRenderer.on("updateMoments", function(event) {
-        rconsole.log("IPCRENDER: updateMoment emitted");
+        logger.verbose("IPCRENDER: updateMoment emitted");
         updateMoments();
       });
 
       ipcRenderer.on("synced", function(event, file) {
-        rconsole.log("IPCRENDER: synced emitted");
-        switch (file.fileType) {
-          case "png":
-          case "jpg":
-          case "jpeg":
-          case "gif":
-          case "tif":
-            file.fileType = "image";
-            break;
-          case "docx":
-          case "rtf":
-          case "doc":
-            console.log("word");
-            file.fileType = "word";
-            break;
-          case "html":
-          case "js":
-          case "css":
-          case "c":
-          case "cpp":
-          case "py":
-          case "ruby":
-          case "java":
-            console.log("code");
-            file.fileType = "code";
-            break;
-          case "mp4":
-          case "mkv":
-          case "flv":
-            file.fileType = "video";
-            break;
-          case "mp4":
-          case "mkv":
-          case "flv":
-          case "doc":
-          case "gdoc":
-            file.fileType = "word";
-            break;
-          case "ppt":
-            file.fileType = "powerpoint";
-            break;
-          case "ai":
-          case "psd":
-          case "flv":
-            file.fileType = "vector";
-            break;
-          case "mp3":
-          case "flac":
-          case "wav":
-            file.fileType = "audio";
-            break;
-          case "tar":
-          case "zip":
-          case "gz":
-            file.fileType = "vector";
-            break;
-          case "tar":
-          case "zip":
-          case "gz":
-            file.fileType = "zip";
-            break;
-          case "pdf":
-            file.fileType = "pdf";
-            break;
-          case "XLS":
-          case "XLSM":
-          case "XLSX":
-            file.fileType = "excel";
-            break;
-          default:
-            file.fileType = "file";
-        }
+        logger.verbose("IPCRENDER: synced emitted");
+				file.fileType = resolveFileType(file.fileType);
         updateList(file);
       });
     </script>

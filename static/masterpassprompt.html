@@ -46,9 +46,6 @@
 							<form onsubmit="return false;">
 								<div class="masterpass">
 									<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
-									<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
-									<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
-									<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
 									<label for="checkSharesInput">STILL UNDER DEV</label>
 								</div>
 								<div class="submit">
@@ -118,48 +115,6 @@
 			});
 		});
 
-		/* Helper functions */
-		function getParam(name, url) {
-			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-				results = regex.exec(url);
-			return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-		}
-
-		function validateField(field, errLabel) {
-			var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
-				MPel = $(`input#${field+"Input"}`);
-			const masterpass = MPel.val();
-			if (MPregex.test(masterpass)) {
-				errLabel.hide();
-				MPel.val("");
-				ipcRenderer.send(field, masterpass);
-			} else if (!masterpass) {
-				errLabel.text("please enter a masterpass".toLocaleUpperCase());
-				errLabel.show();
-				MPel.val("");
-			} else {
-				errLabel.text("Invalid masterpass".toLocaleUpperCase());
-				errLabel.show();
-				MPel.val("");
-			}
-		}
-
-		function navigate(panelID) {
-			var oldSelection = $('.panel-container > div.current');
-			if (oldSelection) oldSelection.removeClass("current");
-			if (nav_to) {
-				var currSel = $("#panel-" + panelID);
-				currSel.find("footer").hide();
-				currSel.addClass("current");
-			} else {
-				$("#panel-" + panelID).addClass("current");
-			}
-		}
-
-		function updateOnlineStatus() {
-			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
-		};
 
 		/* Event listeners */
 		ipcRenderer.on('checkMasterPassResult', function(event, result) {
@@ -208,6 +163,49 @@
 				return;
 			}
 		});
+
+		/* Helper functions */
+		function getParam(name, url) {
+			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+				results = regex.exec(url);
+			return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+		}
+
+		function validateField(field, errLabel) {
+			var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
+				MPel = $(`input#${field+"Input"}`);
+			const masterpass = MPel.val();
+			if (MPregex.test(masterpass)) {
+				errLabel.hide();
+				MPel.val("");
+				ipcRenderer.send(field, masterpass);
+			} else if (!masterpass) {
+				errLabel.text("please enter a masterpass".toLocaleUpperCase());
+				errLabel.show();
+				MPel.val("");
+			} else {
+				errLabel.text("Invalid masterpass".toLocaleUpperCase());
+				errLabel.show();
+				MPel.val("");
+			}
+		}
+
+		function navigate(panelID) {
+			var oldSelection = $('.panel-container > div.current');
+			if (oldSelection) oldSelection.removeClass("current");
+			if (nav_to) {
+				var currSel = $("#panel-" + panelID);
+				currSel.find("footer").hide();
+				currSel.addClass("current");
+			} else {
+				$("#panel-" + panelID).addClass("current");
+			}
+		}
+
+		function updateOnlineStatus() {
+			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
+		};
 	</script>
 </body>
 

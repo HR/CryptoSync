@@ -19,7 +19,6 @@ const self = this;
 // 	this.data = data;
 // }
 
-// TODO: fully promisify
 exports.init = function (mpkey) {
 	return new Promise(function(resolve, reject) {
 		logger.verbose(`Vault.init invoked. Creating global vault obj & encrypting...`);
@@ -27,6 +26,7 @@ exports.init = function (mpkey) {
 		.then(function (iv) {
 			// logger.verbose(`crypto.genIvSalt callback.`);
 			global.vault = {};
+			global.vault.files = {};
 			global.vault.creationDate = moment().format();
 			global.creds.viv = iv;
 			// logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);

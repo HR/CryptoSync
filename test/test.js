@@ -1,12 +1,11 @@
 'use strict';
 const assert = require('assert'),
-	expect = require("chai")
-	.expect,
+	expect = require("chai").expect,
 	crypto = require('../src/crypto.js'),
 	sync = require('../src/sync.js'),
 	util = require('../src/util'),
 	Db = require('../src/Db'),
-	Vault = require('../src/Vault'),
+	vault = require('../src/vault'),
 	OAuth = require('../src/OAuth'),
 	init = require('../src/init'),
 	synker = require('../src/synker'),
@@ -85,8 +84,8 @@ describe('CryptoSync Core Modules\' tests', function () {
 		};
 		global.creds = {};
 		global.state = {};
-		global.MasterPassKey = require('../src/_MasterPassKey');
-		global.MasterPassKey.set(scrypto.randomBytes(global.defaults.keyLength));
+		const MasterPassKey = require('../src/_MasterPassKey');
+		global.MasterPassKey = new MasterPassKey(scrypto.randomBytes(global.defaults.keyLength));
 		// console.log(`global.MasterPassKey = ${global.MasterPassKey.get().toString('hex')}`);
 
 		global.files = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'));
@@ -500,15 +499,15 @@ describe('CryptoSync Core Modules\' tests', function () {
 	});
 
 	/**
-	 * Vault module.js
+	 * vault module.js
 	 ******************************/
-	describe('Vault module', function () {
+	describe('vault module', function () {
 		it('should generate encrypt & decrypt vault obj', function () {
 			global.creds.viv = scrypto.randomBytes(defaults.ivLength);
 			const beforeEncVault = _.cloneDeep(global.vault);
-			return Vault.encrypt(global.MasterPassKey.get())
+			return vault.encrypt(global.MasterPassKey.get())
 				.then(() => {
-					return Vault.decrypt(global.MasterPassKey.get())
+					return vault.decrypt(global.MasterPassKey.get())
 						.then(() => {
 							expect(global.vault)
 								.to.deep.equal(beforeEncVault);
@@ -524,7 +523,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 
 		it('should generate iv, encrypt & decrypt vault obj', function () {
 			global.creds.viv = null;
-			return Vault.init(global.MasterPassKey.get())
+			return vault.init(global.MasterPassKey.get())
 				.then(() => {
 					expect(global.creds.viv instanceof Buffer)
 						.to.be.true;
@@ -533,7 +532,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 					return;
 				})
 				.then(() => {
-					return Vault.decrypt(global.MasterPassKey.get());
+					return vault.decrypt(global.MasterPassKey.get());
 				})
 				.then(() => {
 					expect(global.vault)
@@ -547,10 +546,10 @@ describe('CryptoSync Core Modules\' tests', function () {
 
 		it('should throw error when authtag is wrong', function () {
 			global.creds.viv = scrypto.randomBytes(defaults.ivLength);
-			return Vault.encrypt(global.MasterPassKey.get())
+			return vault.encrypt(global.MasterPassKey.get())
 				.then(() => {
 					global.creds.authTag = scrypto.randomBytes(defaults.ivLength);
-					return Vault.decrypt(global.MasterPassKey.get())
+					return vault.decrypt(global.MasterPassKey.get())
 						.catch((err) => {
 							expect(err).to.be.an('error');
 							expect(err.message).to.equal('Unsupported state or unable to authenticate data');
@@ -563,7 +562,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 
 		it('should throw error when invalid iv length supplied', function () {
 			global.creds.viv = scrypto.randomBytes(5);
-			return Vault.encrypt(global.MasterPassKey.get())
+			return vault.encrypt(global.MasterPassKey.get())
 				.catch((err) => {
 					expect(err).to.be.an('error');
 					expect(err.message).to.equal('Invalid IV length');
@@ -572,7 +571,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 
 		// it('should throw error when iv not initialised', function(done) {
 		//	 global.creds.viv = null;
-		//	 return Vault.init(global.MasterPassKey.get(), function(err) {
+		//	 return vault.init(global.MasterPassKey.get(), function(err) {
 		//		 expect(err).to.be.an('error');
 		//		 expect(err.message).to.equal('Invalid IV length');
 		// 		done(err);
