@@ -30,10 +30,11 @@ exports.init = function (mpkey, callback) {
 	.then(function (iv) {
 		// logger.verbose(`crypto.genIvSalt callback.`);
 		global.creds.viv = iv;
-		logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
+		// logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
 	})
 	.then(() => {
-		exports.encrypt(mpkey).then(() => {
+		exports.encrypt(mpkey)
+		.then(() => {
 			callback();
 		})
 		.catch((err) => {
