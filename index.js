@@ -15,12 +15,13 @@ const app = electron.app,
 	MasterPass = require('./src/MasterPass'),
 	sync = require('./src/sync'),
 	init = require('./src/init'),
+	synker = require('./src/synker'),
 	fs = require('fs-extra'),
 	chokidar = require('chokidar'),
 	https = require('https'),
 	sutil = require('util'),
 	moment = require('moment'),
-	Vault_cl = require('./src/Vault_cl'),
+	// Vault_cl = require('./src/Vault_cl'),
 	base64 = require('base64-stream'),
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
@@ -29,6 +30,9 @@ const app = electron.app,
 	logger = require('./logger');
 
 require('dotenv').config();
+
+// App init
+app.dock.setIcon('res/app-icons/CryptoSync256.png');
 
 // enable remote debugging
 // app.commandLine.appendSwitch('remote-debugging-port', '8315');
@@ -51,7 +55,8 @@ const API_REQ_LIMIT = 8;
 // TODO: consider using arrow callback style I.E. () => {}
 // YOLO#101
 
-// MasterPass is protected (private var) and only exist in Main memory
+// MasterPassKey is protected (private var) and only exist in Main memory
+// MasterPassKey is a derived key of the actual user MasterPass
 global.MasterPassKey = require('./src/_MasterPassKey');
 // TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth;
@@ -299,7 +304,7 @@ function Setup(callback) {
 					// store auth token in mdb
 					.then((token) => {
 						global.gAuth.oauth2Client.credentials = token;
-	          return global.mdb.storeToken(token);
+						return global.mdb.storeToken(token);
 					})
 					.then(() => {
 						return init.drive(global.gAuth);
@@ -307,18 +312,18 @@ function Setup(callback) {
 					.then(() => {
 						return sync.getAccountInfo();
 					})
-	        .then((res) => {
-	          return sync.getPhoto(res);
-	        })
-	        .then((param) => {
-	          return sync.setAccountInfo(param);
-	        })
-	        .then((email) => {
-	          return sync.getAllFiles(email);
-	        })
-	        .then((trees) => {
-	          return init.syncGlobals(trees);
-	        })
+					.then((res) => {
+						return sync.getPhoto(res);
+					})
+					.then((param) => {
+						return sync.setAccountInfo(param);
+					})
+					.then((email) => {
+						return sync.getAllFiles(email);
+					})
+					.then((trees) => {
+						return init.syncGlobals(trees);
+					})
 					.catch(function (error) {
 						logger.error(`PROMISE ERR: ${error.stack}`);
 					});
@@ -352,13 +357,17 @@ function Setup(callback) {
 	ipc.on('done', function (event, masterpass) {
 		logger.info('IPCMAIN: done emitted, setup complete. Closing this window and opening menubar...');
 		setupComplete = true;
-		Vault.init(global.MasterPassKey.get(), function (err) {
-			if (err) {
-				logger.error(`init.vault ERR: ${err.stack}`);
-			} else {
-				win.close();
-			}
-		});
+		Vault.init(global.MasterPassKey.get())
+			.then(() => {
+				return win.close();
+			})
+			.then(() => {
+				return app.quit();
+			})
+			.catch((err) => {
+				logger.error(`Vault.init ERR: ${err.stack}`);
+				throw (err);
+			});
 		// TODO: restart the application in default mode
 	});
 
@@ -604,6 +613,10 @@ app.on('activate', function (win) {
 	// 	}
 });
 
+/**
+ * Main
+ **/
+
 app.on('ready', function () {
 	// TODO: Wrap all this into init();
 	let setupRun = ((!util.checkDirectorySync(global.paths.mdb)) || (!util.checkFileSync(global.paths.vault)));
@@ -611,27 +624,17 @@ app.on('ready', function () {
 		// TODO: Do more extensive FIRST RUN check
 		logger.info('First run. Creating Setup wizard...');
 		// Setup();
-		let Init = function () {
-			logger.verbose(`INITIALISATION PROMISE`);
-			return new Promise(function (resolve, reject) {
-				global.mdb = new Db(global.paths.mdb);
-				fs.ensureDir(global.paths.home, function (err) {
-					if (err) reject(err);
-					resolve();
-				});
-			});
-		};
 		// TODO: Wrap Setup around Setup and call Setup the way its being called now
 		// Run User through Setup/First Install UI
-		Init()
+		init.setup()
 			// .then(
 			// 	global.mdb.del('gdrive-token', function (err) {
 			// 		if (err) logger.error(`Error retrieving gdrive-token, ${err}`);
 			// 		logger.verbose("deleted gdrive-token");
 			// 	})
 			// )
-			.then(
-				Setup(function (err) {
+			.then(() => {
+				return Setup(function (err) {
 					if (err) {
 						logger.error(err);
 						ErrorPrompt(err, function (response) {
@@ -647,310 +650,149 @@ app.on('ready', function () {
 						// throw err;
 					}
 					logger.info('MAIN Setup successfully completed. Starting menubar...');
-					// Cryptobar(function (result) {
-					//
-					// });
-					app.quit();
-				})
-			)
+				});
+
+			}) // then restart app
 			.catch(function (error) {
 				logger.error(`PROMISE ERR: ${error.stack}`);
 			});
 	} else {
 		// start menubar
 		logger.info('Normal run. Creating Menubar...');
-		// TODO: Implement MasterPassPrompt function
 
-		/* TODO: Implement all objects to restore from persistent storage as a routine to be run on start
+		/*
 		 * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
 		 */
-		let Init = function () {
-			// Decrypt db (the Vault) and get ready for use
-			// open mdb
-			return new Promise(function (resolve, reject) {
-				global.mdb = new Db(global.paths.mdb);
-				global.mdb.get('creds', function (err, json) {
-					if (err) {
-						if (err.notFound) {
-							logger.error(`ERROR: key creds NOT FOUND `);
-							global.creds = {};
-							reject(err);
-						} else {
-							// I/O or other error, pass it up the callback
-							logger.error(`ERROR: mdb.get('creds') FAILED`);
-							reject(err);
-						}
-					} else {
-						logger.info(`SUCCESS: creds FOUND ${json.substr(0, 20)}`);
-						global.creds = JSON.parse(json);
-						setTimeout(function () {
-							logger.verbose(`resolve global.creds called`);
-							resolve();
-						}, 0);
-					}
-				});
-				fs.ensureDir(global.paths.home, function (err) {
-					if (err) reject(err);
-					resolve();
-				});
-			});
-		};
 
-		Init()
+		init.main()
 			.then(() => {
-				MasterPass.Prompt()
-					.then(() => {
-						Vault.decrypt(global.MasterPassKey.get()).then(() => {
-							Promise.all([
-									global.mdb.restoreGlobalObj('accounts'),
-									global.mdb.restoreGlobalObj('state'),
-									global.mdb.restoreGlobalObj('settings'),
-									global.mdb.restoreGlobalObj('stats'),
-									global.mdb.restoreGlobalObj('files')
-								])
-								.then(() => {
-									const o2c = global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client;
-									global.gAuth = new google.auth.OAuth2(o2c.clientId_, o2c.clientSecret_, o2c.redirectUri_);
-									gAuth.setCredentials(o2c.credentials);
-									global.drive = google.drive({
-										version: 'v3',
-										auth: gAuth
-									});
-									return;
-								})
-								.then(() => {
-									// Set initial stats
-									global.stats.startTime = moment().format();
-									global.stats.time = moment();
-									return;
-								})
-								.then(
-									// TODO: start sync daemon
-									// Start menubar
-									Cryptobar(function (result) {
-										// body...
-									})
-								).then(() => {
-
-									let pushGetQueue = function (file) {
-										logger.verbose(`PROMISE: pushGetQueue for ${file.name}`);
-										return new Promise(function (resolve, reject) {
-											sync.getQueue.push(file, function (err, file) {
-												if (err) {
-													logger.error(`ERROR occurred while GETting ${file.name}`);
-													reject(err);
-												}
-												// update file globally
-												global.files[file.id] = file;
-												// global.state.toCrypt.push(file); // add from toCrypt queue
-												// _.pull(global.state.toGet, file); // remove from toGet queue
-												logger.info(`DONE GETting ${file.name}`);
-												resolve(file);
-											});
-										});
-									};
-
-									let pushCryptQueue = function (file) {
-										logger.verbose(`PROMISE: pushCryptQueue for ${file.name}`);
-										return new Promise(function (resolve, reject) {
-											sync.cryptQueue.push(file, function (err, file) {
-												if (err) {
-													logger.error(`ERROR occurred while ENCRYPTting`);
-													reject(err);
-												}
-												// update file globally
-												global.files[file.id] = file;
-												// global.state.toUpdate.push(file);
-												// _.pull(global.state.toCrypt, file);
-												logger.info(`DONE ENCRYPTting ${file.name}`);
-												resolve(file);
-											});
-										});
-									};
-
-									let pushUpdateQueue = function (file) {
-										logger.verbose(`PROMISE: pushUpdateQueue for ${file.name}`);
-										return new Promise(function (resolve, reject) {
-											sync.updateQueue.push(file, function (err, file) {
-												if (err) {
-													logger.error(`ERROR occurred while UPDATting`);
-													reject();
-												}
-												// update file globally
-												global.files[file.id] = file;
-												// remove file from persistent update queue
-												_.pull(global.state.toUpdate, file);
-												sync.event.emit('put', file);
-												logger.info(`DONE UPDATting ${file.name}. Removing from global status...`);
-												resolve();
-											});
-										});
-									};
-
-									sync.getQueue.drain = function () {
-										logger.info('DONE getQueue for ALL items');
-										// start encyrpting
-									};
-
-									sync.cryptQueue.drain = function () {
-										logger.info('DONE cryptQueue for ALL items');
-										// start putting
-									};
-
-									sync.updateQueue.drain = function () {
-										logger.info('DONE updateQueue for ALL items');
-										// start taking off toUpdate
-									};
-
-									// Restore queues on startup
-									if (!_.isEmpty(global.state.toGet)) {
-										sync.event.emit('statusChange', 'getting');
-										global.state.toGet.forEach(function (file) {
-											pushGetQueue(file)
-												// .then(pushCryptQueue)
-												// .then(pushUpdateQueue)
-												.then(() => {
-													sync.event.emit('statusChange', 'synced');
-												})
-												.catch((err) => {
-													sync.event.emit('statusChange', 'notsynced');
-													logger.error(`PROMISE ERR: ${err.stack}`);
-												});
-										});
-									}
-
-									if (!_.isEmpty(global.state.toCrypt)) {
-										sync.event.emit('statusChange', 'encrypting');
-										global.state.toCrypt.forEach(function (file) {
-											pushCryptQueue(file)
-												.then(pushUpdateQueue)
-												.then(() => {
-													sync.event.emit('statusChange', 'synced');
-												})
-												.catch((err) => {
-													sync.event.emit('statusChange', 'notsynced');
-													logger.error(`PROMISE ERR: ${err.stack}`);
-												});
-										});
-									}
-
-									if (!_.isEmpty(global.state.toUpdate)) {
-										sync.event.emit('statusChange', 'putting');
-										global.state.toUpdate.forEach(function (file) {
-											pushUpdateQueue(file)
-												.then(() => {
-													sync.event.emit('statusChange', 'synced');
-												})
-												.catch((err) => {
-													sync.event.emit('statusChange', 'notsynced');
-													logger.error(`PROMISE ERR: ${err.stack}`);
-												});
-										});
-									}
-									// TODO: Modularise, write as a seperate script
-									// (with check for changes at interval)
-									// and spawn as child process (with shared memory)
-									// Implement with ES6 Generators?
-
-									const dotRegex = /\/\..+/g;
-									const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g;
-
-									const watcher = chokidar.watch(global.paths.home, {
-										ignored: dotRegex,
-										persistent: true,
-										ignoreInitial: true,
-										alwaysStat: true
-									});
-
-									let createFileObj = function (fileId, fileName) {
-										return new Promise(function (resolve, reject) {
-											let file = {};
-											file.name = fileName;
-											file.id = fileId;
-											file.mtime = stats.mtime;
-											global.files[file.id] = file;
-											resolve(file);
-										});
-									};
-
-									watcher.on('add', (path, stats) => {
-										if (dotRegex.test(path)) {
-											// Ignore dot file
-											logger.info(`IGNORE added file ${path}, stats.mtime = ${stats.mtime}`);
-											watcher.unwatch(path);
-										} else {
-											// Queue up to encrypt and put
-											let fileName = path.match(fNameRegex)[0];
-											let relPath = path.replace(global.paths.home, '');
-											logger.info(`ADD added file ${fileName}, stats ${stats.mtime}`);
-
-											sync.genID()
-												.then((fileId) => {
-													let file = {};
-													file.name = fileName;
-													file.id = fileId;
-													file.origpath = path;
-													file.mtime = stats.mtime;
-													global.files[file.id] = file;
-													return file;
-												})
-												.then(pushCryptQueue)
-												.then((file) => {
-													logger.info(`Done encrypting ${file.name} (${file.id})`);
-												})
-												.catch((err) => {
-													logger.error(`Error occured while adding ${fileName}:\n${err.stack}`);
-												});
-										}
-									});
-
-									watcher
-										.on('change', (path, stats) => {
-											if (dotRegex.test(path)) {
-												// Ignore dot file
-												logger.info(`IGNORE added file ${path}, stats ${stats.mtime}`);
-												watcher.unwatch(path);
-											} else {
-												// Queue up to encrypt and put
-												let fileName = path.match(fNameRegex)[0];
-												logger.info(`File ${fileName} at ${path} has been changed, stats ${stats.mtime}}`);
-											}
-										})
-										.on('unlink', (path, stats) => logger.info(`File ${path} has been removed, stats ${stats}`))
-										.on('addDir', (path, stats) => logger.info(`Directory ${path} has been added, stats ${stats}`))
-										.on('unlinkDir', (path, stats) => logger.info(`Directory ${path} has been removed, stats ${stats}`))
-										.on('error', error => logger.error(`Watcher error: ${error}`))
-										.on('ready', () => {
-											logger.info('Initial scan complete. Ready for changes');
-										});
-									// .on('raw', (event, path, details) => {
-									// 	logger.verbose('Raw event info:', event, path, details);
-									// });
-									//
-									// Spawn a child process for sync worker
-									// const cp = require('child_process');
-									// const child = cp.fork('./src/sync_worker');
-									//
-									// child.on('put', function (file) {
-									// 	// Receive results from child process
-									// 	logger.verbose('received: ' + file);
-									// });
-									//
-									// // Send child process some work
-									// child.send('Please up-case this string');
-								})
-								.catch(function (error) {
-									logger.error(`PROMISE ERR: ${error.stack}`);
-								}).catch(function (error) {
-									logger.error(`PROMISE ERR: ${error.stack}`);
-								});
-						}).catch(function (error) {
-							logger.error(`PROMISE ERR: ${error.stack}`);
-						});
-					}).catch(function (error) {
-						logger.error(`PROMISE ERR: ${error.stack}`);
-					});
+				return MasterPass.Prompt();
 			})
+			.then(() => {
+				return Vault.decrypt(global.MasterPassKey.get());
+			})
+			.then(() => {
+				return Promise.all([
+					global.mdb.restoreGlobalObj('accounts'),
+					global.mdb.restoreGlobalObj('state'),
+					global.mdb.restoreGlobalObj('settings'),
+					global.mdb.restoreGlobalObj('stats'),
+					global.mdb.restoreGlobalObj('files')
+				]);
+			})
+			.then(() => {
+				return init.drive(global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client, true);
+			})
+			.then(() => {
+				// Set initial stats
+				return init.stats();
+			})
+			.then(() => {
+				// Set initial stats
+				return synker.init();
+			})
+			.then(() => {
+				// TODO: start sync daemon
+				// Start menubar
+				return Cryptobar(function (result) {
+					// body...
+				});
+			})
+			// .then(() => {
+			//
+			// 	// TODO: Modularise, write as a seperate script
+			// 	// (with check for changes at interval)
+			// 	// and spawn as child process (with shared memory)
+			// 	// Implement with ES6 Generators?
+			//
+			// 	// Spawn a child process for sync worker
+			// 	// const cp = require('child_process');
+			// 	// const child = cp.fork('./src/sync_worker');
+			// 	//
+			// 	// child.on('put', function (file) {
+			// 	// 	// Receive results from child process
+			// 	// 	logger.verbose('received: ' + file);
+			// 	// });
+			// 	//
+			// 	// // Send child process some work
+			// 	// child.send('Please up-case this string');
+			//
+			// 	const dotRegex = /\/\..+/g;
+			// 	const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g;
+			//
+			// 	const watcher = chokidar.watch(global.paths.home, {
+			// 		ignored: dotRegex,
+			// 		persistent: true,
+			// 		ignoreInitial: true,
+			// 		alwaysStat: true
+			// 	});
+			//
+			// 	let createFileObj = function (fileId, fileName) {
+			// 		return new Promise(function (resolve, reject) {
+			// 			let file = {};
+			// 			file.name = fileName;
+			// 			file.id = fileId;
+			// 			file.mtime = stats.mtime;
+			// 			global.files[file.id] = file;
+			// 			resolve(file);
+			// 		});
+			// 	};
+			//
+			// 	watcher.on('add', (path, stats) => {
+			// 		if (dotRegex.test(path)) {
+			// 			// Ignore dot file
+			// 			logger.info(`IGNORE added file ${path}, stats.mtime = ${stats.mtime}`);
+			// 			watcher.unwatch(path);
+			// 		} else {
+			// 			// Queue up to encrypt and put
+			// 			let fileName = path.match(fNameRegex)[0];
+			// 			let relPath = path.replace(global.paths.home, '');
+			// 			logger.info(`ADD added file ${fileName}, stats ${stats.mtime}`);
+			//
+			// 			sync.genID()
+			// 				.then((fileId) => {
+			// 					let file = {};
+			// 					file.name = fileName;
+			// 					file.id = fileId;
+			// 					file.origpath = path;
+			// 					file.mtime = stats.mtime;
+			// 					global.files[file.id] = file;
+			// 					return file;
+			// 				})
+			// 				.then(pushCryptQueue)
+			// 				.then((file) => {
+			// 					logger.info(`Done encrypting ${file.name} (${file.id})`);
+			// 				})
+			// 				.catch((err) => {
+			// 					logger.error(`Error occured while adding ${fileName}:\n${err.stack}`);
+			// 				});
+			// 		}
+			// 	});
+			//
+			// 	watcher
+			// 		.on('change', (path, stats) => {
+			// 			if (dotRegex.test(path)) {
+			// 				// Ignore dot file
+			// 				logger.info(`IGNORE added file ${path}, stats ${stats.mtime}`);
+			// 				watcher.unwatch(path);
+			// 			} else {
+			// 				// Queue up to encrypt and put
+			// 				let fileName = path.match(fNameRegex)[0];
+			// 				logger.info(`File ${fileName} at ${path} has been changed, stats ${stats.mtime}}`);
+			// 			}
+			// 		})
+			// 		.on('unlink', (path, stats) => logger.info(`File ${path} has been removed, stats ${stats}`))
+			// 		.on('addDir', (path, stats) => logger.info(`Directory ${path} has been added, stats ${stats}`))
+			// 		.on('unlinkDir', (path, stats) => logger.info(`Directory ${path} has been removed, stats ${stats}`))
+			// 		.on('error', error => logger.error(`Watcher error: ${error}`))
+			// 		.on('ready', () => {
+			// 			logger.info('Initial scan complete. Ready for changes');
+			// 		});
+			// 	// .on('raw', (event, path, details) => {
+			// 	// 	logger.verbose('Raw event info:', event, path, details);
+			// 	// });
+			// 	//
+			// })
 			.catch(function (error) {
 				logger.error(`PROMISE ERR: ${error.stack}`);
 			});

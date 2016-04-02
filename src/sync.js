@@ -25,27 +25,104 @@ const CONCURRENCY = 2;
 
 // Refer to https://www.googleapis.com/discovery/v1/apis/drive/v3/rest for full request schema
 
+/**
+ * Status
+ */
+
 exports.event = new EventEmitter();
 
-exports.genID = function (n = 1) {
+exports.updateStats = function (file, callback) {
+	fs.Stats(file.path, function (err, stats) {
+		if (err) {
+			logger.verbose(`fs.Stats ERROR: ${err.stack}`);
+			return callback(err);
+		}
+		logger.verbose(`fs.Stats: for ${file.name}, file.mtime = ${stats.mtime}`);
+		logger.verbose(`fs.Stats: for ${file.name}, file.size = ${stats.size}`);
+		file.mtime = stats.mtime;
+		file.size = stats.size;
+		// global.files[file.id] = file;
+		logger.verbose(`GOT fs.Stat of file, mtime = ${file.mtime}`);
+		callback(null, file);
+	});
+};
+
+exports.updateStatus = function (status, file) {
 	return new Promise(function (resolve, reject) {
-		global.drive.files.generateIds({
-			count: n,
-			space: 'drive'
-		}, function (err, res) {
+		if (_.isEqual(status, 'put')) {
+			exports.event.emit('put', file);
+		} else {
+			exports.event.emit('statusChange', status);
+		}
+		resolve();
+	});
+};
+
+
+/**
+ * Promise Queues
+ */
+// first global.state.toGet.push(file);
+// then enqueue
+
+exports.pushGetQueue = function (file) {
+	logger.verbose(`PROMISE: pushGetQueue for ${file.name}`);
+	return new Promise(function (resolve, reject) {
+		exports.getQueue.push(file, function (err, file) {
 			if (err) {
-				logger.verbose(`callback: error genID`);
-				return reject(err);
+				logger.error(`ERROR occurred while GETting ${file.name}`);
+				reject(err);
 			}
-			// logger.verbose(`callback: genID`);
-			resolve((res.ids.length === 1) ? res.ids[0] : res.ids);
+			// update file globally
+			global.files[file.id] = file;
+			global.state.toCrypt.push(file); // add from toCrypt queue
+			_.pull(global.state.toGet, file); // remove from toGet queue
+			logger.info(`DONE GETting ${file.name}`);
+			resolve(file);
 		});
 	});
 };
 
-// QUEUES
-// first global.state.toGet.push(file);
-// then enqueue
+exports.pushCryptQueue = function (file) {
+	logger.verbose(`PROMISE: pushCryptQueue for ${file.name}`);
+	return new Promise(function (resolve, reject) {
+		exports.cryptQueue.push(file, function (err, file) {
+			if (err) {
+				logger.error(`ERROR occurred while ENCRYPTting`);
+				reject(err);
+			}
+			// update file globally
+			global.files[file.id] = file;
+			global.state.toUpdate.push(file);
+			_.pull(global.state.toCrypt, file);
+			logger.info(`DONE ENCRYPTting ${file.name}`);
+			resolve(file);
+		});
+	});
+};
+
+exports.pushUpdateQueue = function (file) {
+	logger.verbose(`PROMISE: pushUpdateQueue for ${file.name}`);
+	return new Promise(function (resolve, reject) {
+		exports.updateQueue.push(file, function (err, file) {
+			if (err) {
+				logger.error(`ERROR occurred while UPDATting`);
+				reject();
+			}
+			// update file globally
+			global.files[file.id] = file;
+			// remove file from persistent update queue
+			_.pull(global.state.toUpdate, file);
+			logger.info(`DONE UPDATting ${file.name}. Removing from global status...`);
+			resolve();
+		});
+	});
+};
+
+/**
+ * Async Queues
+ */
+
 exports.getQueue = async.queue(function (file, callback) {
 	if (!file || _.isEmpty(file)) callback(new Error('File doesn\'t exist'));
 	let parentPath = global.state.rfs[file.parents[0]].path;
@@ -160,21 +237,25 @@ exports.putQueue = async.queue(function (file, callback) {
 	});
 }, CONCURRENCY);
 
-exports.updateStats = function (file, callback) {
-	fs.Stats(file.path, function (err, stats) {
-		if (err) {
-			logger.verbose(`fs.Stats ERROR: ${err.stack}`);
-			return callback(err);
-		}
-		logger.verbose(`fs.Stats: for ${file.name}, file.mtime = ${stats.mtime}`);
-		logger.verbose(`fs.Stats: for ${file.name}, file.size = ${stats.size}`);
-		file.mtime = stats.mtime;
-		file.size = stats.size;
-		// global.files[file.id] = file;
-		logger.verbose(`GOT fs.Stat of file, mtime = ${file.mtime}`);
-		callback(null, file);
-	});
 
+/**
+ * Promises
+ */
+
+exports.genID = function (n = 1) {
+	return new Promise(function (resolve, reject) {
+		global.drive.files.generateIds({
+			count: n,
+			space: 'drive'
+		}, function (err, res) {
+			if (err) {
+				logger.verbose(`callback: error genID`);
+				return reject(err);
+			}
+			// logger.verbose(`callback: genID`);
+			resolve((res.ids.length === 1) ? res.ids[0] : res.ids);
+		});
+	});
 };
 
 exports.getAccountInfo = function () {
@@ -299,49 +380,6 @@ exports.setAccountInfo = function (param) {
 	});
 };
 
-exports.getAll = function (toGet, cb) {
-	//
-	async.eachLimit(toGet, API_REQ_LIMIT, function (file, callback) {
-		if (!file) return;
-		let parentPath = global.state.rfs[file.parents[0]].path;
-		const dir = `${global.paths.home}${parentPath}`;
-		const path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
-		file.path = path;
-		// not linked list with file.id as key!
-		global.files[file.id].path = path;
-
-		// TODO: replace with mkdirp
-		fs.mkdirs(dir, function (err) {
-			if (err) callback(err);
-			logger.verbose(`GETing ${file.name} at dest ${path}`);
-			let dest = fs.createWriteStream(path);
-			// TODO: figure out a better way of limiting API requests to less than 10/s (Google API limit)
-
-			global.drive.files.get({
-					fileId: file.id,
-					alt: 'media'
-				})
-				.on('error', function (err) {
-					logger.verbose('Error during download', err);
-					callback(err);
-				})
-				.pipe(dest)
-				.on('error', function (err) {
-					logger.verbose('Error during writting to fs', err);
-					callback(err);
-				})
-				.on('finish', function () {
-					// logger.verbose(`Written ${file.name} to ${path}`);
-					// exports.event.emit('got', file);
-					_.pull(toGet, file); // remove from toGet queue
-					global.state.toCrypt.push(file); // add from toCrypt queue
-					callback();
-				});
-		});
-	}, function (err) {
-		cb(err);
-	});
-};
 
 // TODO: Implement recursive function
 exports.fetchFolderItems = function (folderId, callback) {
@@ -387,72 +425,5 @@ exports.fetchFolderItems = function (folderId, callback) {
 			}
 			callback(null, fsuBtree);
 		}
-	});
-};
-
-exports.cryptAll = function (toCrypt, cb) {
-
-	fs.mkdirs(global.paths.crypted, function (err) {
-		if (err) callback(err);
-		async.each(toCrypt, function (file, callback) {
-			if (!file) return;
-			let parentPath = global.state.rfs[file.parents[0]].path;
-			let origpath = (parentPath === "/") ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`;
-			let destpath = `${global.paths.crypted}/${file.name}.crypto`;
-			logger.verbose(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`);
-			crypto.encrypt(origpath, destpath, global.MasterPassKey.get(), function (err, key, iv, tag) {
-				if (err) {
-					return callback(err);
-				} else {
-					try {
-						file.cryptPath = destpath;
-						file.iv = iv.toString('hex');
-						file.authTag = tag.toString('hex');
-						global.files[file.id] = file;
-						global.vault[file.id] = file;
-						global.vault[file.id].shares = crypto.pass2shares(key.toString('hex'));
-						// global.state.toUpdate.push(file);
-						// _.pull(toCrypt, file);
-						// exports.event.emit('encrypted', file);
-						callback();
-					} catch (err) {
-						callback(err);
-					}
-				}
-			});
-		}, function (err) {
-			// if any of the file processing produced an error, err would equal that error
-			cb(err);
-		});
-	});
-};
-
-exports.putAll = function (cb) {
-
-	async.eachLimit(global.state.toUpdate, API_REQ_LIMIT, function (file, callback) {
-		if (!file) return;
-		logger.verbose(`TO PUT: ${file.name} (${file.id})`);
-		global.drive.files.update({
-			fileId: file.id,
-			resource: {
-				name: `${file.name}.crypto`
-			},
-			media: {
-				mimeType: "application/octet-stream",
-				body: fs.createReadStream(file.cryptPath)
-			},
-		}, function (err, res) {
-			if (err) {
-				logger.verbose(`callback: error putting ${file.name}`);
-				return callback(err);
-			}
-			logger.verbose(`callback: put ${file.name}`);
-			file.lastSynced = moment().format();
-			_.pull(global.state.toCrypt, file);
-			exports.event.emit('put', file);
-			return callback();
-		});
-	}, function (err) {
-		cb(err);
 	});
 };

@@ -6,6 +6,7 @@
 test/CryptoSync
 .env
 spec/
+deprecated/
 src/Vault_cl.js
 
 # Icon must end with two \r

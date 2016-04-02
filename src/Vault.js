@@ -20,29 +20,26 @@ const self = this;
 // }
 
 // TODO: fully promisify
-exports.init = function (mpkey, callback) {
-	logger.verbose(`Vault.init invoked. Creating global vault obj & encrypting...`);
-	global.vault = {};
-	global.vault.creationDate = moment().format();
-	// TODO: decide whether to use crypto.encryptObj or genIvSalt (and then encryptObj
-	// & remove gen functionality from crypto.encryptObj)
-	crypto.genIV()
-	.then(function (iv) {
-		// logger.verbose(`crypto.genIvSalt callback.`);
-		global.creds.viv = iv;
-		// logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
-	})
-	.then(() => {
-		exports.encrypt(mpkey)
+exports.init = function (mpkey) {
+	return new Promise(function(resolve, reject) {
+		logger.verbose(`Vault.init invoked. Creating global vault obj & encrypting...`);
+		crypto.genIV()
+		.then(function (iv) {
+			// logger.verbose(`crypto.genIvSalt callback.`);
+			global.vault = {};
+			global.vault.creationDate = moment().format();
+			global.creds.viv = iv;
+			// logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
+		})
 		.then(() => {
-			callback();
+			return exports.encrypt(mpkey);
+		})
+		.then(() => {
+			resolve();
 		})
 		.catch((err) => {
-			callback(err);
+			reject(err);
 		});
-	})
-	.catch((err) => {
-		callback(err);
 	});
 };
 

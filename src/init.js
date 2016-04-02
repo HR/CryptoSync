@@ -5,30 +5,33 @@
  ******************************/
 const _ = require('lodash'),
 	moment = require('moment'),
+	fs = require('fs-extra'),
 	google = require('googleapis'),
 	logger = require('../logger'),
 	util = require('./util'),
+	Db = require('./Db'),
 	crypto = require('./crypto');
 
 
 exports.main = function () {
 	// Decrypt db (the Vault) and get ready for use
 	// open mdb
+	logger.verbose(`PROMISE: Main initialisation`);
 	return new Promise(function (resolve, reject) {
 		global.mdb = new Db(global.paths.mdb);
 		global.mdb.get('creds', function (err, json) {
 			if (err) {
 				if (err.notFound) {
-					logger.verbose(`ERROR: key creds NOT FOUND `);
+					logger.error(`ERROR: key creds NOT FOUND `);
 					global.creds = {};
 					reject(err);
 				} else {
 					// I/O or other error, pass it up the callback
-					logger.verbose(`ERROR: mdb.get('creds') FAILED`);
+					logger.error(`ERROR: mdb.get('creds') FAILED`);
 					reject(err);
 				}
 			} else {
-				logger.verbose(`SUCCESS: creds FOUND ${json.substr(0, 20)}`);
+				logger.info(`SUCCESS: creds FOUND ${json.substr(0, 20)}`);
 				global.creds = JSON.parse(json);
 				setTimeout(function () {
 					logger.verbose(`resolve global.creds called`);
@@ -43,15 +46,44 @@ exports.main = function () {
 	});
 };
 
-exports.drive = function (gAuth) {
+exports.setup = function () {
+	logger.verbose(`PROMISE: Setup initialisation`);
+	return new Promise(function (resolve, reject) {
+		global.mdb = new Db(global.paths.mdb);
+		fs.ensureDir(global.paths.home, function (err) {
+			if (err) reject(err);
+			resolve();
+		});
+	});
+};
+
+exports.drive = function (gAuth, notInstOfAuth) {
 	// store auth token in mdb
 	logger.verbose(`init.drive: `);
 	// logger.verbose(require('util').inspect(gAuth, { depth: null }));
 	return new Promise(function (resolve, reject) {
-		global.drive = google.drive({
-			version: 'v3',
-			auth: gAuth.oauth2Client
-		});
+		if (notInstOfAuth) {
+			const initedGAuth = new google.auth.OAuth2(gAuth.clientId_, gAuth.clientSecret_, gAuth.redirectUri_);
+			initedGAuth.setCredentials(gAuth.credentials);
+			global.drive = google.drive({
+				version: 'v3',
+				auth: initedGAuth
+			});
+			resolve();
+		} else {
+			global.drive = google.drive({
+				version: 'v3',
+				auth: gAuth.oauth2Client
+			});
+			resolve();
+		}
+	});
+};
+
+exports.stats = function () {
+	return new Promise(function(resolve, reject) {
+		global.stats.startTime = moment().format();
+		global.stats.time = moment();
 		resolve();
 	});
 };
