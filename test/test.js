@@ -495,7 +495,7 @@ describe('CryptoSync Core Modules\' tests', function() {
     //   return Vault.init(global.MasterPassKey.get(), function(err) {
     //     expect(err).to.be.an('error');
     //     expect(err.message).to.equal('Invalid IV length');
-		// 		done(err);
+    // 		done(err);
     //   });
     // });
   });
@@ -526,6 +526,9 @@ describe('CryptoSync Core Modules\' tests', function() {
                 .to.deep.equal(beforeSaveObj);
               db.close();
               done();
+            })
+            .catch((err) => {
+              done(err);
             });
         })
         .catch((err) => {
@@ -533,34 +536,48 @@ describe('CryptoSync Core Modules\' tests', function() {
         });
     });
 
-    it('should save and restore obj persistently', function(done) {
+    it('should save and restore obj persistently', function() {
       const beforeSaveObj = _.cloneDeep(global.testo);
-      db.saveGlobalObj('testo')
+      return db.saveGlobalObj('testo')
         .then(() => {
           global.testo = null;
           db.close();
           db = new Db('tmp/db');
-          db.restoreGlobalObj('testo')
+          return db.restoreGlobalObj('testo')
             .then(() => {
               expect(global.testo)
                 .to.deep.equal(beforeSaveObj);
               db.close();
-              done();
+
+            })
+            .catch((err) => {
+              throw (err);
             });
         })
         .catch((err) => {
-          done(err);
+          throw (err);
         });
     });
 
-    it('should return null if key not found for onlyGetValue', function(done) {
-      db.onlyGetValue('notExist')
+		it('should return null if key not found for onlyGetValue', function() {
+      return db.onlyGetValue('notExist')
         .then((token) => {
           expect(token)
             .to.equal(null);
-          done();
+					db.close();
         });
     });
+
+    it('should throw error when global object not exist for saveGlobalObj', function() {
+      return db.saveGlobalObj('fake')
+        .catch((err) => {
+          expect(err).to.be.an('error');
+          expect(err.message).to.equal('Unsupported state or unable to authenticate data');
+          db.close();
+        });
+    });
+
+
   });
   /**
    * Util module.js
