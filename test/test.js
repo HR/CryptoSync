@@ -17,8 +17,7 @@ const assert = require('assert'),
 	_ = require('lodash'),
 	google = require('googleapis'),
 	fs = require('fs-extra'),
-	exec = require('child_process')
-	.exec;
+	exec = require('child_process').exec;
 
 require('dotenv')
 	.config();
@@ -436,6 +435,9 @@ describe('CryptoSync Core Modules\' tests', function () {
 						.then(() => {
 							expect(global.vault)
 								.to.deep.equal(beforeEncVault);
+						})
+						.catch((err) => {
+							throw err;
 						});
 				})
 				.catch((err) => {
@@ -443,42 +445,40 @@ describe('CryptoSync Core Modules\' tests', function () {
 				});
 		});
 
-		it('should generate iv, encrypt & decrypt vault obj', function () {
+		it('should generate iv, encrypt & decrypt vault obj', function (done) {
 			global.creds.viv = null;
 			return Vault.init(global.MasterPassKey.get(), function (err) {
-				if (err) throw err;
+				if (err) done(err);
 				expect(global.creds.viv instanceof Buffer)
 					.to.be.true;
 				expect(global.creds.authTag instanceof Buffer)
 					.to.be.true;
 				return Vault.decrypt(global.MasterPassKey.get())
 					.then(() => {
-						throw 'error';
+						// assert.fail();
 						expect(global.vault)
 							.to.have.property('creationDate');
+						done();
 					})
 					.catch((err) => {
-						throw err;
+						 done(err);
 					});
 			});
 		});
 
-		it('should throw error when authtag is wrong', function (done) {
+		it('should throw error when authtag is wrong', function () {
 			global.creds.viv = scrypto.randomBytes(defaults.ivLength);
-			Vault.encrypt(global.MasterPassKey.get())
-				.then((value) => {
+			return Vault.encrypt(global.MasterPassKey.get())
+				.then(() => {
 					global.creds.authTag = scrypto.randomBytes(defaults.ivLength);
-					Vault.decrypt(global.MasterPassKey.get())
+					return Vault.decrypt(global.MasterPassKey.get())
 						.catch((err) => {
-							expect(err)
-								.to.throw(new Error);
-							expect(false)
-								.to.be.true;
-						})
-						.then(done());
+							expect(err).to.be.an('error');
+							expect(err.message).to.equal('Unsupported state or unable to authenticate data');
+						});
 				})
 				.catch((err) => {
-					done(err);
+					throw err;
 				});
 		});
 	});
