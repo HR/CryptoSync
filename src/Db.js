@@ -7,6 +7,7 @@
 let levelup = require('levelup'),
 	fs = require('fs-extra'),
 	_ = require('lodash'),
+	logger = require('../logger'),
 	crypto = require('./crypto'),
 	util = require('util');
 
@@ -22,20 +23,20 @@ util.inherits(Db, levelup);
 
 Db.prototype.saveGlobalObj = function (objName) {
 	const self = this;
-	// console.log(`PROMISE: saveGlobalObj for ${objName}`);
+	// logger.verbose(`PROMISE: saveGlobalObj for ${objName}`);
 	return new Promise(function (resolve, reject) {
 		if (!(_.isEmpty(global[objName]))) {
 			self.put(objName, JSON.stringify(global[objName]), function (err) {
 				if (err) {
-					console.log(`ERROR: mdb.put('${objName}') failed, ${err}`);
+					logger.verbose(`ERROR: mdb.put('${objName}') failed, ${err}`);
 					// I/O or other error, pass it up the callback
 					reject(err);
 				}
-				// console.log(`SUCCESS: mdb.put('${objName}')`);
+				// logger.verbose(`SUCCESS: mdb.put('${objName}')`);
 				resolve();
 			});
 		} else {
-			// console.log('Nothing to save; empty.');
+			// logger.verbose('Nothing to save; empty.');
 			resolve();
 		}
 	});
@@ -43,20 +44,20 @@ Db.prototype.saveGlobalObj = function (objName) {
 
 Db.prototype.restoreGlobalObj = function (objName) {
 	const self = this;
-	// console.log(`PROMISE: restoreGlobalObj for ${objName}`);
+	// logger.verbose(`PROMISE: restoreGlobalObj for ${objName}`);
 	return new Promise(function (resolve, reject) {
 		self.get(objName, function (err, json) {
 			if (err) {
 				if (err.notFound) {
-					console.log(`ERROR: Global obj ${objName} NOT FOUND `);
+					logger.verbose(`ERROR: Global obj ${objName} NOT FOUND `);
 					reject(err);
 				} else {
 					// I/O or other error, pass it up the callback
-					console.log(`ERROR: mdb.get('${objName}') FAILED`);
+					logger.verbose(`ERROR: mdb.get('${objName}') FAILED`);
 					reject(err);
 				}
 			} else {
-				// console.log(`SUCCESS: ${objName} FOUND`);
+				// logger.verbose(`SUCCESS: ${objName} FOUND`);
 				try {
 					global[objName] = JSON.parse(json) || {};
 					resolve();
@@ -70,20 +71,20 @@ Db.prototype.restoreGlobalObj = function (objName) {
 
 Db.prototype.onlyGetValue = function (key) {
 	const self = this;
-	console.log(`PROMISE: getValue for getting ${key}`);
+	logger.verbose(`PROMISE: getValue for getting ${key}`);
 	return new Promise(function (resolve, reject) {
 		self.get(key, function (err, value) {
 			if (err) {
 				if (err.notFound) {
-					console.log(`ERROR: key ${key} NOT FOUND `);
+					logger.verbose(`ERROR: key ${key} NOT FOUND `);
 					resolve(null);
 				} else {
 					// I/O or other error, pass it up the callback
-					console.log(`ERROR: mdb.get('${key}') FAILED`);
+					logger.verbose(`ERROR: mdb.get('${key}') FAILED`);
 					reject(err);
 				}
 			} else {
-				console.log(`SUCCESS: ${key} FOUND`);
+				logger.verbose(`SUCCESS: ${key} FOUND`);
 				resolve(value);
 			}
 		});
@@ -92,7 +93,7 @@ Db.prototype.onlyGetValue = function (key) {
 
 Db.prototype.getValue = function (key) {
 	const self = this;
-	console.log(`PROMISE: getValue for getting ${key}`);
+	logger.verbose(`PROMISE: getValue for getting ${key}`);
 	return new Promise(function (resolve, reject) {
 		self.get(key, function (err, value) {
 			if (err) {
@@ -100,11 +101,11 @@ Db.prototype.getValue = function (key) {
 					resolve(null);
 				} else {
 					// I/O or other error, pass it up the callback
-					console.log(`ERROR: mdb.get('${key}') FAILED`);
+					logger.verbose(`ERROR: mdb.get('${key}') FAILED`);
 					reject(err);
 				}
 			} else {
-				console.log(`SUCCESS: ${key} FOUND`);
+				logger.verbose(`SUCCESS: ${key} FOUND`);
 				resolve(value);
 			}
 		});
@@ -116,18 +117,9 @@ Db.prototype.storeToken = function (token) {
 	return new Promise(function (resolve, reject) {
 		self.put(`gdrive-token`, JSON.stringify(token), function (err) {
 			if (err) reject(err); // some kind of I/O error
-			console.log(`Token stored in mdb`);
+			logger.verbose(`Token stored in mdb`);
 			resolve();
 		});
-	});
-};
-
-Db.prototype.closeW = function (path) {
-	// encrypt Db after closing using the temporarily store MasterPass
-	levelup.close();
-	fs.readFileSync(path, 'utf8', function (err, data) {
-		if (err) throw err;
-		Db.encrypt(path, pass);
 	});
 };
 

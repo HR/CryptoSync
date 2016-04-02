@@ -61,7 +61,8 @@
     "moment": "*",
     "querystring": "*",
     "secrets.js": "*",
-    "tar": "*"
+    "tar": "*",
+    "winston": "^2.2.0"
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",

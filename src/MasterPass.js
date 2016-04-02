@@ -7,6 +7,7 @@
 const crypto = require('./crypto'),
 	util = require('./util'),
 	_ = require('lodash'),
+	logger = require('../logger'),
 	Main = (process.env.TEST_RUN) ?  null : require('../index');
 
 exports.Prompt = function () {
@@ -20,15 +21,15 @@ exports.Prompt = function () {
 
 exports.check = function (masterpass, callback) {
 	crypto.deriveMasterPassKey(masterpass, global.creds.mpsalt, function (err, mpkey, mpsalt) {
-		// console.log('checkMasterPass deriveMasterPassKey callback');
+		// logger.verbose('checkMasterPass deriveMasterPassKey callback');
 		if (err) {
-			console.error(`ERROR: deriveMasterPassKey failed, ${err.stack}`);
+			logger.error(`ERROR: deriveMasterPassKey failed, ${err.stack}`);
 			return callback(err, null);
 		}
 		crypto.genPassHash(mpkey, global.creds.mpksalt, function (mpkhash) {
-			// console.log(`creds.mpkhash = ${global.creds.mpkhash}, mpkhash (of entered mp) = ${mpkhash}`);
+			// logger.verbose(`creds.mpkhash = ${global.creds.mpkhash}, mpkhash (of entered mp) = ${mpkhash}`);
 			const MATCH = crypto.verifyPassHash(global.creds.mpkhash, mpkhash); // check if masterpasskey derived is correct
-			// console.log(`MATCH: ${global.creds.mpkhash} (creds.mpkhash) === ${mpkhash} (mpkhash) = ${MATCH}`);
+			logger.verbose(`MATCH: ${global.creds.mpkhash} (creds.mpkhash) === ${mpkhash} (mpkhash) = ${MATCH}`);
 			return callback(null, MATCH, mpkey);
 		});
 	});
@@ -36,16 +37,16 @@ exports.check = function (masterpass, callback) {
 
 exports.set = function (masterpass, callback) {
 	// TODO: decide whther to put updated masterpass instantly
-	// console.log(`setMasterPass() for ${masterpass}`);
+	// logger.verbose(`setMasterPass() for ${masterpass}`);
 	crypto.deriveMasterPassKey(masterpass, null, function (err, mpkey, mpsalt) {
 		if (err) return callback(err);
 		global.creds.mpsalt = mpsalt;
-		// console.log(`\n global.creds.mpsalt = ${global.creds.mpsalt.toString('hex')}`);
+		// logger.verbose(`\n global.creds.mpsalt = ${global.creds.mpsalt.toString('hex')}`);
 		crypto.genPassHash(mpkey, null, function (mpkhash, mpksalt) {
 			global.creds.mpkhash = mpkhash;
 			global.creds.mpksalt = mpksalt;
 			return callback(null, mpkey);
-			// console.log(`deriveMasterPassKey callback: \npbkdf2 mpkey = ${mpkey.toString('hex')},\nmpsalt = ${global.creds.mpsalt.toString('hex')},\nmpkhash = ${mpkhash},\nmpksalt = ${mpksalt}`);
+			// logger.verbose(`deriveMasterPassKey callback: \npbkdf2 mpkey = ${mpkey.toString('hex')},\nmpsalt = ${global.creds.mpsalt.toString('hex')},\nmpkhash = ${mpkhash},\nmpksalt = ${mpksalt}`);
 		});
 	});
 };

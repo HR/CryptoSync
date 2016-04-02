@@ -8,5 +8,6 @@ const sync = require('./src/sync'),
 	ipc = electron.ipcMain,
 	moment = require('moment'),
 	fs = require('fs-extra'),
+	logger = require('../logger'),
 	_ = require('lodash'),
 	async = require('async');

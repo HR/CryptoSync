@@ -6,6 +6,7 @@
 const _ = require('lodash'),
 	moment = require('moment'),
 	google = require('googleapis'),
+	logger = require('../logger'),
 	util = require('./util'),
 	crypto = require('./crypto');
 
@@ -18,19 +19,19 @@ exports.main = function () {
 		global.mdb.get('creds', function (err, json) {
 			if (err) {
 				if (err.notFound) {
-					console.log(`ERROR: key creds NOT FOUND `);
+					logger.verbose(`ERROR: key creds NOT FOUND `);
 					global.creds = {};
 					reject(err);
 				} else {
 					// I/O or other error, pass it up the callback
-					console.log(`ERROR: mdb.get('creds') FAILED`);
+					logger.verbose(`ERROR: mdb.get('creds') FAILED`);
 					reject(err);
 				}
 			} else {
-				console.log(`SUCCESS: creds FOUND ${json.substr(0, 20)}`);
+				logger.verbose(`SUCCESS: creds FOUND ${json.substr(0, 20)}`);
 				global.creds = JSON.parse(json);
 				setTimeout(function () {
-					console.log(`resolve global.creds called`);
+					logger.verbose(`resolve global.creds called`);
 					resolve();
 				}, 0);
 			}
@@ -44,8 +45,8 @@ exports.main = function () {
 
 exports.drive = function (gAuth) {
 	// store auth token in mdb
-	console.log(`init.drive: `);
-	// console.log(require('util').inspect(gAuth, { depth: null }));
+	logger.verbose(`init.drive: `);
+	// logger.verbose(require('util').inspect(gAuth, { depth: null }));
 	return new Promise(function (resolve, reject) {
 		global.drive = google.drive({
 			version: 'v3',
@@ -57,7 +58,7 @@ exports.drive = function (gAuth) {
 
 exports.syncGlobals = function (trees) {
 	return new Promise(function (resolve, reject) {
-		console.log(`\n THEN saving file tree (fBtree) to global.state.toGet`);
+		logger.verbose(`\n THEN saving file tree (fBtree) to global.state.toGet`);
 		global.state = {};
 		global.state.toGet = _.flattenDeep(trees[0]);
 		global.state.toCrypt = [];

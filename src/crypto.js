@@ -9,6 +9,7 @@ const secrets = require('secrets.js'),
 	util = require('./util'),
 	fstream = require('fstream'),
 	tar = require('tar'),
+	logger = require('../logger'),
 	_ = require('lodash'),
 	zlib = require('zlib'),
 	Readable = require('stream').Readable,
@@ -41,7 +42,7 @@ let defaults = {
 
 // Error handler
 function handler(error, at) {
-	console.log(`Error ${at} STREAM: Error while OP of file to ${path}`);
+	logger.verbose(`Error ${at} STREAM: Error while OP of file to ${path}`);
 	callback(err);
 }
 
@@ -56,7 +57,7 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 			// return error to callback YOLO#101
 			callback(err);
 		} else {
-			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
+			// logger.verbose(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
 			const origin = fs.createReadStream(origpath);
 			const dest = fs.createWriteStream(destpath);
 			const iv = crypto.randomBytes(defaults.ivLength); // generate pseudorandom iv
@@ -68,17 +69,17 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 			});
 
 			cipher.on('error', () => {
-				console.log(`CIPHER STREAM: Error while encrypting ${destf} file`);
+				logger.verbose(`CIPHER STREAM: Error while encrypting ${destf} file`);
 				callback(err);
 			});
 
 			origin.on('error', () => {
-				console.log(`ORIGIN STREAM: Error while reading ${destf} file to ${destpath}`);
+				logger.verbose(`ORIGIN STREAM: Error while reading ${destf} file to ${destpath}`);
 				callback(err);
 			});
 
 			dest.on('error', () => {
-				console.log(`DEST STREAM: Error while writting ${destf} file to ${destpath}`);
+				logger.verbose(`DEST STREAM: Error while writting ${destf} file to ${destpath}`);
 				callback(err);
 			});
 
@@ -86,12 +87,12 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 				// Append iv used to encrypt the file to end of file
 				dest.write(`\nCryptoSync#${iv.toString('hex')}#${cipher.getAuthTag().toString('hex')}`);
 				dest.end();
-				// console.log(`End (of writestream) for ${destf} called, IV&authTag appended`);
+				// logger.verbose(`End (of writestream) for ${destf} called, IV&authTag appended`);
 			});
 
 			dest.on('finish', () => {
 				const tag = cipher.getAuthTag();
-				// console.log(`Finished encrypted/written to ${destf}`);
+				// logger.verbose(`Finished encrypted/written to ${destf}`);
 				callback(null, key, iv, tag);
 			});
 		}
@@ -114,7 +115,7 @@ exports.encryptObj = function (obj, destpath, mpkey, viv, callback) {
 		origin.push(json); // writes the json string of obj to stream
 		origin.push(null); // indicates end-of-file basically - the end of the stream
 	} catch (err) {
-		console.log(`JSON.stringify error for ${destpath}`);
+		logger.verbose(`JSON.stringify error for ${destpath}`);
 		callback(err);
 	}
 	const dest = fs.createWriteStream(destpath);
@@ -132,7 +133,7 @@ exports.encryptObj = function (obj, destpath, mpkey, viv, callback) {
 
 	dest.on('finish', () => {
 		const tag = cipher.getAuthTag();
-		// console.log(`Finished encrypted/written to ${destpath} with authtag = ${tag.toString('hex')}`);
+		// logger.verbose(`Finished encrypted/written to ${destpath} with authtag = ${tag.toString('hex')}`);
 		callback(null, tag);
 	});
 };
@@ -144,7 +145,7 @@ exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
 	const iv = (viv instanceof Buffer) ? viv : new Buffer(viv.data);
 	const tag = (vtag instanceof Buffer) ? vtag : new Buffer(vtag.data);
 
-	// console.log(`Decrypting using MasterPass = ${mpkey.toString('hex')}, iv = ${iv.toString('hex')}, tag = ${tag.toString('hex')}`);
+	// logger.verbose(`Decrypting using MasterPass = ${mpkey.toString('hex')}, iv = ${iv.toString('hex')}, tag = ${tag.toString('hex')}`);
 	// pass = (Array.isArray(password)) ? shares2pass(password) : password;
 	const origin = fs.createReadStream(origpath);
 	const decipher = crypto.createDecipheriv(defaults.algorithm, mpkey, iv);
@@ -157,13 +158,13 @@ exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
 	});
 
 	util.streamToString(JSONstream, function (err, json) {
-		// console.log(`Finished decrypting from ${origpath}`);
+		// logger.verbose(`Finished decrypting from ${origpath}`);
 		if (err) callback(err);
 		try {
 			let vault = JSON.parse(json);
 			callback(null, vault);
 		} catch (err) {
-			console.log(`JSON.parse error for ${origpath}`);
+			logger.verbose(`JSON.parse error for ${origpath}`);
 			callback(err);
 		}
 	});
@@ -189,24 +190,24 @@ exports.deriveMasterPassKey = function (masterpass, mpsalt, callback) {
 			// return error to callback
 			return callback(err);
 		} else {
-			// console.log(`Pbkdf2 generated: \nmpkey = ${mpkey.toString('hex')} \nwith salt = ${salt.toString('hex')}`);
+			// logger.verbose(`Pbkdf2 generated: \nmpkey = ${mpkey.toString('hex')} \nwith salt = ${salt.toString('hex')}`);
 			return callback(null, mpkey, salt);
 		}
 	});
 };
 
 exports.genPassHash = function (mpass, salt, callback) {
-	// console.log(`crypto.genPassHash() invoked`);
+	// logger.verbose(`crypto.genPassHash() invoked`);
 	const pass = (mpass instanceof Buffer) ? mpass.toString('hex') : mpass;
 
 	if (salt) {
 		const hash = crypto.createHash(defaults.hash_alg).update(`${pass}${salt}`).digest('hex');
-		// console.log(`genPassHash: S, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
+		// logger.verbose(`genPassHash: S, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
 		callback(hash);
 	} else {
 		const salt = crypto.randomBytes(defaults.keyLength).toString('hex');
 		const hash = crypto.createHash(defaults.hash_alg).update(`${pass}${salt}`).digest('hex');
-		// console.log(`genPassHash: NS, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
+		// logger.verbose(`genPassHash: NS, pass = ${pass}, salt = ${salt}, hash = ${hash}`);
 		callback(hash, salt);
 	}
 };
@@ -222,7 +223,7 @@ exports.genFileHash = function (origpath, callback) {
 	fd.on('end', function () {
 		hash.end();
 		let fhash = hash.read();
-		// console.log(`genFileHash: fhash = ${fhash}`);
+		// logger.verbose(`genFileHash: fhash = ${fhash}`);
 		callback(null, fhash);
 	});
 
@@ -276,7 +277,7 @@ exports.decrypt = function (origpath, destpath, key, iv, authTag, callback) {
 				});
 
 				dest.on('finish', () => {
-					console.log(`Finished encrypted/written to ${destf}`);
+					logger.verbose(`Finished encrypted/written to ${destf}`);
 					callback(null, iv, tag);
 				});
 			} else {
@@ -348,7 +349,7 @@ exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 			// return error to callback YOLO#101
 			callback(err);
 		} else {
-			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
+			// logger.verbose(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
 			let destpath = `${origpath}.crypto`;
 			const origin = fstream.Reader({
 				'path': origpath,
@@ -365,7 +366,7 @@ exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 				.pipe(dest); // Give the output file name
 			// origin.pipe(zip).pipe(cipher).pipe(dest);
 			origin.on('error', () => {
-				console.error(`Error while encrypting/writting file to ${destpath}`);
+				logger.error(`Error while encrypting/writting file to ${destpath}`);
 				callback(err);
 			});
 
@@ -373,11 +374,11 @@ exports.encryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 			// 	// Append iv used to encrypt the file to end of file
 			// 	dest.write(`\nCryptoSync#${iv.toString('hex')}`);
 			// 	dest.end();
-			// 	console.log(`End for ${destf} called`);
+			// 	logger.verbose(`End for ${destf} called`);
 			// });
 
 			origin.on('end', () => {
-				console.log(`Finished encrypted/written to ${destpath}`);
+				logger.verbose(`Finished encrypted/written to ${destpath}`);
 				callback(null, [iv, salt]);
 			});
 		}
@@ -396,7 +397,7 @@ exports.decryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 			// return error to callback YOLO#101
 			callback(err);
 		} else {
-			// console.log(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
+			// logger.verbose(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`);
 			let destpath = origpath.replace(/[\.]{1}(crypto)/g, '');
 			const origin = fstream.Reader({
 				'path': origpath,
@@ -413,12 +414,12 @@ exports.decryptDB = function (origpath, mpkey, viv, vsalt, callback) {
 				.pipe(dest); // Give the output file name
 
 			origin.on('error', () => {
-				console.error(`Error while encrypting/writting file to ${destpath}`);
+				logger.error(`Error while encrypting/writting file to ${destpath}`);
 				callback(err);
 			});
 
 			origin.on('end', () => {
-				console.log(`Finished encrypted/written to ${destpath}`);
+				logger.verbose(`Finished encrypted/written to ${destpath}`);
 				callback(null, [iv, salt]);
 			});
 		}

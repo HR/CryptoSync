@@ -7,6 +7,7 @@
 const fs = require('fs'),
 	google = require('googleapis'),
 	googleAuth = require('google-auth-library'),
+	logger = require('../logger'),
 	request = require('request'),
 	SCOPES = ['https://www.googleapis.com/auth/drive'];
 
@@ -22,14 +23,14 @@ OAuth.prototype.authorize = function (token, callback) {
 	// Drive API.
 
 	// Google Drive Auth
-	// console.log(`Google Drive auth initiated`);
+	logger.verbose(`Google Drive auth initiated`);
 	const auth = new googleAuth();
 	self.oauth2Client = new auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_);
 
 	if (!token) {
 		getNewToken(self, callback);
 	} else {
-		console.log(`TOKEN FOUND: ${token}`);
+		logger.verbose(`TOKEN FOUND: ${token}`);
 		self.oauth2Client.credentials = JSON.parse(token);
 		callback();
 	}
@@ -44,7 +45,7 @@ OAuth.prototype.authorize = function (token, callback) {
  *		 client.
  */
 function getNewToken(self, callback) {
-	console.log(`getNewToken`);
+	logger.verbose(`getNewToken`);
 	const authUrl = self.oauth2Client.generateAuthUrl({
 		access_type: 'offline',
 		scope: SCOPES
@@ -57,13 +58,13 @@ OAuth.prototype.getToken = function (auth_code) {
 	var self = this;
 	return new Promise(function (resolve, reject) {
 		// Google Drive
-		// console.log(`getToken`);
+		// logger.verbose(`getToken`);
 		self.oauth2Client.getToken(auth_code, function (err, token) {
 			if (err) {
 				reject(new Error(`Error while trying to retrieve access token ${err}`));
 				throw err;
 			}
-			console.log(`Got the ACCESS_TOKEN:\n ${require('util').inspect(token, { depth: null })}`);
+			logger.verbose(`Got the ACCESS_TOKEN:\n ${require('util').inspect(token, { depth: null })}`);
 			self.oauth2Client.credentials = token;
 			resolve(token);
 		});

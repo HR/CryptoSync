@@ -20,13 +20,30 @@ const app = electron.app,
 	https = require('https'),
 	sutil = require('util'),
 	moment = require('moment'),
+	Vault_cl = require('./src/Vault_cl'),
 	base64 = require('base64-stream'),
 	Positioner = require('electron-positioner'),
 	_ = require('lodash'),
 	google = require('googleapis'),
-	async = require('async');
+	async = require('async'),
+	logger = require('./logger');
 
 require('dotenv').config();
+
+// enable remote debugging
+// app.commandLine.appendSwitch('remote-debugging-port', '8315');
+// app.commandLine.appendSwitch('host-rules', 'MAP * 127.0.0.1');
+
+// report crashes to the Electron project
+// require('crash-reporter').start({
+// 	 productName: 'CryptoSync',
+// 	 companyName: 'CryptoSync',
+// 	 submitURL: 'https://git.io/HR',
+// 	 autoSubmit: false
+// });
+
+// adds debug features like hotkeys for triggering dev tools and reload
+require('electron-debug')();
 
 const API_REQ_LIMIT = 8;
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
@@ -87,33 +104,6 @@ global.views = {
 	vault: `file://${__dirname}/static/vault.html`
 };
 
-// enable remote debugging
-// app.commandLine.appendSwitch('remote-debugging-port', '8315');
-// app.commandLine.appendSwitch('host-rules', 'MAP * 127.0.0.1');
-
-// report crashes to the Electron project
-// require('crash-reporter').start({
-// 	 productName: 'CryptoSync',
-// 	 companyName: 'CryptoSync',
-// 	 submitURL: 'https://git.io/HR',
-// 	 autoSubmit: false
-// });
-
-// adds debug features like hotkeys for triggering dev tools and reload
-require('electron-debug')();
-
-// Override default main process console.log to include time stamp and file being exec
-(function () {
-	'use strict';
-	if (console.log) {
-		let old = console.log;
-		console.log = function () {
-			Array.prototype.unshift.call(arguments, `[${moment().format('DD/MM HH:MM:SS')}]`);
-			/* use process.argv[1]? */
-			old.apply(this, arguments);
-		};
-	}
-})();
 
 // prevent the following from being garbage collected
 let Menubar;
@@ -193,7 +183,7 @@ function Cryptobar(callback) {
 
 	// Event listeners
 	sync.event.on('put', (file) => {
-		console.log(`PUT EVENT RECEIVED for ${file.name}`);
+		logger.verbose(`PUT EVENT RECEIVED for ${file.name}`);
 		webContents.send('synced', {
 			name: file.name,
 			fileType: file.fullFileExtension,
@@ -203,34 +193,34 @@ function Cryptobar(callback) {
 	});
 
 	sync.event.on('statusChange', (status) => {
-		console.log(`statusChange: status changed to ${status}`);
+		logger.verbose(`statusChange: status changed to ${status}`);
 		webContents.send('statusChange', status);
 	});
 
 	ipc.on('openSyncFolder', function (event) {
-		console.log('IPCMAIN: openSyncFolder event emitted');
+		logger.verbose('IPCMAIN: openSyncFolder event emitted');
 		shell.showItemInFolder(global.paths.vault);
 	});
 
 	ipc.on('quitApp', function (event) {
-		console.log('IPCMAIN: quitApp event emitted, Calling app.quit()...');
+		logger.verbose('IPCMAIN: quitApp event emitted, Calling app.quit()...');
 		app.quit();
 	});
 
 	ipc.on('openSettings', function (event) {
-		console.log('IPCMAIN: openSettings event emitted');
+		logger.verbose('IPCMAIN: openSettings event emitted');
 		Settings(function (result) {
 
 		});
 	});
 
 	ipc.on('openVault', function (event) {
-		console.log('IPCMAIN: openVault event emitted');
+		logger.verbose('IPCMAIN: openVault event emitted');
 		VaultUI(null);
 	});
 
 	win.on('closed', function () {
-		console.log('win.closed event emitted for Menubar.');
+		logger.verbose('win.closed event emitted for Menubar.');
 		win = null;
 		callback();
 	});
@@ -246,7 +236,7 @@ function VaultUI(callback) {
 	win.loadURL(global.views.vault);
 	win.openDevTools();
 	win.on('closed', function () {
-		console.log('win.closed event emitted for VaultUI.');
+		logger.verbose('win.closed event emitted for VaultUI.');
 		win = null;
 		if (callback) callback();
 	});
@@ -269,17 +259,17 @@ function Setup(callback) {
 	win.loadURL(global.views.setup);
 	win.openDevTools();
 	ipc.on('initAuth', function (event, type) {
-		console.log('IPCMAIN: initAuth emitted. Creating Auth...');
+		logger.verbose('IPCMAIN: initAuth emitted. Creating Auth...');
 		global.gAuth = new OAuth(type);
 		global.mdb.onlyGetValue('gdrive-token').then((token) => {
 			global.gAuth.authorize(token, function (authUrl) {
 				if (authUrl) {
-					console.log(`Loading authUrl... ${authUrl}`);
+					logger.info(`Loading authUrl... ${authUrl}`);
 					win.loadURL(authUrl, {
 						'extraHeaders': 'pragma: no-cache\n'
 					});
 				} else {
-					console.log('As already exists, loading masterpass...');
+					logger.warn('As already exists, loading masterpass...');
 					win.loadURL(`${global.views.setup}?nav_to=masterpass`);
 				}
 			});
@@ -287,23 +277,23 @@ function Setup(callback) {
 	});
 
 	win.on('unresponsive', function (event) {
-		console.log('Setup UNRESPONSIVE');
+		logger.verbose('Setup UNRESPONSIVE');
 	});
 
 	webContents.on('did-navigate', function (event, url) {
-		console.log(`IPCMAIN: did-navigate emitted,\n URL: ${url}`);
+		logger.verbose(`IPCMAIN: did-navigate emitted,\n URL: ${url}`);
 		const regex = /^http:\/\/localhost\/\?(error|code)/g;
 		if (regex.test(url)) {
-			console.log("localhost URL matches");
+			logger.info("localhost URL matches");
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
-			// console.log('MAIN: url matched, sending to RENDER...');
+			// logger.verbose('MAIN: url matched, sending to RENDER...');
 			let err = util.getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#
 			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
 			if (!err) {
 				let auth_code = util.getParam("code", url);
-				console.log(`IPCMAIN: Got the auth_code, ${auth_code}`);
-				console.log("IPCMAIN: Calling callback with the code...");
+				logger.verbose(`IPCMAIN: Got the auth_code, ${auth_code}`);
+				logger.verbose("IPCMAIN: Calling callback with the code...");
 
 				global.gAuth.getToken(auth_code) // Get auth token from auth code
 					// store auth token in mdb
@@ -317,12 +307,12 @@ function Setup(callback) {
 								.then(init.syncGlobals)
 								.then(global.mdb.storeToken(token))
 								.catch(function (error) {
-									console.error(`PROMISE ERR: ${error.stack}`);
+									logger.error(`PROMISE ERR: ${error.stack}`);
 								});
 						});
 					})
 					.catch(function (error) {
-						console.error(`PROMISE ERR: ${error.stack}`);
+						logger.error(`PROMISE ERR: ${error.stack}`);
 					});
 
 				webContents.on('did-finish-load', function () {
@@ -336,11 +326,11 @@ function Setup(callback) {
 		}
 	});
 	webContents.on('will-navigate', function (event, url) {
-		console.log(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
+		logger.verbose(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
 	});
 
 	ipc.on('setMasterPass', function (event, masterpass) {
-		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
+		logger.verbose('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
 		MasterPass.set(masterpass, function (err, mpkey) {
 			global.MasterPassKey.set(mpkey);
 			global.mdb.saveGlobalObj('creds')
@@ -352,11 +342,11 @@ function Setup(callback) {
 	});
 
 	ipc.on('done', function (event, masterpass) {
-		console.log('IPCMAIN: done emitted, setup complete. Closing this window and opening menubar...');
+		logger.info('IPCMAIN: done emitted, setup complete. Closing this window and opening menubar...');
 		setupComplete = true;
 		Vault.init(global.MasterPassKey.get(), function (err) {
 			if (err) {
-				console.error(`init.vault ERR: ${err.stack}`);
+				logger.error(`init.vault ERR: ${err.stack}`);
 			} else {
 				win.close();
 			}
@@ -365,7 +355,7 @@ function Setup(callback) {
 	});
 
 	win.on('closed', function () {
-		console.log('IPCMAIN: win.closed event emitted for setupWindow.');
+		logger.verbose('IPCMAIN: win.closed event emitted for setupWindow.');
 		win = null;
 		if (setupComplete) {
 			callback(null);
@@ -390,18 +380,18 @@ function addAccountPrompt(callback) {
 	win.loadURL(global.views.setup);
 	win.openDevTools();
 	ipc.on('initAuth', function (event, type) {
-		console.log('IPCMAIN: initAuth emitted. Creating Auth...');
+		logger.verbose('IPCMAIN: initAuth emitted. Creating Auth...');
 		global.gAuth = new OAuth(type);
 		// TODO: rewrite the authorize function
 		global.mdb.onlyGetValue('gdrive-token').then((token) => {
 			global.gAuth.authorize(token, function (authUrl) {
 				if (authUrl) {
-					console.log(`Loading authUrl... ${authUrl}`);
+					logger.verbose(`Loading authUrl... ${authUrl}`);
 					win.loadURL(authUrl, {
 						'extraHeaders': 'pragma: no-cache\n'
 					});
 				} else {
-					console.log('As already exists, loading masterpass...');
+					logger.verbose('As already exists, loading masterpass...');
 					win.loadURL(`${global.views.setup}?nav_to=masterpass`);
 				}
 			});
@@ -409,30 +399,23 @@ function addAccountPrompt(callback) {
 	});
 
 	win.on('unresponsive', function (event) {
-		console.log('addAccountPrompt UNRESPONSIVE');
+		logger.verbose('addAccountPrompt UNRESPONSIVE');
 	});
 
 	webContents.on('did-navigate', function (event, url) {
-		console.log(`IPCMAIN: did-navigate emitted,\n URL: ${url}`);
+		logger.verbose(`IPCMAIN: did-navigate emitted,\n URL: ${url}`);
 		const regex = /^http:\/\/localhost/g;
 		if (regex.test(url)) {
-			console.log("localhost URL matches");
+			logger.verbose("localhost URL matches");
 			win.loadURL(`${global.views.setup}?nav_to=auth`);
-			// console.log('MAIN: url matched, sending to RENDER...');
+			// logger.verbose('MAIN: url matched, sending to RENDER...');
 			let err = util.getParam("error", url);
 			// if error then callback URL is http://localhost/?error=access_denied#
 			// if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
 			if (!err) {
 				let auth_code = util.getParam("code", url);
-				console.log(`IPCMAIN: Got the auth_code, ${auth_code}`);
-				console.log("IPCMAIN: Calling callback with the code...");
-
-				// Send code to call back and redirect
-
-				// Get auth token from auth code
-				/*
-				 * TODO: ADD FINAL ACCOUNTS CODE
-				 */
+				logger.verbose(`IPCMAIN: Got the auth_code, ${auth_code}`);
+				logger.verbose("IPCMAIN: Calling callback with the code...");
 
 			} else {
 				// TODO: close window and display error in settings
@@ -441,11 +424,11 @@ function addAccountPrompt(callback) {
 		}
 	});
 	webContents.on('will-navigate', function (event, url) {
-		console.log(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
+		logger.verbose(`IPCMAIN: will-navigate emitted,\n URL: ${url}`);
 	});
 
 	win.on('closed', function () {
-		console.log('IPCMAIN: win.closed event emitted for setupWindow.');
+		logger.verbose('IPCMAIN: win.closed event emitted for setupWindow.');
 		win = null;
 		callback('ERROR: Cancelled the account adding flow');
 	});
@@ -461,16 +444,16 @@ function Settings(callback) {
 	win.loadURL(global.views.settings);
 	win.openDevTools();
 	ipc.on('resetMasterPass', function (event, type) {
-		console.log('IPCMAIN: resetMasterPass emitted. Creating MasterPassPrompt...');
+		logger.verbose('IPCMAIN: resetMasterPass emitted. Creating MasterPassPrompt...');
 		MasterPassPrompt(true, function (newMPset) {
 			// if (newMPset) then new new MP was set otherwise it wasn't
 			// TODO: show password was set successfully
-			console.log(`MAIN: MasterPassPrompt, newMPset finished? ${newMPset}`);
+			logger.info(`MAIN: MasterPassPrompt, newMPset finished? ${newMPset}`);
 			return;
 		});
 	});
 	ipc.on('removeAccount', function (event, account) {
-		console.log(`IPCMAIN: removeAccount emitted. Creating removing ${account}...`);
+		logger.verbose(`IPCMAIN: removeAccount emitted. Creating removing ${account}...`);
 		// TODO: IMPLEMENT ACCOUNT REMOVAL ROUTINE
 		if (_.unset(global.accounts, account)) {
 			// deleted
@@ -489,7 +472,7 @@ function Settings(callback) {
 		}
 	});
 	win.on('closed', function () {
-		console.log('win.closed event emitted for Settings.');
+		logger.verbose('win.closed event emitted for Settings.');
 		win = null;
 		callback();
 	});
@@ -507,19 +490,19 @@ function ErrorPrompt(err, callback) {
 	let webContents = win.webContents;
 	let res;
 	win.loadURL(global.views.errorprompt);
-	console.log(`ERROR PROMPT: the error is ${err}`);
+	logger.info(`ERROR PROMPT: the error is ${err}`);
 	webContents.on('did-finish-load', function () {
 		webContents.send('error', err);
 	});
 
 	ipc.on('response', function (event, response) {
-		console.log('ERROR PROMPT: Got user response');
+		logger.verbose('ERROR PROMPT: Got user response');
 		res = response;
 		win.close();
 	});
 
 	win.on('closed', function (response) {
-		console.log('win.closed event emitted for ErrPromptWindow.');
+		logger.verbose('win.closed event emitted for ErrPromptWindow.');
 		win = null;
 		if (callback) {
 			if (response) {
@@ -541,23 +524,23 @@ function ErrorPrompt(err, callback) {
  **/
 // Check for connection status
 ipc.on('online-status-changed', function (event, status) {
-	console.log(`APP: online-status-changed event emitted, changed to ${status}`);
+	logger.verbose(`APP: online-status-changed event emitted, changed to ${status}`);
 });
 
 app.on('window-all-closed', () => {
-	console.log('APP: window-all-closed event emitted');
+	logger.verbose('APP: window-all-closed event emitted');
 	if (process.platform !== 'darwin') {
 		app.quit();
 	}
 });
 app.on('quit', () => {
-	console.log('APP: quit event emitted');
+	logger.info('APP: quit event emitted');
 });
 app.on('will-quit', (event) => {
 	if (!exit) {
 		event.preventDefault();
-		console.log(`APP.ON('will-quit'): will-quit event emitted`);
-		console.log(`platform is ${process.platform}`);
+		logger.info(`APP.ON('will-quit'): will-quit event emitted`);
+		logger.verbose(`platform is ${process.platform}`);
 		// TODO: Cease any db OPs; encrypt vault before quitting the app and dump to fs
 		// global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials;
 		global.stats.endTime = moment().format();
@@ -570,35 +553,36 @@ app.on('will-quit', (event) => {
 			global.mdb.saveGlobalObj('stats')
 		]).then(function () {
 			if (global.MasterPassKey.get() && !_.isEmpty(global.vault)) {
-				console.log(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`);
-				console.log(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
-				crypto.encryptObj(global.vault, global.paths.vault, global.MasterPassKey.get(), global.creds.viv, function (err, tag) {
-					console.log(`crypto.encryptObj invoked...`);
-					if (err) {
-						console.error(err.stack);
-					} else {
-						console.log(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`);
+				logger.info(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`);
+				logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
+				Vault.encrypt(global.MasterPassKey.get())
+					.then((tag) => {
+						logger.verbose(`crypto.encryptObj invoked...`);
+						logger.info(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`);
 						global.creds.authTag = tag;
 						global.mdb.saveGlobalObj('creds').then(() => {
 							global.mdb.close();
-							console.log('Closed vault and mdb (called mdb.close()).');
+							logger.info('Closed vault and mdb (called mdb.close()).');
 							exit = true;
 							app.quit();
 						}).catch((err) => {
-							console.error(`Error while saving global.creds before quit: ${err.stack}`);
+							logger.error(`Error while saving global.creds before quit: ${err.stack}`);
 						});
-					}
-				});
+					})
+					.catch((err) => {
+						logger.error(err.stack);
+						throw err;
+					});
 			} else {
-				console.log(`NORMAL EXIT. global.MasterPassKey / global.vault empty. Just closing mdb (global.mdb.close())...`);
+				logger.info(`NORMAL EXIT. global.MasterPassKey / global.vault empty. Just closing mdb (global.mdb.close())...`);
 				global.mdb.close();
 				exit = true;
 				app.quit();
 			}
 		}, function (reason) {
-			console.log(`PROMISE ERR (reason): `, reason);
+			logger.error(`PROMISE ERR: ${reason}`);
 		}).catch(function (error) {
-			console.error(`PROMISE ERR: ${error.stack}`);
+			logger.error(`PROMISE ERR: ${error.stack}`);
 		});
 	} else {
 		return;
@@ -606,7 +590,7 @@ app.on('will-quit', (event) => {
 });
 
 app.on('activate', function (win) {
-	console.log('activate event emitted');
+	logger.verbose('activate event emitted');
 	// 	if (!win) {
 	// 		win = createMainWindow();
 	// 	}
@@ -617,10 +601,10 @@ app.on('ready', function () {
 	let setupRun = ((!util.checkDirectorySync(global.paths.mdb)) || (!util.checkFileSync(global.paths.vault)));
 	if (setupRun) {
 		// TODO: Do more extensive FIRST RUN check
-		console.log('First run. Creating Setup wizard...');
+		logger.info('First run. Creating Setup wizard...');
 		// Setup();
 		let Init = function () {
-			console.log(`INITIALISATION PROMISE`);
+			logger.verbose(`INITIALISATION PROMISE`);
 			return new Promise(function (resolve, reject) {
 				global.mdb = new Db(global.paths.mdb);
 				fs.ensureDir(global.paths.home, function (err) {
@@ -634,16 +618,16 @@ app.on('ready', function () {
 		Init()
 			// .then(
 			// 	global.mdb.del('gdrive-token', function (err) {
-			// 		if (err) console.log(`Error retrieving gdrive-token, ${err}`);
-			// 		console.log("deleted gdrive-token");
+			// 		if (err) logger.error(`Error retrieving gdrive-token, ${err}`);
+			// 		logger.verbose("deleted gdrive-token");
 			// 	})
 			// )
 			.then(
 				Setup(function (err) {
 					if (err) {
-						console.log(err);
+						logger.error(err);
 						ErrorPrompt(err, function (response) {
-							console.log(`ERRPROMT response: ${response}`);
+							logger.info(`ERRPROMT response: ${response}`);
 							if (response === 'retry') {
 								// TODO: new Setup
 								Setup(null);
@@ -654,7 +638,7 @@ app.on('ready', function () {
 						});
 						// throw err;
 					}
-					console.log('MAIN Setup successfully completed. Starting menubar...');
+					logger.info('MAIN Setup successfully completed. Starting menubar...');
 					// Cryptobar(function (result) {
 					//
 					// });
@@ -662,11 +646,11 @@ app.on('ready', function () {
 				})
 			)
 			.catch(function (error) {
-				console.error(`PROMISE ERR: ${error.stack}`);
+				logger.error(`PROMISE ERR: ${error.stack}`);
 			});
 	} else {
 		// start menubar
-		console.log('Normal run. Creating Menubar...');
+		logger.info('Normal run. Creating Menubar...');
 		// TODO: Implement MasterPassPrompt function
 
 		/* TODO: Implement all objects to restore from persistent storage as a routine to be run on start
@@ -680,19 +664,19 @@ app.on('ready', function () {
 				global.mdb.get('creds', function (err, json) {
 					if (err) {
 						if (err.notFound) {
-							console.log(`ERROR: key creds NOT FOUND `);
+							logger.error(`ERROR: key creds NOT FOUND `);
 							global.creds = {};
 							reject(err);
 						} else {
 							// I/O or other error, pass it up the callback
-							console.log(`ERROR: mdb.get('creds') FAILED`);
+							logger.error(`ERROR: mdb.get('creds') FAILED`);
 							reject(err);
 						}
 					} else {
-						console.log(`SUCCESS: creds FOUND ${json.substr(0, 20)}`);
+						logger.info(`SUCCESS: creds FOUND ${json.substr(0, 20)}`);
 						global.creds = JSON.parse(json);
 						setTimeout(function () {
-							console.log(`resolve global.creds called`);
+							logger.verbose(`resolve global.creds called`);
 							resolve();
 						}, 0);
 					}
@@ -741,47 +725,47 @@ app.on('ready', function () {
 								).then(() => {
 
 									let pushGetQueue = function (file) {
-										console.log(`PROMISE: pushGetQueue for ${file.name}`);
+										logger.verbose(`PROMISE: pushGetQueue for ${file.name}`);
 										return new Promise(function (resolve, reject) {
 											sync.getQueue.push(file, function (err, file) {
 												if (err) {
-													console.error(`ERROR occurred while GETting ${file.name}`);
+													logger.error(`ERROR occurred while GETting ${file.name}`);
 													reject(err);
 												}
 												// update file globally
 												global.files[file.id] = file;
 												// global.state.toCrypt.push(file); // add from toCrypt queue
 												// _.pull(global.state.toGet, file); // remove from toGet queue
-												console.log(`DONE GETting ${file.name}`);
+												logger.info(`DONE GETting ${file.name}`);
 												resolve(file);
 											});
 										});
 									};
 
 									let pushCryptQueue = function (file) {
-										console.log(`PROMISE: pushCryptQueue for ${file.name}`);
+										logger.verbose(`PROMISE: pushCryptQueue for ${file.name}`);
 										return new Promise(function (resolve, reject) {
 											sync.cryptQueue.push(file, function (err, file) {
 												if (err) {
-													console.error(`ERROR occurred while ENCRYPTting`);
+													logger.error(`ERROR occurred while ENCRYPTting`);
 													reject(err);
 												}
 												// update file globally
 												global.files[file.id] = file;
 												// global.state.toUpdate.push(file);
 												// _.pull(global.state.toCrypt, file);
-												console.log(`DONE ENCRYPTting ${file.name}`);
+												logger.info(`DONE ENCRYPTting ${file.name}`);
 												resolve(file);
 											});
 										});
 									};
 
 									let pushUpdateQueue = function (file) {
-										console.log(`PROMISE: pushUpdateQueue for ${file.name}`);
+										logger.verbose(`PROMISE: pushUpdateQueue for ${file.name}`);
 										return new Promise(function (resolve, reject) {
 											sync.updateQueue.push(file, function (err, file) {
 												if (err) {
-													console.error(`ERROR occurred while UPDATting`);
+													logger.error(`ERROR occurred while UPDATting`);
 													reject();
 												}
 												// update file globally
@@ -789,24 +773,24 @@ app.on('ready', function () {
 												// remove file from persistent update queue
 												_.pull(global.state.toUpdate, file);
 												sync.event.emit('put', file);
-												console.log(`DONE UPDATting ${file.name}. Removing from global status...`);
+												logger.info(`DONE UPDATting ${file.name}. Removing from global status...`);
 												resolve();
 											});
 										});
 									};
 
 									sync.getQueue.drain = function () {
-										console.log('DONE getQueue for ALL items');
+										logger.info('DONE getQueue for ALL items');
 										// start encyrpting
 									};
 
 									sync.cryptQueue.drain = function () {
-										console.log('DONE cryptQueue for ALL items');
+										logger.info('DONE cryptQueue for ALL items');
 										// start putting
 									};
 
 									sync.updateQueue.drain = function () {
-										console.log('DONE updateQueue for ALL items');
+										logger.info('DONE updateQueue for ALL items');
 										// start taking off toUpdate
 									};
 
@@ -822,7 +806,7 @@ app.on('ready', function () {
 												})
 												.catch((err) => {
 													sync.event.emit('statusChange', 'notsynced');
-													console.error(`PROMISE ERR: ${err.stack}`);
+													logger.error(`PROMISE ERR: ${err.stack}`);
 												});
 										});
 									}
@@ -837,7 +821,7 @@ app.on('ready', function () {
 												})
 												.catch((err) => {
 													sync.event.emit('statusChange', 'notsynced');
-													console.error(`PROMISE ERR: ${err.stack}`);
+													logger.error(`PROMISE ERR: ${err.stack}`);
 												});
 										});
 									}
@@ -851,7 +835,7 @@ app.on('ready', function () {
 												})
 												.catch((err) => {
 													sync.event.emit('statusChange', 'notsynced');
-													console.error(`PROMISE ERR: ${err.stack}`);
+													logger.error(`PROMISE ERR: ${err.stack}`);
 												});
 										});
 									}
@@ -884,13 +868,13 @@ app.on('ready', function () {
 									watcher.on('add', (path, stats) => {
 										if (dotRegex.test(path)) {
 											// Ignore dot file
-											console.log(`IGNORE added file ${path}, stats.mtime = ${stats.mtime}`);
+											logger.info(`IGNORE added file ${path}, stats.mtime = ${stats.mtime}`);
 											watcher.unwatch(path);
 										} else {
 											// Queue up to encrypt and put
 											let fileName = path.match(fNameRegex)[0];
 											let relPath = path.replace(global.paths.home, '');
-											console.log(`ADD added file ${fileName}, stats ${stats.mtime}`);
+											logger.info(`ADD added file ${fileName}, stats ${stats.mtime}`);
 
 											sync.genID()
 												.then((fileId) => {
@@ -904,10 +888,10 @@ app.on('ready', function () {
 												})
 												.then(pushCryptQueue)
 												.then((file) => {
-													console.log(`Done encrypting ${file.name} (${file.id})`);
+													logger.info(`Done encrypting ${file.name} (${file.id})`);
 												})
 												.catch((err) => {
-													console.error(`Error occured while adding ${fileName}:\n${err.stack}`);
+													logger.error(`Error occured while adding ${fileName}:\n${err.stack}`);
 												});
 										}
 									});
@@ -916,23 +900,23 @@ app.on('ready', function () {
 										.on('change', (path, stats) => {
 											if (dotRegex.test(path)) {
 												// Ignore dot file
-												console.log(`IGNORE added file ${path}, stats ${stats.mtime}`);
+												logger.info(`IGNORE added file ${path}, stats ${stats.mtime}`);
 												watcher.unwatch(path);
 											} else {
 												// Queue up to encrypt and put
 												let fileName = path.match(fNameRegex)[0];
-												console.log(`File ${fileName} at ${path} has been changed, stats ${stats.mtime}}`);
+												logger.info(`File ${fileName} at ${path} has been changed, stats ${stats.mtime}}`);
 											}
 										})
-										.on('unlink', (path, stats) => console.log(`File ${path} has been removed, stats ${stats}`))
-										.on('addDir', (path, stats) => console.log(`Directory ${path} has been added, stats ${stats}`))
-										.on('unlinkDir', (path, stats) => console.log(`Directory ${path} has been removed, stats ${stats}`))
-										.on('error', error => console.log(`Watcher error: ${error}`))
+										.on('unlink', (path, stats) => logger.info(`File ${path} has been removed, stats ${stats}`))
+										.on('addDir', (path, stats) => logger.info(`Directory ${path} has been added, stats ${stats}`))
+										.on('unlinkDir', (path, stats) => logger.info(`Directory ${path} has been removed, stats ${stats}`))
+										.on('error', error => logger.error(`Watcher error: ${error}`))
 										.on('ready', () => {
-											console.log('Initial scan complete. Ready for changes');
+											logger.info('Initial scan complete. Ready for changes');
 										});
 									// .on('raw', (event, path, details) => {
-									// 	console.log('Raw event info:', event, path, details);
+									// 	logger.verbose('Raw event info:', event, path, details);
 									// });
 									//
 									// Spawn a child process for sync worker
@@ -941,26 +925,26 @@ app.on('ready', function () {
 									//
 									// child.on('put', function (file) {
 									// 	// Receive results from child process
-									// 	console.log('received: ' + file);
+									// 	logger.verbose('received: ' + file);
 									// });
 									//
 									// // Send child process some work
 									// child.send('Please up-case this string');
 								})
 								.catch(function (error) {
-									console.error(`PROMISE ERR: ${error.stack}`);
+									logger.error(`PROMISE ERR: ${error.stack}`);
 								}).catch(function (error) {
-									console.error(`PROMISE ERR: ${error.stack}`);
+									logger.error(`PROMISE ERR: ${error.stack}`);
 								});
 						}).catch(function (error) {
-							console.error(`PROMISE ERR: ${error.stack}`);
+							logger.error(`PROMISE ERR: ${error.stack}`);
 						});
 					}).catch(function (error) {
-						console.error(`PROMISE ERR: ${error.stack}`);
+						logger.error(`PROMISE ERR: ${error.stack}`);
 					});
 			})
 			.catch(function (error) {
-				console.error(`PROMISE ERR: ${error.stack}`);
+				logger.error(`PROMISE ERR: ${error.stack}`);
 			});
 		// TODO: rewrite as promise
 	}
@@ -985,7 +969,7 @@ exports.MasterPassPrompt = function (reset, callback) {
 	}
 	// win.openDevTools();
 	ipc.on('checkMasterPass', function (event, masterpass) {
-		console.log('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
+		logger.verbose('IPCMAIN: checkMasterPass emitted. Checking MasterPass...');
 		// TODO: Clean this up and remove redundancies
 		MasterPass.check(masterpass, function (err, match, mpkey) {
 			if (err) {
@@ -994,7 +978,7 @@ exports.MasterPassPrompt = function (reset, callback) {
 				callback(err);
 			}
 			if (match) {
-				console.log("IPCMAIN: PASSWORD MATCHES!");
+				logger.info("IPCMAIN: PASSWORD MATCHES!");
 				// Now derive masterpasskey and set it (temporarily)
 				global.MasterPassKey.set(mpkey);
 				webContents.send('checkMasterPassResult', {
@@ -1006,7 +990,7 @@ exports.MasterPassPrompt = function (reset, callback) {
 					win.close();
 				}, 1000);
 			} else {
-				console.log("IPCMAIN: PASSWORD DOES NOT MATCH!");
+				logger.warn("IPCMAIN: PASSWORD DOES NOT MATCH!");
 				webContents.send('checkMasterPassResult', {
 					err: null,
 					match: match
@@ -1019,7 +1003,7 @@ exports.MasterPassPrompt = function (reset, callback) {
 		});
 	});
 	ipc.on('setMasterPass', function (event, masterpass) {
-		console.log('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
+		logger.verbose('IPCMAIN: setMasterPass emitted, Setting Masterpass...');
 		MasterPass.set(masterpass, function (err, mpkey) {
 			// TODO: create new Vault, delete old data and start re-encrypting
 			if (!err) {
@@ -1036,7 +1020,7 @@ exports.MasterPassPrompt = function (reset, callback) {
 		});
 	});
 	win.on('closed', function () {
-		console.log('win.closed event emitted for Settings.');
+		logger.info('win.closed event emitted for Settings.');
 		win = null;
 		// callback(((reset) ? newMPset : null));
 		if (gotMP) {

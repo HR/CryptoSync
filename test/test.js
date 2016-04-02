@@ -73,7 +73,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 		global.MasterPassKey.set(scrypto.randomBytes(global.defaults.keyLength));
 		console.log(`global.MasterPassKey = ${global.MasterPassKey.get().toString('hex')}`);
 
-		// global.files = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'));
+		global.files = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'));
 		global.state.rfs = JSON.parse(fs.readFileSync('data/rfs.json', 'utf8'));
 
 		global.credentials = {
@@ -211,22 +211,30 @@ describe('CryptoSync Core Modules\' tests', function () {
 			global.accounts = {};
 			global.files = {};
 			const auth = new googleAuth();
+			const b64Regex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/g;
 			global.gAuth.oauth2Client = new auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_);
 			// global.gAuth.getToken(process.env.auth_code) // Get auth token from auth code
 			const token = process.env.access_token;
 			global.gAuth.oauth2Client.credentials = token;
 			expect(global.gAuth.oauth2Client.credentials).to.equal(token);
-			global.state.rfs = null;
 			const rfs = _.cloneDeep(global.state.rfs);
+			const files = _.cloneDeep(global.files);
+			global.state.rfs = {};
+			global.files = {};
 			// expect(global.drive).to.equal(token);
 			sync.getAccountInfo()
 				.then(sync.getPhoto)
+				.then((param) => {
+					expect(b64Regex.test(param[0])).to.be.true;
+					expect(param[1].user).to.have.property('displayName');
+					return param;
+				})
 				.then(sync.setAccountInfo)
 				.then(sync.getAllFiles)
 				.then(init.syncGlobals)
 				.then(global.mdb.storeToken(token).then(() => {
 					expect(global.accounts).to.have.property('cryptosync_drive');
-					expect(global.files).to.have.property('0B0pJLMXieC-mTWJpT3hiWjRoems');
+					expect(global.files).to.deep.equal(files);
 					expect(global.state.rfs).to.deep.equal(rfs);
 					global.mdb.getValue('gdrive-token').then((dbtoken) => {
 						expect(dbtoken).to.deep.equal(token);
@@ -439,6 +447,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 					done(err);
 				});
 		});
+
 		it('should save and restore obj persistently', function (done) {
 			const beforeSaveObj = _.cloneDeep(global.testo);
 			db.saveGlobalObj('testo')
@@ -455,6 +464,13 @@ describe('CryptoSync Core Modules\' tests', function () {
 				.catch((err) => {
 					done(err);
 				});
+		});
+
+		it('should return null if key not found for onlyGetValue', function (done) {
+			db.onlyGetValue('notExist').then((token) => {
+				expect(token).to.equal(null);
+				done();
+			});
 		});
 	});
 	/**
