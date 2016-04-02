@@ -6,6 +6,7 @@ const assert = require('assert'),
 	util = require('../src/util'),
 	Db = require('../src/Db'),
 	vault = require('../src/vault'),
+	MasterPassKey = require('../src/_MasterPassKey'),
 	OAuth = require('../src/OAuth'),
 	init = require('../src/init'),
 	synker = require('../src/synker'),
@@ -84,7 +85,6 @@ describe('CryptoSync Core Modules\' tests', function () {
 		};
 		global.creds = {};
 		global.state = {};
-		const MasterPassKey = require('../src/_MasterPassKey');
 		global.MasterPassKey = new MasterPassKey(scrypto.randomBytes(global.defaults.keyLength));
 		// console.log(`global.MasterPassKey = ${global.MasterPassKey.get().toString('hex')}`);
 
@@ -725,7 +725,7 @@ describe('CryptoSync Core Modules\' tests', function () {
 	});
 
 	/**
-	 * MasterPass module.js
+	 * MasterPass & MasterPassKey module.js
 	 ******************************/
 	describe('MasterPass module', function () {
 		it('should set and check masterpass', function (done) {
@@ -741,6 +741,30 @@ describe('CryptoSync Core Modules\' tests', function () {
 					done();
 				});
 			});
+		});
+	});
+
+	describe('MasterPassKey module', function () {
+		it('should set and get same masterpasskey', function () {
+			const mpkey = scrypto.randomBytes(global.defaults.keyLength);
+			const newMPK = scrypto.randomBytes(global.defaults.keyLength);
+			const MPK = new MasterPassKey(mpkey);
+			expect(MPK.get()).to.deep.equal(mpkey);
+			expect(MPK.get() instanceof Buffer).to.be.true;
+			MPK.set(newMPK);
+			expect(MPK.get()).to.deep.equal(newMPK);
+		});
+		it('should throw error when deleted and get called', function () {
+			const mpkey = scrypto.randomBytes(global.defaults.keyLength);
+			const MPK = new MasterPassKey(mpkey);
+			MPK.delete();
+			expect(MPK.get()).to.be.an('error');
+			expect(MPK.get().message).to.equal('MasterPassKey has been deleted');
+		});
+		it('should throw error when not instantiated with key', function () {
+			const MPK = new MasterPassKey();
+			expect(MPK.get()).to.be.an('error');
+			expect(MPK.get().message).to.equal('MasterPassKey has been deleted');
 		});
 	});
 });

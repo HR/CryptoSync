@@ -23,7 +23,11 @@ const MasterPassKey = (function () {
 	}
 
 	MasterPassKey.prototype.get = function () {
-		return mpk.get(this);
+		if (mpk.get(this) === undefined) {
+			return new Error('MasterPassKey has been deleted');
+		} else {
+			return mpk.get(this);
+		}
 	};
 
 	MasterPassKey.prototype.set = function (key) {
