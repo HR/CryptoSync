@@ -141,8 +141,29 @@ describe('CryptoSync Core Modules\' tests', function() {
           done();
         });
       });
+
+      it('should throw error for empty file', function(done) {
+        sync.getQueue.push({}, function(err, file) {
+          expect(err).to.be.an('error');
+          expect(err.message).to.equal('File doesn\'t exist');
+          done();
+        });
+      });
+
+      it('should throw error for undefined file', function(done) {
+        sync.getQueue.push(undefined, function(err, file) {
+          expect(err).to.be.an('error');
+          expect(err.message).to.equal('File doesn\'t exist');
+          done();
+        });
+      });
     });
     describe('cryptQueue', function() {
+      before(function() {
+        sync.getQueue.push(rfile, function(err, file) {
+          if (err) throw err;
+        });
+      });
       beforeEach(function() {
         fs.removeSync(global.paths.crypted);
       });
@@ -234,7 +255,9 @@ describe('CryptoSync Core Modules\' tests', function() {
       global.files = {};
       // expect(global.drive).to.equal(token);
       return sync.getAccountInfo()
-        .then(sync.getPhoto)
+        .then((res) => {
+          return sync.getPhoto(res);
+        })
         .then((param) => {
           expect(b64Regex.test(param[0]))
             .to.be.true;
@@ -242,32 +265,38 @@ describe('CryptoSync Core Modules\' tests', function() {
             .to.have.property('displayName');
           return param;
         })
-        .then(sync.setAccountInfo)
-        .then(sync.getAllFiles)
-        .then(init.syncGlobals)
+        .then((param) => {
+          return sync.setAccountInfo(param);
+        })
+        .then((email) => {
+          return sync.getAllFiles(email);
+        })
+        .then((trees) => {
+          return init.syncGlobals(trees);
+        })
+				.then((trees) => {
+          return global.mdb.storeToken(token);
+        })
         .then(() => {
-          return global.mdb.storeToken(token)
-            .then(() => {
-              expect(global.accounts)
-                .to.have.property('cryptosync_drive');
-              expect(global.files)
-                .to.have.property('0B0pJLMXieC-mTWJpT3hiWjRoems');
-              expect(global.files)
-                .to.have.property('0B0pJLMXieC-mUV9LTkJqOHJPcFU');
-              expect(global.files)
-                .to.have.property('0B0pJLMXieC-mWElPMEtJT1Q1dDg');
-              expect(global.state.rfs)
-                .to.deep.equal(rfs);
-              global.mdb.getValue('gdrive-token')
-                .then((dbtoken) => {
-                  expect(dbtoken)
-                    .to.deep.equal(token);
-                  expect(false)
-                    .to.be.true;
-                })
-                .catch(function(e) {
-                  throw e;
-                });
+          expect(global.accounts)
+            .to.have.property('cryptosync_drive');
+          expect(global.files)
+            .to.have.property('0B0pJLMXieC-mTWJpT3hiWjRoems');
+          expect(global.files)
+            .to.have.property('0B0pJLMXieC-mUV9LTkJqOHJPcFU');
+          expect(global.files)
+            .to.have.property('0B0pJLMXieC-mWElPMEtJT1Q1dDg');
+          expect(global.state.toGet.length)
+            .to.equal(3);
+          expect(global.state.rfs)
+            .to.deep.equal(rfs);
+          global.mdb.getValue('gdrive-token')
+            .then((dbtoken) => {
+              expect(dbtoken)
+                .to.deep.equal(token);
+            })
+            .catch(function(e) {
+              throw e;
             });
         })
         .catch(function(e) {
@@ -276,6 +305,54 @@ describe('CryptoSync Core Modules\' tests', function() {
         .catch(function(e) {
           throw e;
         });
+
+      // return sync.getAccountInfo()
+      //   .then((res) => {
+      //     sync.getPhoto(res)
+      //       .then((param) => {
+      //         expect(b64Regex.test(param[0]))
+      //           .to.be.true;
+      //         expect(param[1].user)
+      //           .to.have.property('displayName');
+      //
+      //         sync.setAccountInfo(param).
+      //         then((email) => {
+      //           sync.getAllFiles(email).then((trees) => {
+      //             init.syncGlobals(trees)
+      //               .then(() => {
+      //                 expect(global.toGet.length)
+      //                   .to.have.property(3);
+      //                 return global.mdb.storeToken(token)
+      //                   .then(() => {
+      //                     expect(global.accounts)
+      //                       .to.have.property('cryptosync_drive');
+      //                     expect(global.files)
+      //                       .to.have.property('0B0pJLMXieC-mTWJpT3hiWjRoems');
+      //                     expect(global.files)
+      //                       .to.have.property('0B0pJLMXieC-mUV9LTkJqOHJPcFU');
+      //                     expect(global.files)
+      //                       .to.have.property('0B0pJLMXieC-mWElPMEtJT1Q1dDg');
+      //                     expect(global.state.rfs)
+      //                       .to.deep.equal(rfs);
+      //                     global.mdb.getValue('gdrive-token')
+      //                       .then((dbtoken) => {
+      //                         expect(dbtoken)
+      //                           .to.deep.equal(token);
+      //                         expect(false)
+      //                           .to.be.true;
+      //                       })
+      //                       .catch(function(e) {
+      //                         throw e;
+      //                       });
+      //                   });
+      //               })
+      //               .catch(function(e) {
+      //                 throw e;
+      //               });
+      //           });
+      //         });
+      //       });
+      //   })
     });
   });
 
@@ -491,12 +568,12 @@ describe('CryptoSync Core Modules\' tests', function() {
     });
 
     // it('should throw error when iv not initialised', function(done) {
-    //   global.creds.viv = null;
-    //   return Vault.init(global.MasterPassKey.get(), function(err) {
-    //     expect(err).to.be.an('error');
-    //     expect(err.message).to.equal('Invalid IV length');
+    //	 global.creds.viv = null;
+    //	 return Vault.init(global.MasterPassKey.get(), function(err) {
+    //		 expect(err).to.be.an('error');
+    //		 expect(err.message).to.equal('Invalid IV length');
     // 		done(err);
-    //   });
+    //	 });
     // });
   });
 
@@ -559,23 +636,24 @@ describe('CryptoSync Core Modules\' tests', function() {
         });
     });
 
-		it('should return null if key not found for onlyGetValue', function() {
+    it('should return null if key not found for onlyGetValue', function() {
       return db.onlyGetValue('notExist')
         .then((token) => {
           expect(token)
             .to.equal(null);
-					db.close();
-        });
-    });
-
-    it('should throw error when global object not exist for saveGlobalObj', function() {
-      return db.saveGlobalObj('fake')
-        .catch((err) => {
-          expect(err).to.be.an('error');
-          expect(err.message).to.equal('Unsupported state or unable to authenticate data');
           db.close();
         });
     });
+
+    // it('should throw error when global object not exist for restoreGlobalObj', function() {
+    //	 return db.saveGlobalObj('fake')
+    //		 .catch((err) => {
+    // 			expect(false).to.be(true);
+    //			 expect(err).to.be.an('error');
+    //			 expect(err.message).to.equal('Unsupported state or unable to authenticate data');
+    //			 db.close();
+    //		 });
+    // });
 
 
   });

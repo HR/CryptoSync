@@ -299,18 +299,26 @@ function Setup(callback) {
 					// store auth token in mdb
 					.then((token) => {
 						global.gAuth.oauth2Client.credentials = token;
-						init.drive(global.gAuth).then(() => {
-							sync.getAccountInfo()
-								.then(sync.getPhoto)
-								.then(sync.setAccountInfo)
-								.then(sync.getAllFiles)
-								.then(init.syncGlobals)
-								.then(global.mdb.storeToken(token))
-								.catch(function (error) {
-									logger.error(`PROMISE ERR: ${error.stack}`);
-								});
-						});
+	          return global.mdb.storeToken(token);
 					})
+					.then(() => {
+						return init.drive(global.gAuth);
+					})
+					.then(() => {
+						return sync.getAccountInfo();
+					})
+	        .then((res) => {
+	          return sync.getPhoto(res);
+	        })
+	        .then((param) => {
+	          return sync.setAccountInfo(param);
+	        })
+	        .then((email) => {
+	          return sync.getAllFiles(email);
+	        })
+	        .then((trees) => {
+	          return init.syncGlobals(trees);
+	        })
 					.catch(function (error) {
 						logger.error(`PROMISE ERR: ${error.stack}`);
 					});

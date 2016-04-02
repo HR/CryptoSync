@@ -47,6 +47,7 @@ exports.genID = function (n = 1) {
 // first global.state.toGet.push(file);
 // then enqueue
 exports.getQueue = async.queue(function (file, callback) {
+	if (!file || _.isEmpty(file)) callback(new Error('File doesn\'t exist'));
 	let parentPath = global.state.rfs[file.parents[0]].path;
 	const dir = `${global.paths.home}${parentPath}`;
 	const path = (parentPath === "/") ? `${dir}${file.name}` : `${dir}/${file.name}`;
