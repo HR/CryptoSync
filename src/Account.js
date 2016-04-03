@@ -1,12 +1,12 @@
-'use strict';
+'use strict'
 /**
  * Account.js
  * User accounts
  ******************************/
 
 const google = require('googleapis'),
-	googleAuth = require('google-auth-library'),
-	request = require('request');
+  googleAuth = require('google-auth-library'),
+  request = require('request')
 
 /**
  * Constructor
@@ -18,15 +18,15 @@ const google = require('googleapis'),
  * @param {qouta}:string the qouta of the authenticated user
  * @param {oauth}:object the authenticated oauth2Client
  */
-function Account(type, name, email, profileImg, quota, oauth) {
-	this.type = type;
-	this.name = name;
-	this.email = email;
-	this.profileImg = profileImg;
-	this.quota = quota;
-	this.oauth = oauth;
-	// TODO: Implement qouta functionality
-	// this.qouta = qouta;
+function Account (type, name, email, profileImg, quota, oauth) {
+  this.type = type
+  this.name = name
+  this.email = email
+  this.profileImg = profileImg
+  this.quota = quota
+  this.oauth = oauth
+// TODO: Implement qouta functionality
+// this.qouta = qouta
 }
 
-module.exports = Account;
+module.exports = Account

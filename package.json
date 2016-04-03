@@ -72,6 +72,7 @@
     "chromedriver": "*",
     "codeclimate-test-reporter": "^0.3.1",
     "coveralls": "^2.11.9",
+    "electron-chromedriver": "^0.37.1",
     "electron-packager": "*",
     "eslint": "*",
     "eslint-plugin-html": "*",
@@ -80,6 +81,8 @@
     "isparta": "^4.0.0",
     "jshint": "*",
     "mocha-lcov-reporter": "^1.2.0",
+    "spectron": "^1.37.0",
+    "standard": "^6.0.8",
     "wdio-mocha-framework": "^0.2.12",
     "webdriverio": "^4.0.5",
     "xo": "*"
