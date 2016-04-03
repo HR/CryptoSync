@@ -12,24 +12,24 @@
     <section id="vault">
       <header class="top">
         <img src="images/icons/CryptoSyncVault.svg" class="icon centre" alt="">
-        <a class="right">
+        <!-- <a class="right">
           <img src="images/icons/folder.svg" class="icon" alt=""/>
         </a>
         <a class="left">
           <img src="images/icons/settings.svg" class="icon" alt=""/>
-        </a>
+        </a> -->
       </header>
       <div class="main">
         <div class="segment" id="accounts">
           <div class="table" id="accountsList"></div>
         </div>
         <div class="segment" id="files">
-          <input type="text" placeholder="    Search files"/>
-          <div class="table" id="filesList">
-          </div>
+          <!-- <input type="text" placeholder="    Search files"/> -->
+          <div class="table" id="filesList"></div>
         </div>
         <div class="segment" id="info">
-          <div id="content"></div>
+          <div id="content">
+          </div>
           <footer>
             <a class="right">
               <img src="images/icons/trashcan.svg" alt=""/>
@@ -58,17 +58,10 @@
     </script>
 
     <script id="file-template" type="text/x-handlebars-template">
-      <div class="row" data-fid="{{id}}">
+      <div class="file row" data-fid="{{id}}">
         <div class="name">{{name}}</div>
         <div class="lastMod">{{lastSyncedText}}</div>
       </div>
-    </script>
-
-    <script id="share-template" type="text/x-handlebars-template">
-      <input type="text" value="{{share}}"/>
-      <a data-action="clip">
-        <img src="images/icons/clippy.svg" alt=""/>
-      </a>
     </script>
 
     <script id="info-template" type="text/x-handlebars-template">
@@ -87,7 +80,7 @@
           <td>Checksum</td>
           <td>
             <input type="text" value="{{md5Checksum}}"/>
-            <a data-action="clip">
+            <a data-action="clip" data-share="{{md5Checksum}}">
               <img src="images/icons/clippy.svg" alt=""/>
             </a>
           </td>
@@ -96,7 +89,7 @@
           <td>Initialisation Vector</td>
           <td>
             <input type="text" value="{{iv}}"/>
-            <a data-action="clip">
+            <a data-action="clip" data-share="{{iv}}">
               <img src="images/icons/clippy.svg" alt=""/>
             </a>
           </td>
@@ -105,24 +98,12 @@
           <td>Authentication Tag</td>
           <td>
             <input type="text" value="{{authTag}}"/>
-            <a data-action="clip">
+            <a data-action="clip" data-share="{{authTag}}">
               <img src="images/icons/clippy.svg" alt=""/>
             </a>
           </td>
         </tr>
-				<tr>
-          <td>threshold</td>
-          <td>{{shares.total}}</td>
-        </tr>
-        <tr>
-          <td>Shares</td>
-          <td>
-            {{#each shares.data}}
-							<input type="text" value="{{this}}"/>
-							<a data-action="clip" data-share="{{this}}"><img src="images/icons/clippy.svg" alt=""/></a>
-            {{/each}}
-          </td>
-        </tr>
+        <tr id="shares"></tr>
         <tr>
           <td class="bttline">Encryption key</td>
           <td>
@@ -132,72 +113,127 @@
       </table>
     </script>
 
+    <script id="share-template" type="text/x-handlebars-template">
+      <td>Shares</td>
+      <td>
+        {{#each data}}
+          <input type="text" value="{{this}}"/>
+          <a data-action="clip" data-share="{{this}}"><img src="images/icons/clippy.svg" alt=""/></a>
+        {{/each}}
+      </td>
+    </script>
+
+    <script id="input-template" type="text/x-handlebars-template">
+      <input type="text" value="{{value}}"/>
+      <a data-action="clip" data-share="{{value}}"><img src="images/icons/clippy.svg" alt=""/></a>`
+    </script>
+
     <script type="text/javascript">
-      window.$ = window.jQuery = require('jquery');
+      window.$ = window.jQuery = require('jquery')
       // load core modules first
-      var remote = require('electron').remote,
-        ipcRenderer = require('electron').ipcRenderer,
-        accounts = remote.getGlobal("accounts"),
-				// TODO: ENCAPSULATE files var!
-				vault = remote.getGlobal("vault"),
-        files = remote.getGlobal("files"),
+      var  electron = require('electron'),
+        remote = electron.remote,
+        ipcRenderer = electron.ipcRenderer,
+        clipboard = electron.clipboard,
+        accounts = remote.getGlobal('accounts'),
+        // TODO: ENCAPSULATE files var!
+        vault = remote.getGlobal('vault'),
+        files = remote.getGlobal('files'),
+        shares2pass = require('../src/crypto').shares2pass,
         Handlebars = require('handlebars'),
-        mdb = remote.getGlobal("mdb"),
-        rconsole = remote.getGlobal("console");
+        mdb = remote.getGlobal('mdb'),
+        rconsole = remote.getGlobal('console')
 
-      $(window).on('online', updateOnlineStatus);
-      $(window).on('offline', updateOnlineStatus);
-      updateOnlineStatus();
+      $(window).on('online', updateOnlineStatus)
+      $(window).on('offline', updateOnlineStatus)
+      updateOnlineStatus()
 
-      // Handlebars.registerHelper('shareList', function(shares, options) {
-      //   var out;
-			//
-      //   for (var i = 0, l = shares.length; i < l; i++) {
-      //     out += '<input type="text" value="' + options.fn(shares[i]) + '"/>';
-      //     out += '<a data-action="clip" data-share="' + options.fn(shares[i]) + '"><img src="images/icons/clippy.svg" alt=""/></a>';
-      //   }
-			//
-      //   return out;
-      // });
+      Handlebars.registerHelper('each', function(context, options) {
+        var ret = ""
+        for (var i = 0, j = context.length; i < j; i++) {
+          ret = ret + options.fn(context[i])
+        }
+        return ret
+      })
 
-			function renderSelFileInfo() {
-        var fid = $('#filesList > .selected').first().data('fid');
-        var template = Handlebars.compile($("#info-template").html());
-        var info = template(files[fid]);
-        $('#info > #content').html(info);
-      };
+      function renderSelFileInfo(fid) {
+        // console.log(`vault: ${JSON.stringify(vault)}`)
+        var fid = fid || $('#filesList > .selected').first().data('fid'),
+          info_template = Handlebars.compile($('#info-template').html()),
+          share_template = Handlebars.compile($('#share-template').html()),
+          info = info_template(files[fid]),
+          shares = share_template(vault.files[fid].shares)
+
+        content = $('#info > #content')
+        content.html(info)
+        content.find('#shares').html(shares)
+
+        $('button.default').click(function() {
+          var pass = shares2pass(vault.files[fid].shares.data).toString('hex')
+          console.log(`pass = ${pass}`)
+          var input_temp = Handlebars.compile($('#input-template').html())
+          $(this).replaceWith(input_temp({value:pass}))
+        })
+
+        $('a[data-action="clip"]').each(function(index) {
+          var self = $(this)
+          self.click(function() {
+            var fid = self.data('share')
+            clipboard.writeText(fid)
+            self.prev().fadeOut(300).fadeIn(300)
+          })
+        })
+      }
 
       $(window).load(function() {
         /* Render accounts */
         for (var account in accounts) {
           if (accounts.hasOwnProperty(account)) {
-            var template = Handlebars.compile($("#account-template").html());
-            var account = template(accounts[account]);
-            $('#accountsList').append(account);
+            var template = Handlebars.compile($('#account-template').html())
+            var account = template(accounts[account])
+            $('#accountsList').append(account)
           }
         }
-        $('#accountsList').find('.row').first().addClass("selected");
+        $('#accountsList').find('.row').first().addClass('selected')
 
+        var fileList = $('#filesList')
         for (var file in files) {
           if (files.hasOwnProperty(file)) {
-            files[file].lastSyncedText = file.lastSyncedText || 'not synced yet';
-            var template = Handlebars.compile($("#file-template").html());
-            var file = template(files[file]);
-            $('#filesList').append(file);
+            files[file].lastSyncedText = file.lastSyncedText || 'not synced yet'
+            var template = Handlebars.compile($('#file-template').html())
+            var file = template(files[file])
+            fileList.append(file)
           }
         }
-        $('#filesList').find('.row').first().addClass("selected");
-				renderSelFileInfo();
-      });
+        // select first item of list by default
+        $('#filesList').find('.row').first().addClass('selected')
 
+        // render the info for the selected file
+        renderSelFileInfo()
+
+        $('.file.row').each(function(index) {
+          var self = $(this)
+          self.click(function() {
+            var fid = self.data('fid'),
+              sel = $('.selected.row')
+
+            if (fid !== sel.data('fid')) {
+              console.log('not equal')
+              sel.removeClass('selected')
+              self.addClass('selected')
+              renderSelFileInfo(fid)
+            }
+          })
+        })
+      })
 
       /* Helper functions */
       // Network change event
       function updateOnlineStatus() {
         ipcRenderer.send('online-status-changed', navigator.onLine
           ? 'online'
-          : 'offline');
-      };
+          : 'offline')
+      }
     </script>
   </body>
 

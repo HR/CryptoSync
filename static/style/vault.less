@@ -31,50 +31,51 @@ to add "..." to overflow text
 @name-fsize: 0.8rem;
 @win-height: 100%;
 h3 {
-  margin     : 0.5rem 0;
+  margin: 0.5rem 0;
   font-weight: normal;
 }
 p {
   margin: 0;
 }
 input[type=text] {
-  margin-top   : 1rem;
-  border       : none;
+  border: none;
   border-bottom: 1px solid @light;
-  outline      : none;
+  outline: none;
+  vertical-align: top;
   &:focus {
-    animation-name    : colorTrans;
+    animation-name: colorTrans;
     animation-duration: 2s;
-    border-bottom     : 1px solid @black;
+    border-bottom: 1px solid @black;
   }
 }
 section#vault {
-  display       : flex;
+  display: flex;
   flex-direction: column;
-  position      : relative;
-  overflow      : hidden;
+  position: relative;
+  overflow: hidden;
 }
 .left {
   -webkit-align-self: flex-start;
-  align-self        : flex-start;
+  align-self: flex-start;
 }
 .right {
   margin-left: auto;
 }
 div.main {
-  width  : 100%;
+  width: 100% !important;
   display: flex;
-  margin : auto;
+  margin: auto;
 }
 .centre {
-  width   : 100% !important;
-  margin  : auto;
+  width: 100% !important;
+  margin: auto;
   position: absolute;
 }
 header.top {
-  display      : flex;
-  position     : relative;
-  width        : 100%;
+  display: flex;
+  position: relative;
+  height: 2.4rem;
+  width: 100%;
   border-bottom: 1px solid @light;
   a > img.icon {
     padding-left: 0.5rem;
@@ -83,87 +84,90 @@ header.top {
     padding: 0.5rem;
   }
   button {
-    height         : 2rem;
-    width          : 2rem;
+    height: 2rem;
+    width: 2rem;
     background-size: 1.2rem !important;
   }
 }
 div.segment {
-  flex       : 1;
+  flex: 1;
   border-left: 1px solid @light;
 }
 div.row:last-child {
-  border       : none !important;
+  border-bottom: none !important;
+}
+div.row:only-child {
+  border: none !important;
 }
 div.row {
   display: block;
 }
 div#accounts {
-  flex : 1;
+  flex: 1;
   width: 100%;
   .selected {
     border-left: 2px solid @orange_d;
   }
   .row {
-    align-items  : center;
+    align-items: center;
     border-bottom: 1px solid @light;
-    padding      : @spacing04 0 @spacing04 @spacing04;
-    text-align   : left;
+    padding: @spacing04 0 @spacing04 @spacing04;
+    text-align: left;
   }
   .content {
     vertical-align: 100%;
-    margin-left   : @spacing-ic-txt;
+    margin-left: @spacing-ic-txt;
   }
   .name {
-    font-weight  : normal;
-    font-size    : @name-fsize;
-    white-space  : nowrap;
-    overflow     : hidden;
+    font-weight: normal;
+    font-size: @name-fsize;
+    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
   }
   .email {
-    font-size    : @name-fsize - 0.2rem;
-    white-space  : nowrap;
-    overflow     : hidden;
+    font-size: @name-fsize - 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
   }
   .cloudType {
     position: absolute;
-    bottom  : -(@profile-size * 0.1);
-    left   : (@profile-size * 0.6);
+    bottom: -(@profile-size * 0.1);
+    left: (@profile-size * 0.6);
   }
   .cloudType > img {
     height: @profile-size * 0.4;
-    width : auto;
+    width: auto;
   }
   .profile {
-    width              : @profile-size;
-    height             : @profile-size;
-    margin             : 0;
-    border-radius      : 50%;
+    width: @profile-size;
+    height: @profile-size;
+    margin: 0;
+    border-radius: 50%;
     background-position: center center !important;
-    background-size    : @profile-size @profile-size !important;
+    background-size: @profile-size @profile-size !important;
   }
   .content,
   .type {
-    display : block;
+    display: inline-table;
     position: relative;
   }
 }
 div#files {
-  flex : 1.2;
+  flex: 1.2;
   width: 100%;
   header {
-    padding         : 0.2rem 0 0.2rem 0.8rem;
+    padding: 0.2rem 0 0.2rem 0.8rem;
     background-color: @light;
     h4 {
-      margin     : 0;
-      font-size  : 0.8rem;
+      margin: 0;
+      font-size: 0.8rem;
       font-weight: normal;
     }
   }
   div.table {
-    width     : 100%;
+    width: 100%;
     max-height: @win-height;
     overflow-y: auto;
   }
@@ -172,23 +176,24 @@ div#files {
   }
   .row {
     flex-direction: column;
-    border-bottom : 1px solid @light;
-    padding       : @spacing04 @spacing04 @spacing04 @spacing08;
-    text-align    : left;
+    border-bottom: 1px solid @light;
+    padding: @spacing04 @spacing04 @spacing04 @spacing08;
+    text-align: left;
   }
   .name {
     font-weight: normal;
-    font-size  : 0.8rem;
+    font-size: 0.8rem;
   }
   .lastMod {
     font-size: 0.6rem;
   }
   input[type=text] {
-    width          : 90%;
-    margin         : 0.5rem;
-    font-size      : 0.8rem;
-    background     : url('../images/icons/search.svg') left center no-repeat;
+    width: 90%;
+    margin: 0.5rem;
+    font-size: 0.8rem;
+    background: url('../images/icons/search.svg') left center no-repeat;
     background-size: 0.8rem;
+
     &:focus {
       background: none;
     }
@@ -198,21 +203,21 @@ div#files {
   }
 }
 div#info {
-  flex            : 1.8;
-  display         : flex;
-  min-height      : 100vh;
-  flex-direction  : column;
+  flex: 1.8;
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
   background-color: @lighter;
   #content {
-    flex  : 1;
+    flex: 1;
     margin: 1rem;
     table {
       font-size: 0.7rem;
       tr {
         margin-top: 0.4rem;
-        display   : inline-block;
+        display: inline-block;
         .bttline {
-          padding-top: 0.4rem;
+          vertical-align: inherit;
         }
         td {
           vertical-align: top;
@@ -220,16 +225,16 @@ div#info {
             width: 80%;
           }
           a > img {
-            height     : 1rem;
+            height: 1rem;
             margin-left: 0.1rem;
           }
         }
         td:first-child {
           text-align: right;
-          color     : @dark * 0.8;
+          color: @dark * 0.8;
         }
         td:last-child {
-          text-align  : left;
+          text-align: left;
           padding-left: 0.2rem;
         }
       }
@@ -237,13 +242,13 @@ div#info {
   }
 }
 img.icon {
-  width : auto;
+  width: auto;
   height: @ic-size;
 }
 footer {
-  display   : flex;
+  display: flex;
   border-top: 1px solid @light;
-  width     : 100%;
+  width: 100%;
   button {
     height: 1rem;
     margin: 0.2rem 0.8rem 0.2rem 0;
