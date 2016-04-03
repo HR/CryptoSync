@@ -27,7 +27,7 @@ to add "..." to overflow text
 @spacing-ic-txt: @side-margin - 0.4rem;
 @lastMod-fsize: 0.8rem;
 @ic-size: 1.4rem;
-@profile-size: 2.2rem;
+@profile-size: 1.8rem;
 @name-fsize: 0.8rem;
 @win-height: 100%;
 h3 {
@@ -103,21 +103,35 @@ div.row {
   display: block;
 }
 div#accounts {
+  height: 100vh;
   flex: 1;
   width: 100%;
   .selected {
     border-left: 2px solid @orange_d;
   }
   .row {
+    width: inherit;
     align-items: center;
     border-bottom: 1px solid @light;
     padding: @spacing04 0 @spacing04 @spacing04;
     text-align: left;
   }
   .content {
+    width: 90%;
+    position: relative;
     vertical-align: 100%;
-    margin-left: @spacing-ic-txt;
   }
+
+  .type {
+    width: @profile-size * 1.2;
+    position: relative;
+    float: left;
+  }
+  .content,
+  .type {
+
+  }
+
   .name {
     font-weight: normal;
     font-size: @name-fsize;
@@ -148,13 +162,9 @@ div#accounts {
     background-position: center center !important;
     background-size: @profile-size @profile-size !important;
   }
-  .content,
-  .type {
-    display: inline-table;
-    position: relative;
-  }
 }
 div#files {
+  height: 100vh;
   flex: 1.2;
   width: 100%;
   header {
@@ -203,9 +213,9 @@ div#files {
   }
 }
 div#info {
+  height: 90vh;
   flex: 1.8;
   display: flex;
-  min-height: 100%;
   flex-direction: column;
   background-color: @lighter;
   #content {
@@ -252,6 +262,10 @@ footer {
   button {
     height: 1rem;
     margin: 0.2rem 0.8rem 0.2rem 0;
+  }
+  a > img {
+    height: 1rem;
+    margin: 0.2rem 0.4rem 0.2rem 0rem;
   }
 }
 @keyframes colorTrans {

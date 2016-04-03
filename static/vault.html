@@ -12,12 +12,6 @@
     <section id="vault">
       <header class="top">
         <img src="images/icons/CryptoSyncVault.svg" class="icon centre" alt="">
-        <!-- <a class="right">
-          <img src="images/icons/folder.svg" class="icon" alt=""/>
-        </a>
-        <a class="left">
-          <img src="images/icons/settings.svg" class="icon" alt=""/>
-        </a> -->
       </header>
       <div class="main">
         <div class="segment" id="accounts">
@@ -28,11 +22,10 @@
           <div class="table" id="filesList"></div>
         </div>
         <div class="segment" id="info">
-          <div id="content">
-          </div>
+          <div id="content"></div>
           <footer>
-            <a class="right">
-              <img src="images/icons/trashcan.svg" alt=""/>
+            <a class="right" data-action="delete">
+              <img src="images/icons/trashcan.svg" alt="delete"/>
             </a>
           </footer>
         </div>
@@ -131,7 +124,7 @@
     <script type="text/javascript">
       window.$ = window.jQuery = require('jquery')
       // load core modules first
-      var  electron = require('electron'),
+      var electron = require('electron'),
         remote = electron.remote,
         ipcRenderer = electron.ipcRenderer,
         clipboard = electron.clipboard,
@@ -140,9 +133,7 @@
         vault = remote.getGlobal('vault'),
         files = remote.getGlobal('files'),
         shares2pass = require('../src/crypto').shares2pass,
-        Handlebars = require('handlebars'),
-        mdb = remote.getGlobal('mdb'),
-        rconsole = remote.getGlobal('console')
+        Handlebars = require('handlebars')
 
       $(window).on('online', updateOnlineStatus)
       $(window).on('offline', updateOnlineStatus)
@@ -156,9 +147,21 @@
         return ret
       })
 
+      function handleDelete(fid) {
+        $('#filesList > .selected').first().remove()
+        var firstFile = $('#filesList > .row').first().addClass('selected')
+        if (firstFile) {
+          renderSelFileInfo()
+        } else {
+          var template = Handlebars.compile($('#file-template').html())
+          var file = template({name: 'No files to show...'})
+          fileList.append(file)
+        }
+      }
+
       function renderSelFileInfo(fid) {
         // console.log(`vault: ${JSON.stringify(vault)}`)
-        var fid = fid || $('#filesList > .selected').first().data('fid'),
+        var fid = (fid) ? fid : $('#filesList > .selected').first().data('fid'),
           info_template = Handlebars.compile($('#info-template').html()),
           share_template = Handlebars.compile($('#share-template').html()),
           info = info_template(files[fid]),
@@ -172,7 +175,12 @@
           var pass = shares2pass(vault.files[fid].shares.data).toString('hex')
           console.log(`pass = ${pass}`)
           var input_temp = Handlebars.compile($('#input-template').html())
-          $(this).replaceWith(input_temp({value:pass}))
+          $(this).replaceWith(input_temp({value: pass}))
+        })
+
+        $('a[data-action="delete"]').click(function() {
+          console.log(`delete event triggerd for ${fid}`)
+          handleDelete()
         })
 
         $('a[data-action="clip"]').each(function(index) {
@@ -194,6 +202,7 @@
             $('#accountsList').append(account)
           }
         }
+        // select first account by default
         $('#accountsList').find('.row').first().addClass('selected')
 
         var fileList = $('#filesList')
@@ -205,17 +214,17 @@
             fileList.append(file)
           }
         }
-        // select first item of list by default
+        // select first file of list by default
         $('#filesList').find('.row').first().addClass('selected')
 
         // render the info for the selected file
         renderSelFileInfo()
-
+        
         $('.file.row').each(function(index) {
           var self = $(this)
           self.click(function() {
             var fid = self.data('fid'),
-              sel = $('.selected.row')
+              sel = $('#filesList > .selected.row')
 
             if (fid !== sel.data('fid')) {
               console.log('not equal')

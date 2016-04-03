@@ -229,7 +229,7 @@ function Cryptobar (callback) {
 
 function VaultUI (callback) {
   let win = new BrowserWindow({
-    width: 800,
+    width: 700,
     height: 400,
     center: true,
     titleBarStyle: 'hidden-inset'
