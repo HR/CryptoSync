@@ -2,8 +2,7 @@
   "parser": "babel-eslint",
   "rules": {
     "strict": 0,
-    "semi": ["error", "never"],
-    "comma-style": ["error", "last"]
+    "semi": [2,"never"]
   },
   "ecmaFeatures": {
     "blockBindings": true,
