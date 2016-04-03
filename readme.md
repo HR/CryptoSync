@@ -1,6 +1,6 @@
 ![alt tag](CryptoSync_Banner.gif?raw=true "Crypto.Sync application banner")
 
-# Crypto.Sync [![Build Status](https://travis-ci.org/HR/CryptoSync.svg?branch=master)](https://travis-ci.org/HR/CryptoSync) [![Coverage Status](https://coveralls.io/repos/github/HR/CryptoSync/badge.svg?branch=master)](https://coveralls.io/github/HR/CryptoSync?branch=master) [![Code Climate](https://codeclimate.com/github/HR/CryptoSync/badges/gpa.svg)](https://codeclimate.com/github/HR/CryptoSync)
+# Crypto.Sync [![Build Status](https://travis-ci.org/HR/CryptoSync.svg?branch=master)](https://travis-ci.org/HR/CryptoSync) [![Coverage Status](https://coveralls.io/repos/github/HR/CryptoSync/badge.svg?branch=master)](https://coveralls.io/github/HR/CryptoSync?branch=master) [![Code Climate](https://codeclimate.com/github/HR/CryptoSync/badges/gpa.svg)](https://codeclimate.com/github/HR/CryptoSync) [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
 
 > A cross-platform end-to-end encryption cloud sync client
 

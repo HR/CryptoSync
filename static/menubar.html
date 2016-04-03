@@ -48,114 +48,115 @@
       <span>{{text}}</span>
     </script>
     <script type="text/javascript">
-      window.$ = window.jQuery = require('jquery');
+      window.$ = window.jQuery = require('jquery')
       // load core modules first
       var remote = require('electron').remote,
         ipcRenderer = require('electron').ipcRenderer,
         Handlebars = require('handlebars'),
         moment = require('moment'),
-      	logger = require('../logger.js'),
-      	MAX_LIST_LENGTH = 6;
+        logger = require('../logger.js'),
+        MAX_LIST_LENGTH = 6
 
       var statusTexts = {
         getting: 'Fetching...',
         syncing: 'Syncing...',
-				putting: 'Uploading...',
-				encrypting: 'Encrypting...',
-				encrypted: 'Encrypted!',
-				synced: 'Synced!',
-				notsynced: 'Not synced!'
-      };
+        putting: 'Uploading...',
+        encrypting: 'Encrypting...',
+        encrypted: 'Encrypted!',
+        synced: 'Synced!',
+        notsynced: 'Not synced!'
+      }
 
-      $(window).on('online', updateOnlineStatus);
-      $(window).on('offline', updateOnlineStatus);
-      updateOnlineStatus();
+      $(window).on('online', updateOnlineStatus)
+      $(window).on('offline', updateOnlineStatus)
+      updateOnlineStatus()
 
-      $(window).load(function() {
+      $(window).load(function () {
         // attach click listners
-        $(".navigationLink").each(function(index) {
-          $(this).click(function() {
-            if (this.hasAttribute("data-target"))
-              emittEvent(this.getAttribute("data-target"));
-            }
-          );
-        });
+        $('.navigationLink').each(function (index) {
+          $(this).click(function () {
+            if (this.hasAttribute('data-target'))
+              emittEvent(this.getAttribute('data-target'))
+          }
+          )
+        })
         if ($.isEmptyObject(status)) {
           // TODO: render
         }
-      });
+      })
 
       /* Helper functions */
-      function updateStatus(status) {
-        var sobj = {};
-        if (status === "getting" || status === "putting") {
-          sobj.status = "syncing";
+      function updateStatus (status) {
+        var sobj = {}
+        if (status === 'getting' || status === 'putting') {
+          sobj.status = 'syncing'
         } else {
-          sobj.status = status;
+          sobj.status = status
         }
-        sobj.text = statusTexts[status];
-        sobj.spin = (sobj.status === "syncing")
-          ? "spin"
-          : "";
-        var template = Handlebars.compile($("#status-template").html());
-        var statusHTML = template(sobj);
-        $('#status').html(statusHTML);
+        sobj.text = statusTexts[status]
+        sobj.spin = (sobj.status === 'syncing')
+          ? 'spin'
+          : ''
+        var template = Handlebars.compile($('#status-template').html())
+        var statusHTML = template(sobj)
+        $('#status').html(statusHTML)
       }
 
-      function updateList(file) {
-        file.moment = file.lastSynced;
-        file.lastSyncedText = moment(file.lastSynced).fromNow();
+      function updateList (file) {
+        file.moment = file.lastSynced
+        file.lastSyncedText = moment(file.lastSynced).fromNow()
         var fileList = $('#filesList'),
           fListItem = fileList.children(),
-          template = Handlebars.compile($("#file-template").html()),
-          fileHTML = template(file);
-        fileList.prepend(fileHTML);
+          template = Handlebars.compile($('#file-template').html()),
+          fileHTML = template(file)
+        fileList.prepend(fileHTML)
         if (fListItem.length > MAX_LIST_LENGTH) {
           while (fListItem.length > MAX_LIST_LENGTH) {
-            fListItem.last().remove();
-            fListItem = $('#filesList').children();
+            fListItem.last().remove()
+            fListItem = $('#filesList').children()
           }
         }
       }
 
-      function updateMoments() {
-        $('.lastSynced').each(function(index) {
+      function updateMoments () {
+        $('.lastSynced').each(function (index) {
           var tmoment = $(this).data(),
-            nmoment = moment(tmoment).fromNow();
-          $(this).text(nmoment);
-        });
-      };
+            nmoment = moment(tmoment).fromNow()
+          $(this).text(nmoment)
+        })
+      }
 
       /* Event emitters  */
-      function emittEvent(event) {
+      function emittEvent (event) {
         // send event to main
-        logger.verbose(`RENDER: ${event} event emitted`);
-        ipcRenderer.send(event);
+        logger.verbose(`RENDER: ${event} event emitted`)
+        ipcRenderer.send(event)
       }
 
       // Network change event
-      function updateOnlineStatus() {
+      function updateOnlineStatus () {
         ipcRenderer.send('online-status-changed', navigator.onLine
           ? 'online'
-          : 'offline');
-      };
+          : 'offline')
+      }
 
       /* Event listeners */
-      ipcRenderer.on("statusChange", function(event, status) {
-        logger.verbose("IPCRENDER: statusChange emitted");
-        updateStatus(status);
-      });
+      ipcRenderer.on('statusChange', function (event, status) {
+        logger.verbose('IPCRENDER: statusChange emitted')
+        updateStatus(status)
+      })
 
-      ipcRenderer.on("updateMoments", function(event) {
-        logger.verbose("IPCRENDER: updateMoment emitted");
-        updateMoments();
-      });
+      ipcRenderer.on('updateMoments', function (event) {
+        logger.verbose('IPCRENDER: updateMoment emitted')
+        updateMoments()
+      })
 
-      ipcRenderer.on("synced", function(event, file) {
-        logger.verbose("IPCRENDER: synced emitted");
-				file.fileType = resolveFileType(file.fileType);
-        updateList(file);
-      });
+      ipcRenderer.on('synced', function (event, file) {
+        logger.verbose('IPCRENDER: synced emitted')
+        file.fileType = resolveFileType(file.fileType)
+        updateList(file)
+      })
+
     </script>
   </body>
 

@@ -1,212 +1,212 @@
 <!doctype html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<title>Unlock the Vault</title>
-	<link rel="stylesheet" href="style/masterpassprompt.css" charset="utf-8">
-	<!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
+  <meta charset="utf-8">
+  <title>Unlock the Vault</title>
+  <link rel="stylesheet" href="style/masterpassprompt.css" charset="utf-8">
+  <!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
 </head>
 
 <body>
-	<section id="masterpassprompt">
-		<img src="images/icons/CryptoSyncvault.svg" alt="some" id="vault" />
-		<div class="panel-container">
-			<div id="panel-default">
-				<header>
-					<h1>Unlock the Vault</h1>
-					<p>Please enter your Master Password to unlock the vault
-					</p>
-					<img class="info" src="images/icons/info.svg" alt="" />
-					<p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass</p>
-				</header>
-				<form onsubmit="return false;">
-					<div class="masterpass">
-						<input type="password" name="masterpass" id="checkMasterPassInput" placeholder="********" />
-						<label for="checkMasterPassInput"></label>
-					</div>
-					<div class="forgotMP">
-						<a class="navigationLink" data-target="reset">Forgot MasterPass?</a>
-					</div>
-					<div class="submit">
-						<input type="submit" value="Unlock" id="checkMasterPass" />
-					</div>
-				</form>
-				<!-- <footer>
-								<a class="navigationLink right" data-target="shares">Got shares?</a>
-							</footer> -->
-			</div>
-			<!-- <div id="panel-shares">
-							<header>
-								<h1>Unlock the Vault</h1>
-								<p>Please enter your Secret Shares to unlock the vault
-								</p>
-								<img class="info" src="images/icons/info.svg" alt="" />
-								<p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass - constructed using your secret shares</p>
-							</header>
-							<form onsubmit="return false;">
-								<div class="masterpass">
-									<input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
-									<label for="checkSharesInput">STILL UNDER DEV</label>
-								</div>
-								<div class="submit">
-									<input type="submit" value="Unlock" id="checkShares"/>
-								</div>
-							</form>
-							<footer>
-								<a class="back navigationLink" data-target="default">
-									<img src=" images/icons/back.svg" alt=" " />
-								</a>
-							</footer>
-						</div> -->
-			<div id="panel-reset">
-				<header>
-					<h1>Reset the MasterPass</h1>
-					<p>Please enter a new secure MasterPass
-					</p>
-					<img class="info" src="images/icons/info.svg" alt=" " />
-					<p class="info ">The MasterPass is used to encrypt the Vault. Thus, the strength of the Vault relies on the strength of your password. Resetting your password will prompt the re-encryption of all the data and discard the former encrypted</p>
-				</header>
-				<form onsubmit="return false;">
-					<div class="masterpass">
-						<input type="password" name="name" id="setMasterPassInput" placeholder="********" required/>
-						<label for="setMasterPassInput"></label>
-					</div>
-					<div class="submit">
-						<input type="submit" value="Reset" id="setMasterPass" />
-					</div>
-				</form>
-				<footer>
-					<a href="#" class="back navigationLink" data-target="default">
-						<img src="images/icons/back.svg" alt="" />
-					</a>
-				</footer>
-			</div>
-		</div>
-	</section>
-	<script type="text/javascript">
-		var ipcRenderer = require('electron').ipcRenderer,
-			rconsole = require('electron').remote.getGlobal("console"),
-			nav_to = getParam("nav_to", window.document.URL);
-		window.$ = window.jQuery = require('jquery');
+  <section id="masterpassprompt">
+    <img src="images/icons/CryptoSyncvault.svg" alt="some" id="vault" />
+    <div class="panel-container">
+      <div id="panel-default">
+        <header>
+          <h1>Unlock the Vault</h1>
+          <p>Please enter your Master Password to unlock the vault
+          </p>
+          <img class="info" src="images/icons/info.svg" alt="" />
+          <p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass</p>
+        </header>
+        <form onsubmit="return false;">
+          <div class="masterpass">
+            <input type="password" name="masterpass" id="checkMasterPassInput" placeholder="********" />
+            <label for="checkMasterPassInput"></label>
+          </div>
+          <div class="forgotMP">
+            <a class="navigationLink" data-target="reset">Forgot MasterPass?</a>
+          </div>
+          <div class="submit">
+            <input type="submit" value="Unlock" id="checkMasterPass" />
+          </div>
+        </form>
+        <!-- <footer>
+                <a class="navigationLink right" data-target="shares">Got shares?</a>
+              </footer> -->
+      </div>
+      <!-- <div id="panel-shares">
+              <header>
+                <h1>Unlock the Vault</h1>
+                <p>Please enter your Secret Shares to unlock the vault
+                </p>
+                <img class="info" src="images/icons/info.svg" alt="" />
+                <p class="info">The Vault that contains all the secret keys for your encrypted data is encrypted using a Master Password - your MasterPass - constructed using your secret shares</p>
+              </header>
+              <form onsubmit="return false;">
+                <div class="masterpass">
+                  <input type="password" name="share" class="checkSharesInput" placeholder="********" required/>
+                  <label for="checkSharesInput">STILL UNDER DEV</label>
+                </div>
+                <div class="submit">
+                  <input type="submit" value="Unlock" id="checkShares"/>
+                </div>
+              </form>
+              <footer>
+                <a class="back navigationLink" data-target="default">
+                  <img src=" images/icons/back.svg" alt=" " />
+                </a>
+              </footer>
+            </div> -->
+      <div id="panel-reset">
+        <header>
+          <h1>Reset the MasterPass</h1>
+          <p>Please enter a new secure MasterPass
+          </p>
+          <img class="info" src="images/icons/info.svg" alt=" " />
+          <p class="info ">The MasterPass is used to encrypt the Vault. Thus, the strength of the Vault relies on the strength of your password. Resetting your password will prompt the re-encryption of all the data and discard the former encrypted</p>
+        </header>
+        <form onsubmit="return false;">
+          <div class="masterpass">
+            <input type="password" name="name" id="setMasterPassInput" placeholder="********" required/>
+            <label for="setMasterPassInput"></label>
+          </div>
+          <div class="submit">
+            <input type="submit" value="Reset" id="setMasterPass" />
+          </div>
+        </form>
+        <footer>
+          <a href="#" class="back navigationLink" data-target="default">
+            <img src="images/icons/back.svg" alt="" />
+          </a>
+        </footer>
+      </div>
+    </div>
+  </section>
+  <script type="text/javascript">
+    var ipcRenderer = require('electron').ipcRenderer,
+      rconsole = require('electron').remote.getGlobal('console'),
+      nav_to = getParam('nav_to', window.document.URL)
+    window.$ = window.jQuery = require('jquery')
 
-		$(window).on('online', updateOnlineStatus);
-		$(window).on('offline', updateOnlineStatus);
-		updateOnlineStatus();
+    $(window).on('online', updateOnlineStatus)
+    $(window).on('offline', updateOnlineStatus)
+    updateOnlineStatus()
 
-		navigate((nav_to) ? nav_to : "default");
+    navigate((nav_to) ? nav_to : 'default')
 
-		$(window).load(function() {
-			errLabelCheckMP = $('label[for="checkMasterPassInput"]');
-			errLabelSetMP = $('label[for="setMasterPassInput"]');
-			errLabelCheckMP.hide();
-			errLabelSetMP.hide();
-			$(".navigationLink").each(function(index) {
-				$(this).click(function() {
-					navigate(this.getAttribute("data-target"));
-				});
-			});
-			$("#checkMasterPass").click(function() {
-				console.log("checkMasterPass button clicked");
-				validateField("checkMasterPass", errLabelCheckMP);
-			});
-			$("#setMasterPass").click(function() {
-				console.log("setMasterPass button clicked");
-				validateField("setMasterPass", errLabelSetMP);
-			});
-		});
+    $(window).load(function () {
+      errLabelCheckMP = $('label[for="checkMasterPassInput"]')
+      errLabelSetMP = $('label[for="setMasterPassInput"]')
+      errLabelCheckMP.hide()
+      errLabelSetMP.hide()
+      $('.navigationLink').each(function (index) {
+        $(this).click(function () {
+          navigate(this.getAttribute('data-target'))
+        })
+      })
+      $('#checkMasterPass').click(function () {
+        console.log('checkMasterPass button clicked')
+        validateField('checkMasterPass', errLabelCheckMP)
+      })
+      $('#setMasterPass').click(function () {
+        console.log('setMasterPass button clicked')
+        validateField('setMasterPass', errLabelSetMP)
+      })
+    })
 
+    /* Event listeners */
+    ipcRenderer.on('checkMasterPassResult', function (event, result) {
+      rconsole.log(`IPCRENDER checkMasterPassResult emitted`)
+      if (result.err) {
+        errLabelCheckMP.text(`ERROR: ${err}`)
+        errLabelCheckMP.show()
+        return
+      }
 
-		/* Event listeners */
-		ipcRenderer.on('checkMasterPassResult', function(event, result) {
-			rconsole.log(`IPCRENDER checkMasterPassResult emitted`);
-			if (result.err) {
-				errLabelCheckMP.text(`ERROR: ${err}`);
-				errLabelCheckMP.show();
-				return;
-			}
+      if (result.match) {
+        // TODO: show confirmation
+        errLabelCheckMP.text(`CORRECT MASTERPASS`)
+        errLabelCheckMP.css('color', '#2ECC71')
+        errLabelCheckMP.show()
+        return
+      } else {
+        errLabelCheckMP.text(`INCORRECT MASTERPASS`)
+        errLabelCheckMP.show()
+        return
+      }
+    })
 
-			if (result.match) {
-				// TODO: show confirmation
-				errLabelCheckMP.text(`CORRECT MASTERPASS`);
-				errLabelCheckMP.css('color', '#2ECC71');
-				errLabelCheckMP.show();
-				return;
-			} else {
-				errLabelCheckMP.text(`INCORRECT MASTERPASS`);
-				errLabelCheckMP.show();
-				return;
-			}
-		});
+    ipcRenderer.on('setMasterPassResult', function (event, err) {
+      rconsole.log(`IPCRENDER setMasterPassResult emitted, err = ${err}`)
+      if (err) {
+        errLabelSetMP.text(`ERROR: ${err}`)
+        errLabelSetMP.css('color', '#9F3A38')
+        errLabelSetMP.show()
+        return
+      } else {
+        errLabelSetMP.text(`MASTERPASS SUCCESSFULLY SET`)
+        errLabelSetMP.css('color', '#2ECC71')
+        errLabelSetMP.show()
+        if (nav_to) {
+          setTimeout(function () {
+            navigate('default')
+          }, 2000)
+        } else {
+          setTimeout(function () {
+            navigate('default')
+            errLabelSetMP.hide()
+            errLabelSetMP.css('color', '#9F3A38')
+          }, 2000)
+        }
+        return
+      }
+    })
 
-		ipcRenderer.on('setMasterPassResult', function(event, err) {
-			rconsole.log(`IPCRENDER setMasterPassResult emitted, err = ${err}`);
-			if (err) {
-				errLabelSetMP.text(`ERROR: ${err}`);
-				errLabelSetMP.css('color', '#9F3A38');
-				errLabelSetMP.show();
-				return;
-			} else {
-				errLabelSetMP.text(`MASTERPASS SUCCESSFULLY SET`);
-				errLabelSetMP.css('color', '#2ECC71');
-				errLabelSetMP.show();
-				if (nav_to) {
-					setTimeout(function() {
-						navigate("default");
-					}, 2000);
-				} else {
-					setTimeout(function() {
-						navigate("default");
-						errLabelSetMP.hide();
-						errLabelSetMP.css('color', '#9F3A38');
-					}, 2000);
-				}
-				return;
-			}
-		});
+    /* Helper functions */
+    function getParam (name, url) {
+      name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]')
+      var regex = new RegExp('[\\?&]' + name + '=([^&#]*)'),
+        results = regex.exec(url)
+      return (results === null) ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '))
+    }
 
-		/* Helper functions */
-		function getParam(name, url) {
-			name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-			var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-				results = regex.exec(url);
-			return (results === null) ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-		}
+    function validateField (field, errLabel) {
+      var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
+        MPel = $(`input#${field + 'Input'}`)
+      const masterpass = MPel.val()
+      if (MPregex.test(masterpass)) {
+        errLabel.hide()
+        MPel.val('')
+        ipcRenderer.send(field, masterpass)
+      } else if (!masterpass) {
+        errLabel.text('please enter a masterpass'.toLocaleUpperCase())
+        errLabel.show()
+        MPel.val('')
+      } else {
+        errLabel.text('Invalid masterpass'.toLocaleUpperCase())
+        errLabel.show()
+        MPel.val('')
+      }
+    }
 
-		function validateField(field, errLabel) {
-			var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
-				MPel = $(`input#${field+"Input"}`);
-			const masterpass = MPel.val();
-			if (MPregex.test(masterpass)) {
-				errLabel.hide();
-				MPel.val("");
-				ipcRenderer.send(field, masterpass);
-			} else if (!masterpass) {
-				errLabel.text("please enter a masterpass".toLocaleUpperCase());
-				errLabel.show();
-				MPel.val("");
-			} else {
-				errLabel.text("Invalid masterpass".toLocaleUpperCase());
-				errLabel.show();
-				MPel.val("");
-			}
-		}
+    function navigate (panelID) {
+      var oldSelection = $('.panel-container > div.current')
+      if (oldSelection) oldSelection.removeClass('current')
+      if (nav_to) {
+        var currSel = $('#panel-' + panelID)
+        currSel.find('footer').hide()
+        currSel.addClass('current')
+      } else {
+        $('#panel-' + panelID).addClass('current')
+      }
+    }
 
-		function navigate(panelID) {
-			var oldSelection = $('.panel-container > div.current');
-			if (oldSelection) oldSelection.removeClass("current");
-			if (nav_to) {
-				var currSel = $("#panel-" + panelID);
-				currSel.find("footer").hide();
-				currSel.addClass("current");
-			} else {
-				$("#panel-" + panelID).addClass("current");
-			}
-		}
+    function updateOnlineStatus () {
+      ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline')
+    }
 
-		function updateOnlineStatus() {
-			ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
-		};
-	</script>
+  </script>
 </body>
 
 </html>
