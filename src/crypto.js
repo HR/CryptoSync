@@ -180,6 +180,7 @@ exports.genIV = function () {
 }
 
 exports.deriveMasterPassKey = function (masterpass, mpsalt, callback) {
+  if (!masterpass) callback(new Error('MasterPassKey not provided'))
   const salt = (mpsalt) ? ((mpsalt instanceof Buffer) ? mpsalt : new Buffer(mpsalt.data)) : crypto.randomBytes(defaults.keyLength)
   crypto.pbkdf2(masterpass, salt, defaults.mpk_iterations, defaults.keyLength, defaults.digest, (err, mpkey) => {
     if (err) {

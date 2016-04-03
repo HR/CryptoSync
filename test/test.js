@@ -583,24 +583,21 @@ describe("CryptoSync Core Modules' tests", function () {
         }
       }
     })
-    it('should save and restore obj', function (done) {
+    it('should save and restore obj', function () {
       const beforeSaveObj = _.cloneDeep(global.testo)
-      db.saveGlobalObj('testo')
+      return db.saveGlobalObj('testo')
         .then(() => {
           global.testo = null
-          db.restoreGlobalObj('testo')
-            .then(() => {
-              expect(global.testo)
-                .to.deep.equal(beforeSaveObj)
-              db.close()
-              done()
-            })
-            .catch((err) => {
-              done(err)
-            })
+          return db.restoreGlobalObj('testo')
+        })
+        .then(() => {
+          expect(global.testo)
+            .to.deep.equal(beforeSaveObj)
+          db.close()
+          return
         })
         .catch((err) => {
-          done(err)
+          throw (err)
         })
     })
 
@@ -612,14 +609,12 @@ describe("CryptoSync Core Modules' tests", function () {
           db.close()
           db = new Db('tmp/db')
           return db.restoreGlobalObj('testo')
-            .then(() => {
-              expect(global.testo)
-                .to.deep.equal(beforeSaveObj)
-              db.close()
-            })
-            .catch((err) => {
-              throw (err)
-            })
+        })
+        .then(() => {
+          expect(global.testo)
+            .to.deep.equal(beforeSaveObj)
+          db.close()
+          return
         })
         .catch((err) => {
           throw (err)
@@ -727,6 +722,15 @@ describe("CryptoSync Core Modules' tests", function () {
             .to.equal(mpkey.toString('hex'))
           done()
         })
+      })
+    })
+
+    it('should throw error if not provided or undefined', function (done) {
+      const pass = ''
+      MasterPass.check(pass, function (err, MATCH, dmpkey) {
+        expect(err).to.be.an('error')
+        expect(err.message).to.equal('MasterPassKey not provided')
+        done()
       })
     })
   })
