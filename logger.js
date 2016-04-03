@@ -7,6 +7,12 @@ const winston = require('winston'),
 	moment = require('moment');
 
 winston.emitErrs = true;
+const fileTransport = new(winston.transports.File)({
+	filename: `./debug/CS_debug_${moment().format('DD.MM@HH:MM').trim()}.log`,
+	handleExceptions: true,
+	maxsize: 5242880, //5MB
+	colorize: false
+});
 
 module.exports = (!process.env.TEST_RUN) ? new(winston.Logger)({
 	transports: [
@@ -17,22 +23,12 @@ module.exports = (!process.env.TEST_RUN) ? new(winston.Logger)({
 			json: false,
 			colorize: true
 		}),
-		new(winston.transports.File)({
-			filename: `./debug/CS_debug_${moment().format('DD.MM@HH:MM').trim()}.log`,
-			handleExceptions: true,
-			maxsize: 5242880, //5MB
-			colorize: false
-		})
+		fileTransport
 	],
 	exitOnError: false
 }) : new(winston.Logger)({
 	transports: [
-		new(winston.transports.File)({
-			filename: `./debug/CS_debug_${moment().format('DD.MM@HH.MM').trim()}.log`,
-			handleExceptions: true,
-			maxsize: 5242880, //5MB
-			colorize: false
-		})
+		fileTransport
 	],
 	exitOnError: false
 });

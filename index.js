@@ -569,7 +569,7 @@ app.on('will-quit', (event) => {
 			global.mdb.saveGlobalObj('files'),
 			global.mdb.saveGlobalObj('stats')
 		]).then(function () {
-			if (global.MasterPassKey.get() && !_.isEmpty(global.vault)) {
+			if (global.MasterPassKey !== undefined || !_.isEmpty(global.vault)) {
 				logger.info(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`);
 				logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`);
 
