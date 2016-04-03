@@ -1,6 +1,6 @@
-# language: node_js
-# node_js:
-#   - '5.8.0'
+language: node_js
+node_js:
+  - '5.8.0'
 
 git:
   depth: 3
@@ -9,21 +9,19 @@ branches:
   only:
     - master
 
-env:
-  - CXX=g++-4.8
-  - NODE_VERSION='5.8.0'
-  - TEST_RUN=true
+# env:
+#   - NODE_VERSION='5.8.0'
 
-matrix:
-  include:
-    - os: linux
-      env:
-        - NODE_VERSION=5.8.0
-        - BUILD_OS_NAME=linux
-    - os: osx
-      env:
-        - NODE_VERSION=5.8.0
-        - BUILD_OS_NAME=darwin
+# matrix:
+#   include:
+#     - os: linux
+#       env:
+#         - NODE_VERSION=5.8.0
+#         - BUILD_OS_NAME=linux
+#     - os: osx
+#       env:
+#         - NODE_VERSION=5.8.0
+#         - BUILD_OS_NAME=darwin
 
 script: ./script/travis-build.sh
 

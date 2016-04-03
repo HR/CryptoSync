@@ -2,7 +2,8 @@
 
 echo $CC
 echo $CXX
-
+# export CXX=g++-4.8
+export TEST_RUN=true
 
 git clone https://github.com/creationix/nvm.git /tmp/.nvm
 source /tmp/.nvm/nvm.sh
