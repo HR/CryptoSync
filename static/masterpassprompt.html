@@ -22,7 +22,7 @@
         <form onsubmit="return false;">
           <div class="masterpass">
             <input type="password" name="masterpass" id="checkMasterPassInput" placeholder="********" />
-            <label for="checkMasterPassInput"></label>
+            <label for="checkMasterPassInput" id="checkMasterPassLabel"></label>
           </div>
           <div class="forgotMP">
             <a class="navigationLink" data-target="reset">Forgot MasterPass?</a>
@@ -85,9 +85,21 @@
   </section>
   <script type="text/javascript">
     var ipcRenderer = require('electron').ipcRenderer,
-      rconsole = require('electron').remote.getGlobal('console'),
+      logger = require('../logger.js'),
+      getParam = require('../src/util').getParam,
       nav_to = getParam('nav_to', window.document.URL)
     window.$ = window.jQuery = require('jquery')
+    var responses = {
+      invalid: 'INVALID MASTERPASS',
+      incorrect: 'INCORRECT MASTERPASS',
+      correct: 'CORRECT MASTERPASS',
+      setSuccess: 'MASTERPASS SUCCESSFULLY SET',
+      empty: 'PLEASE ENTER A MASTERPASS',
+    }
+    var colors = {
+      bad: '#9F3A38',
+      good: '#2ECC71',
+    }
 
     $(window).on('online', updateOnlineStatus)
     $(window).on('offline', updateOnlineStatus)
@@ -117,37 +129,37 @@
 
     /* Event listeners */
     ipcRenderer.on('checkMasterPassResult', function (event, result) {
-      rconsole.log(`IPCRENDER checkMasterPassResult emitted`)
+      logger.verbose(`IPCRENDER checkMasterPassResult emitted`)
       if (result.err) {
         errLabelCheckMP.text(`ERROR: ${err}`)
-        errLabelCheckMP.show()
+        .show()
         return
       }
 
       if (result.match) {
         // TODO: show confirmation
-        errLabelCheckMP.text(`CORRECT MASTERPASS`)
-        errLabelCheckMP.css('color', '#2ECC71')
-        errLabelCheckMP.show()
+        errLabelCheckMP.text(responses.correct)
+        .css('color', colors.good)
+        .show()
         return
       } else {
-        errLabelCheckMP.text(`INCORRECT MASTERPASS`)
-        errLabelCheckMP.show()
+        errLabelCheckMP.text(responses.incorrect)
+        .show()
         return
       }
     })
 
     ipcRenderer.on('setMasterPassResult', function (event, err) {
-      rconsole.log(`IPCRENDER setMasterPassResult emitted, err = ${err}`)
+      logger.verbose(`IPCRENDER setMasterPassResult emitted, err = ${err}`)
       if (err) {
         errLabelSetMP.text(`ERROR: ${err}`)
-        errLabelSetMP.css('color', '#9F3A38')
-        errLabelSetMP.show()
+        .css('color', colors.bad)
+        .show()
         return
       } else {
-        errLabelSetMP.text(`MASTERPASS SUCCESSFULLY SET`)
-        errLabelSetMP.css('color', '#2ECC71')
-        errLabelSetMP.show()
+        errLabelSetMP.text(responses.setSuccess)
+        .css('color', colors.good)
+        .show()
         if (nav_to) {
           setTimeout(function () {
             navigate('default')
@@ -156,7 +168,7 @@
           setTimeout(function () {
             navigate('default')
             errLabelSetMP.hide()
-            errLabelSetMP.css('color', '#9F3A38')
+            .css('color', colors.bad)
           }, 2000)
         }
         return
@@ -164,13 +176,6 @@
     })
 
     /* Helper functions */
-    function getParam (name, url) {
-      name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]')
-      var regex = new RegExp('[\\?&]' + name + '=([^&#]*)'),
-        results = regex.exec(url)
-      return (results === null) ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '))
-    }
-
     function validateField (field, errLabel) {
       var MPregex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/g,
         MPel = $(`input#${field + 'Input'}`)
@@ -180,11 +185,11 @@
         MPel.val('')
         ipcRenderer.send(field, masterpass)
       } else if (!masterpass) {
-        errLabel.text('please enter a masterpass'.toLocaleUpperCase())
+        errLabel.text(responses.empty)
         errLabel.show()
         MPel.val('')
       } else {
-        errLabel.text('Invalid masterpass'.toLocaleUpperCase())
+        errLabel.text(responses.invalid)
         errLabel.show()
         MPel.val('')
       }

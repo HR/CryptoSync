@@ -9,7 +9,7 @@ const app = electron.app,
   crypto = require('./src/crypto'),
   OAuth = require('./src/OAuth'),
   util = require('./src/util'),
-  res = require('./static/js/res'),
+  res = require('./res/res'),
   Account = require('./src/Account'),
   vault = require('./src/vault'),
   MasterPass = require('./src/MasterPass'),
@@ -30,10 +30,14 @@ const app = electron.app,
   async = require('async'),
   logger = require('./logger')
 
+
+// change exec path
+// process.chdir(app.getAppPath())
+logger.info(`cwd: ${process.cwd()}`)
 require('dotenv').config()
 
 // App init
-app.dock.setIcon('res/app-icons/CryptoSync256.png')
+// app.dock.setIcon('res/app-icons/CryptoSync256.png')
 
 // enable remote debugging
 // app.commandLine.appendSwitch('remote-debugging-port', '8315')

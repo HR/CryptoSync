@@ -13,7 +13,7 @@
   "engines": {
     "node": ">=4"
   },
-  "electronVersion": "*",
+  "electronVersion": "0.37.3",
   "scripts": {
     "test": "TEST_RUN=true mocha --compilers js:babel-core/register",
     "coverage": "TEST_RUN=true ./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover --root src/ ./node_modules/.bin/_mocha --reporter mocha-lcov-reporter",
@@ -21,7 +21,10 @@
     "coveralls": "node ./node_modules/.bin/coveralls < coverage/lcov.info",
     "codeclimate": "node ./node_modules/.bin/codeclimate-test-reporter < coverage/lcov.info",
     "start": "./node_modules/gulp/bin/gulp.js",
-    "build": "electron-packager . $npm_package_productName --out=dist --ignore='^/dist$' --prune --asar --all --version=$npm_package_electronVersion"
+    "testbuild": "electron-packager . $npm_package_productName --out=dest --ignore='(test|dest|coverage)' --asar --platform=$BUILD_OS_NAME --arch=x64 --version=$npm_package_electronVersion --icon=res/app-icons/CryptoSync256 --app-copyright=HR --overwrite",
+    "lb": "echo $npm_package_productName && echo $npm_package_electronVersion",
+    "lbuild": "electron-packager . $npm_package_productName --out=dest --ignore='(test|dest|debug|coverage|backups)' --asar --platform=darwin --arch=x64 --version=$npm_package_electronVersion --icon=res/app-icons/CryptoSync256.icns --app-copyright=HR --overwrite",
+    "build": "electron-packager . $npm_package_productName --out=dest --ignore='(test|dest|debug|coverage)' --prune --asar --all --version=$npm_package_electronVersion"
   },
   "xo": {
     "esnext": true
@@ -41,7 +44,6 @@
     "babel-core": "*",
     "base64-stream": "*",
     "chokidar": "*",
-    "co": "^4.6.0",
     "coveralls": "^2.11.9",
     "dotenv": "^2.0.0",
     "electron-debug": "*",
@@ -59,7 +61,6 @@
     "lodash": "*",
     "mocha": "^2.4.5",
     "moment": "*",
-    "querystring": "*",
     "secrets.js": "*",
     "tar": "*",
     "winston": "^2.2.0"
@@ -69,7 +70,7 @@
     "babel-eslint": "*",
     "babel-preset-es2015": "*",
     "chai": "*",
-    "chromedriver": "*",
+    "chai-as-promised": "^5.3.0",
     "codeclimate-test-reporter": "^0.3.1",
     "coveralls": "^2.11.9",
     "electron-chromedriver": "^0.37.1",
@@ -84,11 +85,9 @@
     "spectron": "^1.37.0",
     "standard": "^6.0.8",
     "wdio-mocha-framework": "^0.2.12",
-    "webdriverio": "^4.0.5",
     "xo": "*"
   },
   "optionalDependencies": {
-    "selenium-webdriver": "*",
     "gulp-mocha": "*",
     "dropbox": "*",
     "event-kit": "*",
