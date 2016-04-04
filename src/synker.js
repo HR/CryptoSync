@@ -4,12 +4,11 @@
  * The worker for the cloud sync process (spwaned as a child of main process)
  * Ensures the sync process runs uninterruptedly (from main)
  ******************************/
-const sync = require('./sync'),
-  moment = require('moment'),
-  fs = require('fs-extra'),
-  logger = require('../logger'),
-  _ = require('lodash'),
-  async = require('async')
+const sync = require('./sync')
+const logger = require('../logger')
+const _ = require('lodash')
+// const async = require('async')
+// const moment = require('moment')
 
 exports.init = function () {
   return new Promise(function (resolve, reject) {

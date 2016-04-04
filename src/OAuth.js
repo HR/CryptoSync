@@ -4,12 +4,11 @@
  * Establish a authorised OAuth 2 client
  ******************************/
 
-const fs = require('fs'),
-  google = require('googleapis'),
-  googleAuth = require('google-auth-library'),
-  logger = require('../logger'),
-  request = require('request'),
-  SCOPES = ['https://www.googleapis.com/auth/drive']
+// const fs = require('fs')
+// const google = require('googleapis')
+const googleAuth = require('google-auth-library')
+const logger = require('../logger')
+const SCOPES = ['https://www.googleapis.com/auth/drive']
 
 function OAuth (type) {
   // TODO: Check type and accordingly init oauth2

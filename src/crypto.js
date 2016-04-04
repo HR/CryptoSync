@@ -4,16 +4,13 @@
  * Provides the crypto functionality required
  ******************************/
 
-const secrets = require('secrets.js'),
-  fs = require('fs-extra'),
-  util = require('./util'),
-  fstream = require('fstream'),
-  tar = require('tar'),
-  logger = require('../logger'),
-  _ = require('lodash'),
-  zlib = require('zlib'),
-  Readable = require('stream').Readable,
-  crypto = require('crypto')
+const secrets = require('secrets.js')
+const fs = require('fs-extra')
+const util = require('./util')
+const logger = require('../logger')
+const _ = require('lodash')
+const Readable = require('stream').Readable
+const crypto = require('crypto')
 
 // Crypto default constants
 // TODO: change accordingly when changed in settings
@@ -39,15 +36,9 @@ let defaults = {
  *  - rewrite as promises
  */
 
-// Error handler
-function handler (error, at) {
-  logger.verbose(`Error ${at} STREAM: Error while OP of file to ${path}`)
-  callback(err)
-}
-
 exports.encrypt = function (origpath, destpath, mpkey, callback) {
   // decrypts any arbitrary data passed with the pass
-  let pass = (Array.isArray(mpkey)) ? shares2pass(mpkey) : mpkey
+  let pass = (Array.isArray(mpkey)) ? exports.shares2pass(mpkey) : mpkey
   // pass = password
   const salt = crypto.randomBytes(defaults.keyLength) // generate pseudorandom salt
   crypto.pbkdf2(pass, salt, defaults.iterations, defaults.keyLength, defaults.digest, (err, key) => {
@@ -100,11 +91,7 @@ CryptoSync#${iv.toString('hex')}#${cipher.getAuthTag().toString('hex')}`)
 
 exports.encryptObj = function (obj, destpath, mpkey, viv, callback) {
   // decrypts any arbitrary data passed with the pass
-  const i = defaults.mpk_iterations,
-    kL = defaults.keyLength,
-    ivL = defaults.ivLength,
-    digest = defaults.digest
-    // pass = (Array.isArray(password)) ? shares2pass(password) : password,
+  // pass = (Array.isArray(password)) ? shares2pass(password) : password,
 
   const iv = (viv instanceof Buffer) ? viv : new Buffer(viv.data)
   const origin = new Readable()
@@ -122,10 +109,10 @@ exports.encryptObj = function (obj, destpath, mpkey, viv, callback) {
   origin.on('error', function (e) {
     callback(e)
   })
-    .pipe(cipher).on('error', function (e) {
+  .pipe(cipher).on('error', function (e) {
     callback(e)
   })
-    .pipe(dest).on('error', function (e) {
+  .pipe(dest).on('error', function (e) {
     callback(e)
   })
 
@@ -137,9 +124,6 @@ exports.encryptObj = function (obj, destpath, mpkey, viv, callback) {
 }
 
 exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
-  const i = defaults.mpk_iterations,
-    kL = defaults.keyLength,
-    digest = defaults.digest
   const iv = (viv instanceof Buffer) ? viv : new Buffer(viv.data)
   const tag = (vtag instanceof Buffer) ? vtag : new Buffer(vtag.data)
 
@@ -250,7 +234,7 @@ exports.decrypt = function (origpath, destpath, key, iv, authTag, callback) {
         const iv = new Buffer(fields[1], 'hex')
         const authTag = new Buffer(fields[2], 'hex')
         const mainData = lines.slice(0, -1).join()
-        let origin = new Readable
+        let origin = new Readable()
         // read as stream
         origin.push(mainData)
         origin.push(null)
@@ -274,8 +258,8 @@ exports.decrypt = function (origpath, destpath, key, iv, authTag, callback) {
         })
 
         dest.on('finish', () => {
-          logger.verbose(`Finished encrypted/written to ${destf}`)
-          callback(null, iv, tag)
+          logger.verbose(`Finished encrypted/written to ${destpath}`)
+          callback(null, iv)
         })
       } else {
         callback(new Error('IV and authTag not supplied'))
@@ -286,7 +270,7 @@ exports.decrypt = function (origpath, destpath, key, iv, authTag, callback) {
   }
 }
 
-exports.pass2shares = function (pass, total = defaults.shares , th = defaults.threshold) {
+exports.pass2shares = function (pass, total = defaults.shares, th = defaults.threshold) {
   // splits the pass into shares using Shamir's Secret Sharing
   // convert the text into a hex string
   try {

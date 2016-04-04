@@ -3,14 +3,12 @@
  * init.js
  * Initialisers
  ******************************/
-const _ = require('lodash'),
-  moment = require('moment'),
-  fs = require('fs-extra'),
-  google = require('googleapis'),
-  logger = require('../logger'),
-  util = require('./util'),
-  Db = require('./Db'),
-  crypto = require('./crypto')
+const _ = require('lodash')
+const moment = require('moment')
+const fs = require('fs-extra')
+const google = require('googleapis')
+const logger = require('../logger')
+const Db = require('./Db')
 
 exports.main = function () {
   // Decrypt db (the Vault) and get ready for use

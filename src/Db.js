@@ -4,12 +4,10 @@
  * Custom DB (levelup) API implementation
  ******************************/
 
-let levelup = require('levelup'),
-  fs = require('fs-extra'),
-  _ = require('lodash'),
-  logger = require('../logger'),
-  crypto = require('./crypto'),
-  util = require('util')
+const levelup = require('levelup')
+const _ = require('lodash')
+const logger = require('../logger')
+const util = require('util')
 
 function Db (location) {
   // Initialize necessary methods/properties from levelup in this instance

@@ -4,10 +4,6 @@
  * User accounts
  ******************************/
 
-const google = require('googleapis'),
-  googleAuth = require('google-auth-library'),
-  request = require('request')
-
 /**
  * Constructor
  *
