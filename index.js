@@ -1,34 +1,34 @@
 'use strict'
 const electron = require('electron')
-const app = electron.app,
-  BrowserWindow = electron.BrowserWindow,
-  ipc = electron.ipcMain,
-  Tray = electron.Tray,
-  shell = electron.shell,
-  Db = require('./src/Db'),
-  crypto = require('./src/crypto'),
-  OAuth = require('./src/OAuth'),
-  util = require('./src/util'),
-  res = require('./res/res'),
-  Account = require('./src/Account'),
-  vault = require('./src/vault'),
-  MasterPass = require('./src/MasterPass'),
-  MasterPassKey = require('./src/_MasterPassKey'),
-  sync = require('./src/sync'),
-  init = require('./src/init'),
-  synker = require('./src/synker'),
-  fs = require('fs-extra'),
-  chokidar = require('chokidar'),
-  https = require('https'),
-  sutil = require('util'),
-  moment = require('moment'),
-  // Vault_cl = require('./src/Vault_cl'),
-  base64 = require('base64-stream'),
-  Positioner = require('electron-positioner'),
-  _ = require('lodash'),
-  google = require('googleapis'),
-  async = require('async'),
-  logger = require('./logger')
+const app = electron.app
+const BrowserWindow = electron.BrowserWindow
+const ipc = electron.ipcMain
+const Tray = electron.Tray
+const shell = electron.shell
+const Db = require('./src/Db')
+const crypto = require('./src/crypto')
+const OAuth = require('./src/OAuth')
+const util = require('./src/util')
+const res = require('./res/res')
+const Account = require('./src/Account')
+const vault = require('./src/vault')
+const MasterPass = require('./src/MasterPass')
+const MasterPassKey = require('./src/_MasterPassKey')
+const sync = require('./src/sync')
+const init = require('./src/init')
+const synker = require('./src/synker')
+const fs = require('fs-extra')
+const chokidar = require('chokidar')
+const https = require('https')
+const sutil = require('util')
+const moment = require('moment')
+// const Vault_cl = require('./src/Vault_cl')
+const base64 = require('base64-stream')
+const Positioner = require('electron-positioner')
+const _ = require('lodash')
+const google = require('googleapis')
+const async = require('async')
+const logger = require('./logger')
 
 
 // change exec path
@@ -54,15 +54,11 @@ require('dotenv').config()
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')()
 
-const API_REQ_LIMIT = 8
 // TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
-// TODO: consider using 'q' or 'bluebird' promise libs later
-// TODO: consider using arrow callback style I.E. () => {}
 // YOLO#101
 
 // MasterPassKey is protected (private var) and only exist in Main memory
 // MasterPassKey is a derived key of the actual user MasterPass
-// TODO: CHANGE USAGE OF gAuth SUPPORT MULTIPLE ACCOUNTS
 global.gAuth
 global.accounts = {}
 global.creds = {}
@@ -464,7 +460,7 @@ function Settings (callback) {
   win.openDevTools()
   ipc.on('resetMasterPass', function (event, type) {
     logger.verbose('IPCMAIN: resetMasterPass emitted. Creating MasterPassPrompt...')
-    MasterPassPrompt(true, function (newMPset) {
+    MasterPass.Prompt(true, function (newMPset) {
       // if (newMPset) then new new MP was set otherwise it wasn't
       // TODO: show password was set successfully
       logger.info(`MAIN: MasterPassPrompt, newMPset finished? ${newMPset}`)
@@ -802,9 +798,9 @@ app.on('ready', function () {
 })
 
 exports.MasterPassPrompt = function (reset, callback) {
-  let tries = 0,
-    newMPset = false,
-    gotMP = false
+  let tries = 0
+  let newMPset = false
+  let gotMP = false
   let win = new BrowserWindow({
     width: 300, // 300
     height: 435,
@@ -859,7 +855,7 @@ exports.MasterPassPrompt = function (reset, callback) {
       // TODO: create new vault, delete old data and start re-encrypting
       if (!err) {
         newMPset = true
-        gglobal.MasterPassKey = new MasterPassKey(mpkey)
+        global.MasterPassKey = new MasterPassKey(mpkey)
         global.mdb.saveGlobalObj('creds')
           .catch((err) => {
             throw err
