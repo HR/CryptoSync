@@ -25,4 +25,4 @@ npm install --no-optional
 
 # npm run testbuild
 
-- npm test
+npm test
