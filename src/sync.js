@@ -4,22 +4,19 @@
  * Main cloud sync functionality
  ******************************/
 
-let levelup = require('levelup'),
-  fs = require('fs-extra'),
-  _ = require('lodash'),
-  google = require('googleapis'),
-  base64 = require('base64-stream'),
-  res = require('../res/res'),
-  https = require('https'),
-  moment = require('moment'),
-  EventEmitter = require('events').EventEmitter,
-  Account = require('./Account'),
-  logger = require('../logger'),
-  util = require('./util'),
-  crypto = require('./crypto'),
-  async = require('async')
+const fs = require('fs-extra')
+const _ = require('lodash')
+const base64 = require('base64-stream')
+const res = require('../res/res')
+const https = require('https')
+const moment = require('moment')
+const EventEmitter = require('events').EventEmitter
+const Account = require('./Account')
+const logger = require('../logger')
+const util = require('./util')
+const crypto = require('./crypto')
+const async = require('async')
 
-const API_REQ_LIMIT = 7
 const CONCURRENCY = 2
 // class SyncEmitter extends EventEmitter {}
 
@@ -199,7 +196,7 @@ exports.updateQueue = async.queue(function (file, callback) {
     media: {
       mimeType: 'application/octet-stream',
       body: fs.createReadStream(file.cryptPath)
-    },
+    }
   }, function (err, res) {
     if (err) {
       logger.verbose(`callback: error updating ${file.name}`)
@@ -221,7 +218,7 @@ exports.putQueue = async.queue(function (file, callback) {
     media: {
       mimeType: 'application/octet-stream',
       body: fs.createReadStream(file.cryptPath)
-    },
+    }
   }, function (err, rfile) {
     if (err) {
       logger.verbose(`callback: error putting ${file.name}`)
@@ -278,10 +275,10 @@ exports.getAllFiles = function (email) {
   logger.verbose(`PROMISE for retrieving all of ${email} files`)
   return new Promise(
     function (resolve, reject) {
-      let fBtree = [],
-        folders = [],
-        root,
-        rfsTree = {}
+      let fBtree = []
+      let folders = []
+      let rfsTree = {}
+      let root
       // TODO: Implement Btree for file directory structure
       logger.verbose('PROMISE: getAllFiles')
       logger.verbose(`query is going to be >> 'root' in parents and trashed = false`)
@@ -295,7 +292,7 @@ exports.getAllFiles = function (email) {
         if (err) {
           reject(err)
         }
-        if (res.files.length == 0) {
+        if (res.files.length === 0) {
           logger.verbose('No files found.')
           reject(new Error('No files found'))
         } else {
@@ -358,12 +355,12 @@ exports.getPhoto = function (res) {
   )
 }
 
-exports.setAccountInfo = function (param) {
+exports.setAccountInfo = function (param, gAuth) {
   logger.verbose('PROMISE: setAccountInfo')
-  let profileImgB64 = param[0],
-    acc = param[1]
+  const profileImgB64 = param[0]
+  const acc = param[1]
   return new Promise(function (resolve, reject) {
-    let accName = `${acc.user.displayName.toLocaleLowerCase().replace(/ /g, '')}_drive`
+    const accName = `${acc.user.displayName.toLocaleLowerCase().replace(/ /g, '')}_drive`
     logger.verbose(`Accounts object key, accName = ${accName}`)
     // Add account to global acc obj
     global.accounts[accName] = new Account('gdrive', acc.user.displayName, acc.user.emailAddress, profileImgB64, {

@@ -4,11 +4,9 @@
  * MasterPass functionality
  ******************************/
 
-const crypto = require('./crypto'),
-  util = require('./util'),
-  _ = require('lodash'),
-  logger = require('../logger'),
-  Main = (process.env.TEST_RUN) ? null : require('../index')
+const crypto = require('./crypto')
+const logger = require('../logger')
+const Main = (process.env.TEST_RUN) ? null : require('../index')
 
 exports.Prompt = function () {
   return new Promise(function (resolve, reject) {

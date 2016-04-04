@@ -5,29 +5,18 @@ const BrowserWindow = electron.BrowserWindow
 const ipc = electron.ipcMain
 const Tray = electron.Tray
 const shell = electron.shell
-const Db = require('./src/Db')
-const crypto = require('./src/crypto')
 const OAuth = require('./src/OAuth')
 const util = require('./src/util')
-const res = require('./res/res')
-const Account = require('./src/Account')
 const vault = require('./src/vault')
 const MasterPass = require('./src/MasterPass')
 const MasterPassKey = require('./src/_MasterPassKey')
 const sync = require('./src/sync')
 const init = require('./src/init')
 const synker = require('./src/synker')
-const fs = require('fs-extra')
-const chokidar = require('chokidar')
-const https = require('https')
-const sutil = require('util')
 const moment = require('moment')
 // const Vault_cl = require('./src/Vault_cl')
-const base64 = require('base64-stream')
 const Positioner = require('electron-positioner')
 const _ = require('lodash')
-const google = require('googleapis')
-const async = require('async')
 const logger = require('./logger')
 
 
@@ -54,8 +43,6 @@ require('dotenv').config()
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')()
 
-// TODO: USE ES6 Generators for asynchronously getting files, encryption and then uploading them
-// YOLO#101
 
 // MasterPassKey is protected (private var) and only exist in Main memory
 // MasterPassKey is a derived key of the actual user MasterPass
@@ -82,13 +69,11 @@ global.paths = {
   vault: `${app.getPath('home')}/CryptoSync/vault.crypto`
 }
 
-// TODO: Get from mdb as JSON and store as JSON as one value
-// TODO: set default at setup only
 global.settings = {
   user: {
 
   },
-  default: { // TODO: finalise the default settings
+  default: {
     keyLength: '128',
     algorithm: 'CTR',
     randomness: 'Pseudo',
@@ -111,7 +96,6 @@ global.views = {
 
 // prevent the following from being garbage collected
 let Menubar
-let drive
 let exit = false
 
 /**
@@ -313,7 +297,7 @@ function Setup (callback) {
             return sync.getPhoto(res)
           })
           .then((param) => {
-            return sync.setAccountInfo(param)
+            return sync.setAccountInfo(param, global.gAuth)
           })
           .then((email) => {
             return sync.getAllFiles(email)
@@ -366,7 +350,6 @@ function Setup (callback) {
         logger.error(`vault.init ERR: ${err.stack}`)
         throw (err)
       })
-  // TODO: restart the application in default mode
   })
 
   win.on('closed', function () {
@@ -397,7 +380,6 @@ function addAccountPrompt (callback) {
   ipc.on('initAuth', function (event, type) {
     logger.verbose('IPCMAIN: initAuth emitted. Creating Auth...')
     global.gAuth = new OAuth(type)
-    // TODO: rewrite the authorize function
     global.mdb.onlyGetValue('gdrive-token').then((token) => {
       global.gAuth.authorize(token, function (authUrl) {
         if (authUrl) {
@@ -433,7 +415,6 @@ function addAccountPrompt (callback) {
         logger.verbose(`IPCMAIN: Got the auth_code, ${auth_code}`)
         logger.verbose('IPCMAIN: Calling callback with the code...')
       } else {
-        // TODO: close window and display error in settings
         callback(err)
       }
     }
@@ -470,11 +451,10 @@ function Settings (callback) {
   ipc.on('removeAccount', function (event, account) {
     logger.verbose(`IPCMAIN: removeAccount emitted. Creating removing ${account}...`)
     // TODO: IMPLEMENT ACCOUNT REMOVAL ROUTINE
-    if (_.unset(global.accounts, account)) {
+    // if (_.unset(global.accounts, account)) {
       // deleted
       // reload window to update
-      win.loadURL(global.views.settings)
-    // TODO: update SYNC Objs
+      // win.loadURL(global.views.settings)
     // TODO: decide whether to do setup is all accounts removed
     // if (Object.keys(global.accounts).length === 0) {
     // 	// Create Setup
@@ -482,9 +462,9 @@ function Settings (callback) {
     // } else {
     //
     // }
-    } else {
+    // } else {
       // not deleted
-    }
+    // }
   })
   win.on('closed', function () {
     logger.verbose('win.closed event emitted for Settings.')
@@ -555,8 +535,7 @@ app.on('will-quit', (event) => {
     event.preventDefault()
     logger.info(`APP.ON('will-quit'): will-quit event emitted`)
     logger.verbose(`platform is ${process.platform}`)
-    // TODO: Cease any db OPs encrypt vault before quitting the app and dump to fs
-    // global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials
+    // TODO: global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials
     global.stats.endTime = moment().format()
 
     Promise.all([
@@ -616,14 +595,10 @@ app.on('activate', function (win) {
  **/
 
 app.on('ready', function () {
-  // TODO: Wrap all this into init()
   let setupRun = ((!util.checkDirectorySync(global.paths.mdb)) || (!util.checkFileSync(global.paths.vault)))
   if (setupRun) {
-    // TODO: Do more extensive FIRST RUN check
     logger.info('First run. Creating Setup wizard...')
     // Setup()
-    // TODO: Wrap Setup around Setup and call Setup the way its being called now
-    // Run User through Setup/First Install UI
     init.setup()
       // .then(
       // 	global.mdb.del('gdrive-token', function (err) {
@@ -638,10 +613,8 @@ app.on('ready', function () {
             ErrorPrompt(err, function (response) {
               logger.info(`ERRPROMT response: ${response}`)
               if (response === 'retry') {
-                // TODO: new Setup
                 Setup(null)
               } else {
-                // TODO: add persistent flag of firstRun = false
                 app.quit()
               }
             })
@@ -656,10 +629,6 @@ app.on('ready', function () {
   } else {
     // start menubar
     logger.info('Normal run. Creating Menubar...')
-
-    /*
-     * TODO: Consider whether to use Obj.change flag on accounts (potentially other Objs) to protect from accidental changes and corruption (by sys)?
-     */
 
     init.main()
       .then(() => {
@@ -695,105 +664,9 @@ app.on('ready', function () {
           // body...
         })
       })
-      // .then(() => {
-      //
-      // 	// TODO: Modularise, write as a seperate script
-      // 	// (with check for changes at interval)
-      // 	// and spawn as child process (with shared memory)
-      // 	// Implement with ES6 Generators?
-      //
-      // 	// Spawn a child process for sync worker
-      // 	// const cp = require('child_process')
-      // 	// const child = cp.fork('./src/sync_worker')
-      // 	//
-      // 	// child.on('put', function (file) {
-      // 	// 	// Receive results from child process
-      // 	// 	logger.verbose('received: ' + file)
-      // 	// })
-      // 	//
-      // 	// // Send child process some work
-      // 	// child.send('Please up-case this string')
-      //
-      // 	const dotRegex = /\/\..+/g
-      // 	const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g
-      //
-      // 	const watcher = chokidar.watch(global.paths.home, {
-      // 		ignored: dotRegex,
-      // 		persistent: true,
-      // 		ignoreInitial: true,
-      // 		alwaysStat: true
-      // 	})
-      //
-      // 	let createFileObj = function (fileId, fileName) {
-      // 		return new Promise(function (resolve, reject) {
-      // 			let file = {}
-      // 			file.name = fileName
-      // 			file.id = fileId
-      // 			file.mtime = stats.mtime
-      // 			global.files[file.id] = file
-      // 			resolve(file)
-      // 		})
-      // 	}
-      //
-      // 	watcher.on('add', (path, stats) => {
-      // 		if (dotRegex.test(path)) {
-      // 			// Ignore dot file
-      // 			logger.info(`IGNORE added file ${path}, stats.mtime = ${stats.mtime}`)
-      // 			watcher.unwatch(path)
-      // 		} else {
-      // 			// Queue up to encrypt and put
-      // 			let fileName = path.match(fNameRegex)[0]
-      // 			let relPath = path.replace(global.paths.home, '')
-      // 			logger.info(`ADD added file ${fileName}, stats ${stats.mtime}`)
-      //
-      // 			sync.genID()
-      // 				.then((fileId) => {
-      // 					let file = {}
-      // 					file.name = fileName
-      // 					file.id = fileId
-      // 					file.origpath = path
-      // 					file.mtime = stats.mtime
-      // 					global.files[file.id] = file
-      // 					return file
-      // 				})
-      // 				.then(pushCryptQueue)
-      // 				.then((file) => {
-      // 					logger.info(`Done encrypting ${file.name} (${file.id})`)
-      // 				})
-      // 				.catch((err) => {
-      // 					logger.error(`Error occured while adding ${fileName}:\n${err.stack}`)
-      // 				})
-      // 		}
-      // 	})
-      //
-      // 	watcher
-      // 		.on('change', (path, stats) => {
-      // 			if (dotRegex.test(path)) {
-      // 				// Ignore dot file
-      // 				logger.info(`IGNORE added file ${path}, stats ${stats.mtime}`)
-      // 				watcher.unwatch(path)
-      // 			} else {
-      // 				// Queue up to encrypt and put
-      // 				let fileName = path.match(fNameRegex)[0]
-      // 				logger.info(`File ${fileName} at ${path} has been changed, stats ${stats.mtime}}`)
-      // 			}
-      // 		})
-      // 		.on('unlink', (path, stats) => logger.info(`File ${path} has been removed, stats ${stats}`))
-      // 		.on('addDir', (path, stats) => logger.info(`Directory ${path} has been added, stats ${stats}`))
-      // 		.on('unlinkDir', (path, stats) => logger.info(`Directory ${path} has been removed, stats ${stats}`))
-      // 		.on('error', error => logger.error(`Watcher error: ${error}`))
-      // 		.on('ready', () => {
-      // 			logger.info('Initial scan complete. Ready for changes')
-      // 		})
-      // 	// .on('raw', (event, path, details) => {
-      // 	// 	logger.verbose('Raw event info:', event, path, details)
-      // 	// })
-      // 	//
-      // })
       .catch(function (error) {
         logger.error(`PROMISE ERR: ${error.stack}`)
       })
-  // TODO: rewrite as promise
   }
 })
 
@@ -817,7 +690,7 @@ exports.MasterPassPrompt = function (reset, callback) {
   // win.openDevTools()
   ipc.on('checkMasterPass', function (event, masterpass) {
     logger.verbose('IPCMAIN: checkMasterPass emitted. Checking MasterPass...')
-    // TODO: Clean this up and remove redundancies
+
     MasterPass.check(masterpass, function (err, match, mpkey) {
       if (err) {
         // send error
@@ -852,14 +725,17 @@ exports.MasterPassPrompt = function (reset, callback) {
   ipc.on('setMasterPass', function (event, masterpass) {
     logger.verbose('IPCMAIN: setMasterPass emitted, Setting Masterpass...')
     MasterPass.set(masterpass, function (err, mpkey) {
-      // TODO: create new vault, delete old data and start re-encrypting
       if (!err) {
         newMPset = true
         global.MasterPassKey = new MasterPassKey(mpkey)
-        global.mdb.saveGlobalObj('creds')
-          .catch((err) => {
-            throw err
-          })
+        // TODO: test this
+        vault.init(global.MasterPassKey.get())
+        .then((value) => {
+          return global.mdb.saveGlobalObj('creds')
+        })
+        .catch((err) => {
+          throw err
+        })
         webContents.send('setMasterPassResult', null)
       } else {
         webContents.send('setMasterPassResult', err)
