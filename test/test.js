@@ -11,6 +11,7 @@ const assert = require('assert'),
   init = require('../src/init'),
   synker = require('../src/synker'),
   MasterPass = require('../src/MasterPass'),
+  logger = require('../logger'),
   googleAuth = require('google-auth-library'),
   levelup = require('levelup'),
   sutil = require('util'),
@@ -24,13 +25,10 @@ if (!process.env.TRAVIS) {
   require('dotenv')
     .config()
 }
-
-process.chdir('test')
 console.log(`cwd: ${process.cwd()}`)
 
-
 describe("CryptoSync Core Modules' tests", function () {
-  function resetGlobalObj (name) {
+  function resetGlobalObj(name) {
     if (name === 'state.queues') {
       global.state.toGet = []
       global.state.toCrypt = []
@@ -41,69 +39,67 @@ describe("CryptoSync Core Modules' tests", function () {
     }
   }
 
-  global.rfile = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'))
+  global.paths = {
+    home: 'test/CryptoSync',
+    crypted: 'test/CryptoSync/.encrypted',
+    mdb: 'test/tmp/mdb',
+    vault: 'test/CryptoSync/vault.crypto',
+    tmp: 'test/tmp',
+    data: 'test/data'
+  }
+
+  global.defaults = {
+    iterations: 4096, // file encryption key iterations
+    keyLength: 32, // in bytes
+    ivLength: 12,
+    algorithm: 'aes-256-gcm',
+    salgorithm: 'aes-256-ctr',
+    digest: 'sha256',
+    hash_alg: 'sha256',
+    check_hash_alg: 'md5',
+    padLength: 1024,
+    mpk_iterations: 100000, // masterpass key iterations
+    shares: 3,
+    threshold: 2
+  }
+
+  global.vault = {
+    'RAND0M-ID3': {
+      name: 'crypto',
+      id: 22,
+      secure: true
+    },
+    'R3C0M-I4D': {
+      name: 'cry9to',
+      id: 2090,
+      secure: false
+    }
+  }
+
+  global.credentials = {
+    access_token: process.env.access_token,
+    token_type: process.env.token_type,
+    refresh_token: process.env.refresh_token,
+    expiry_date: process.env.expiry_date
+  }
+
+  global.creds = {}
+  global.state = {}
+
+  // Declare globals
+  fs.ensureDirSync(global.paths.tmp)
+  global.MasterPassKey = new MasterPassKey(scrypto.randomBytes(global.defaults.keyLength))
+  global.mdb = new Db(global.paths.mdb)
 
   // Before all tests have run
   before(function () {
-    // create temp dir
-    fs.ensureDirSync('tmp')
-
-    // Declare globals
-    global.defaults = {
-      iterations: 4096, // file encryption key iterations
-      keyLength: 32, // in bytes
-      ivLength: 12,
-      algorithm: 'aes-256-gcm',
-      salgorithm: 'aes-256-ctr',
-      digest: 'sha256',
-      hash_alg: 'sha256',
-      check_hash_alg: 'md5',
-      padLength: 1024,
-      mpk_iterations: 100000, // masterpass key iterations
-      shares: 3,
-      threshold: 2
-    }
-
-    global.paths = {
-      home: `CryptoSync`,
-      crypted: `CryptoSync/.encrypted`,
-      mdb: `CryptoSync/mdb`,
-      vault: `CryptoSync/vault.crypto`,
-    }
-
-    // global.mdb = new Db(global.paths.mdb)
-
-    global.vault = {
-      'RAND0M-ID3': {
-        name: 'crypto',
-        id: 22,
-        secure: true
-      },
-      'R3C0M-I4D': {
-        name: 'cry9to',
-        id: 2090,
-        secure: false
-      }
-    }
-    global.creds = {}
-    global.state = {}
-    global.MasterPassKey = new MasterPassKey(scrypto.randomBytes(global.defaults.keyLength))
-    // console.log(`global.MasterPassKey = ${global.MasterPassKey.get().toString('hex')}`)
-
-    global.files = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'))
-    global.state.rfs = JSON.parse(fs.readFileSync('data/rfs.json', 'utf8'))
-
-    global.credentials = {
-      access_token: process.env.access_token,
-      token_type: process.env.token_type,
-      refresh_token: process.env.refresh_token,
-      expiry_date: process.env.expiry_date
-    }
+    global.rfile = JSON.parse(fs.readFileSync(`${global.paths.data}/rfile.json`, 'utf8'))
+    global.files = global.rfile
+    global.state.rfs = JSON.parse(fs.readFileSync(`${global.paths.data}/rfs.json`, 'utf8'))
 
     const gAuth = new google.auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_)
     gAuth.setCredentials(credentials)
 
-    global.mdb = new Db('tmp/mdb')
 
     global.drive = google.drive({
       version: 'v3',
@@ -119,8 +115,8 @@ describe("CryptoSync Core Modules' tests", function () {
 
   // After all tests have run
   after(function () {
-    fs.removeSync('tmp')
-    fs.removeSync('CryptoSync')
+    fs.removeSync(global.paths.tmp)
+    fs.removeSync(global.paths.home)
   })
 
   /** Crypto module.js
@@ -138,7 +134,7 @@ describe("CryptoSync Core Modules' tests", function () {
           if (err) return done(err)
           expect(file)
             .to.include.keys('path')
-          expect(util.checkFileSync('CryptoSync/test.png')).to.be.true
+          expect(util.checkFileSync(`${global.paths.home}/test.png`)).to.be.true
         })
       })
 
@@ -160,15 +156,15 @@ describe("CryptoSync Core Modules' tests", function () {
 
       describe('Queue promises', () => {
         beforeEach(function () {
-          rfile = JSON.parse(fs.readFileSync('data/rfile.json', 'utf8'))
+          rfile = JSON.parse(fs.readFileSync(`${global.paths.data}/rfile.json`, 'utf8'))
         })
         it('should pushGetQueue and then pushCryptQueue', function () {
           resetGlobalObj('state.queues')
           global.state.toGet.push(global.rfile)
-          // return global.state.toGet.forEach(function (file) {
+            // return global.state.toGet.forEach(function (file) {
           return sync.pushGetQueue(global.state.toGet[0])
             .then((file) => {
-              expect(util.checkFileSync('CryptoSync/test.png')).to.be.true
+              expect(util.checkFileSync(`${global.paths.home}/test.png`)).to.be.true
               expect(global.state.toGet).to.be.empty
               expect(global.state.toCrypt[0].id).to.equal(global.rfile.id)
               expect(global.files[file.id]).to.include.keys('path')
@@ -178,7 +174,7 @@ describe("CryptoSync Core Modules' tests", function () {
               return sync.pushCryptQueue(file)
             })
             .then((file) => {
-              expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto')).to.be.true
+              expect(util.checkFileSync(`${global.paths.crypted}/test.png.crypto`)).to.be.true
               expect(global.state.toCrypt).to.be.empty
               expect(global.state.toUpdate[0].id).to.equal(global.rfile.id)
               expect(global.files[file.id]).to.include.keys('cryptPath')
@@ -193,7 +189,7 @@ describe("CryptoSync Core Modules' tests", function () {
             .catch((err) => {
               throw err
             })
-        // })
+            // })
         })
       })
     })
@@ -211,7 +207,7 @@ describe("CryptoSync Core Modules' tests", function () {
       it('should with remote (API) file without errors', function (done) {
         sync.cryptQueue.push(global.rfile, function (err, file) {
           if (err) return done(err)
-          assert.equal('CryptoSync/.encrypted/test.png.crypto', file.cryptPath)
+          assert.equal(`${global.paths.crypted}/test.png.crypto`, file.cryptPath)
           done()
         })
       })
@@ -219,14 +215,14 @@ describe("CryptoSync Core Modules' tests", function () {
         sync.cryptQueue.push(global.rfile, function (err, file) {
           if (err) return done(err)
           expect(file.cryptPath)
-            .to.equal('CryptoSync/.encrypted/test.png.crypto')
+            .to.equal(`${global.paths.crypted}/test.png.crypto`)
           done()
         })
       })
       it('should write to the right location at CryptoSync/.encrypted/', function (done) {
         sync.cryptQueue.push(global.rfile, function (err, file) {
           if (err) return done(err)
-          expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto'))
+          expect(util.checkFileSync(`${global.paths.crypted}/test.png.crypto`))
             .to.be.true
           done()
         })
@@ -255,7 +251,7 @@ describe("CryptoSync Core Modules' tests", function () {
       it('should write to the right location at CryptoSync/.encrypted/', function (done) {
         sync.cryptQueue.push(global.rfile, function (err, file) {
           if (err) return done(err)
-          expect(util.checkFileSync('CryptoSync/.encrypted/test.png.crypto'))
+          expect(util.checkFileSync(`${global.paths.crypted}/test.png.crypto`))
             .to.be.true
           done()
         })
@@ -288,7 +284,7 @@ describe("CryptoSync Core Modules' tests", function () {
       const auth = new googleAuth()
       const b64Regex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/g
       global.gAuth.oauth2Client = new auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_)
-      // global.gAuth.getToken(process.env.auth_code) // Get auth token from auth code
+        // global.gAuth.getToken(process.env.auth_code) // Get auth token from auth code
       const token = process.env.access_token
       global.gAuth.oauth2Client.credentials = token
       expect(global.gAuth.oauth2Client.credentials)
@@ -297,7 +293,7 @@ describe("CryptoSync Core Modules' tests", function () {
       const files = _.cloneDeep(global.files)
       global.state.rfs = {}
       global.files = {}
-      // expect(global.drive).to.equal(token)
+        // expect(global.drive).to.equal(token)
       return sync.getAccountInfo()
         .then((res) => {
           return sync.getPhoto(res)
@@ -351,7 +347,7 @@ describe("CryptoSync Core Modules' tests", function () {
    ******************************/
 
   describe('Crypto module', function () {
-    const t1path = 'tmp/test.txt'
+    const t1path = `${global.paths.tmp}/test.txt`
     before(function () {
       fs.writeFileSync(t1path, '#CryptoSync', 'utf8')
     })
@@ -364,7 +360,7 @@ describe("CryptoSync Core Modules' tests", function () {
           if (err) done(err)
           global.execute(`openssl dgst -md5 ${t1path}`, function (stdout, err, stderr) {
             if (err !== null) done(err)
-            // if (stderr !== null) done(stderr)
+              // if (stderr !== null) done(stderr)
             let ohash = stdout.replace('MD5(test.txt)= ', '')
             expect(hash)
               .to.equal(ohash)
@@ -404,7 +400,7 @@ describe("CryptoSync Core Modules' tests", function () {
     describe('Encryption', function () {
       it('should generate iv, encrypt & decrypt an obj with MPKey when salt is buffer', function (done) {
         const toCryptObj = _.cloneDeep(global.vault)
-        const fpath = 'tmp/cryptedObj.crypto'
+        const fpath = `${global.paths.tmp}/cryptedObj.crypto`
         crypto.genIV()
           .then(function (viv) {
             crypto.encryptObj(toCryptObj, fpath, global.MasterPassKey.get(), viv, function (err, authTag) {
@@ -424,7 +420,7 @@ describe("CryptoSync Core Modules' tests", function () {
 
       it('should generate iv, encrypt & decrypt vault obj with MPKey with persistent salt', function (done) {
         const toCryptObj = _.cloneDeep(global.vault)
-        const fpath = 'tmp/cryptedObj2.crypto'
+        const fpath = `${global.paths.tmp}/cryptedObj2.crypto`
         crypto.genIV()
           .then(function (viv) {
             const pviv = JSON.parse(JSON.stringify(viv))
@@ -464,9 +460,9 @@ describe("CryptoSync Core Modules' tests", function () {
       // 	let cryptoPath = '${t1path}.crypto'
       // 	crypto.encrypt(t1path, cryptoPath, global.MasterPassKey.get(), function (err, key, iv, tag) {
       // 		if (err) done(err)
-      // 		crypto.decrypt(cryptoPath, 'tmp/test2.txt', key, null, null, function (err, iv, tag) {
+      // 		crypto.decrypt(cryptoPath, '${global.paths.tmp}/test2.txt', key, null, null, function (err, iv, tag) {
       // 			if (err) done(err)
-      // 			fs.readFile('tmp/test2.txt', function read(err, data) {
+      // 			fs.readFile('${global.paths.tmp}/test2.txt', function read(err, data) {
       // 				if (err) done(err)
       // 				expect(data.toString('utf8')).to.equal('#CryptoSync')
       // 				done()
@@ -561,94 +557,94 @@ describe("CryptoSync Core Modules' tests", function () {
         })
     })
 
-  // it('should throw error when iv not initialised', function(done) {
-  //	 global.creds.viv = null
-  //	 return vault.init(global.MasterPassKey.get(), function(err) {
-  //		 expect(err).to.be.an('error')
-  //		 expect(err.message).to.equal('Invalid IV length')
-  // 		done(err)
-  //	 })
-  // })
+    // it('should throw error when iv not initialised', function(done) {
+    //	 global.creds.viv = null
+    //	 return vault.init(global.MasterPassKey.get(), function(err) {
+    //		 expect(err).to.be.an('error')
+    //		 expect(err.message).to.equal('Invalid IV length')
+    // 		done(err)
+    //	 })
+    // })
   })
 
   /**
    * Db module.js
    ******************************/
   describe('Db module', function () {
-    let db
-    beforeEach(function () {
-      db = new Db('tmp/db')
-      global.testo = {
-        'RAND0M-ID3': {
-          name: 'crypto',
-          id: 22,
-          secure: true
+      let db
+      beforeEach(function () {
+        db = new Db(`${global.paths.tmp}/db`)
+        global.testo = {
+          'RAND0M-ID3': {
+            name: 'crypto',
+            id: 22,
+            secure: true
+          }
         }
-      }
-    })
-    it('should save and restore obj', function () {
-      const beforeSaveObj = _.cloneDeep(global.testo)
-      return db.saveGlobalObj('testo')
-        .then(() => {
-          global.testo = null
-          return db.restoreGlobalObj('testo')
-        })
-        .then(() => {
-          expect(global.testo)
-            .to.deep.equal(beforeSaveObj)
-          db.close()
-          return
-        })
-        .catch((err) => {
-          throw (err)
-        })
-    })
+      })
+      it('should save and restore obj', function () {
+        const beforeSaveObj = _.cloneDeep(global.testo)
+        return db.saveGlobalObj('testo')
+          .then(() => {
+            global.testo = null
+            return db.restoreGlobalObj('testo')
+          })
+          .then(() => {
+            expect(global.testo)
+              .to.deep.equal(beforeSaveObj)
+            db.close()
+            return
+          })
+          .catch((err) => {
+            throw (err)
+          })
+      })
 
-    it('should save and restore obj persistently', function () {
-      const beforeSaveObj = _.cloneDeep(global.testo)
-      return db.saveGlobalObj('testo')
-        .then(() => {
-          global.testo = null
-          db.close()
-          db = new Db('tmp/db')
-          return db.restoreGlobalObj('testo')
-        })
-        .then(() => {
-          expect(global.testo)
-            .to.deep.equal(beforeSaveObj)
-          db.close()
-          return
-        })
-        .catch((err) => {
-          throw (err)
-        })
+      it('should save and restore obj persistently', function () {
+        const beforeSaveObj = _.cloneDeep(global.testo)
+        return db.saveGlobalObj('testo')
+          .then(() => {
+            global.testo = null
+            db.close()
+            db = new Db(`${global.paths.tmp}/db`)
+            return db.restoreGlobalObj('testo')
+          })
+          .then(() => {
+            expect(global.testo)
+              .to.deep.equal(beforeSaveObj)
+            db.close()
+            return
+          })
+          .catch((err) => {
+            throw (err)
+          })
+      })
+
+      it('should return null if key not found for onlyGetValue', function () {
+        return db.onlyGetValue('notExist')
+          .then((token) => {
+            expect(token)
+              .to.equal(null)
+            db.close()
+          })
+      })
+
+      // it('should throw error when global object not exist for restoreGlobalObj', function() {
+      //	 return db.saveGlobalObj('fake')
+      //		 .catch((err) => {
+      // 			expect(false).to.be(true)
+      //			 expect(err).to.be.an('error')
+      //			 expect(err.message).to.equal('Unsupported state or unable to authenticate data')
+      //			 db.close()
+      //		 })
+      // })
+
     })
-
-    it('should return null if key not found for onlyGetValue', function () {
-      return db.onlyGetValue('notExist')
-        .then((token) => {
-          expect(token)
-            .to.equal(null)
-          db.close()
-        })
-    })
-
-    // it('should throw error when global object not exist for restoreGlobalObj', function() {
-    //	 return db.saveGlobalObj('fake')
-    //		 .catch((err) => {
-    // 			expect(false).to.be(true)
-    //			 expect(err).to.be.an('error')
-    //			 expect(err.message).to.equal('Unsupported state or unable to authenticate data')
-    //			 db.close()
-    //		 })
-    // })
-
-  })
-  /**
-   * Util module.js
-   ******************************/
+    /**
+     * Util module.js
+     ******************************/
   describe('Util module', function () {
-    const t1path = 'tmp/atest.txt'
+    const t1path = `${global.paths.tmp}/atest.txt`
     const t1data = '#CryptoSync'
     before(function () {
       fs.writeFileSync(t1path, t1data, 'utf8')
@@ -689,15 +685,15 @@ describe("CryptoSync Core Modules' tests", function () {
     })
 
     it('should check if file exists', function (done) {
-      expect(util.checkFileSync('data/rfile.json'))
+      expect(util.checkFileSync(`${global.paths.data}/rfile.json`))
         .to.be.true
-      expect(util.checkFileSync('data/rfs.json'))
+      expect(util.checkFileSync(`${global.paths.data}/rfs.json`))
         .to.be.true
-      expect(util.checkDirectorySync('data'))
+      expect(util.checkDirectorySync(`${global.paths.data}`))
         .to.be.true
-      expect(util.checkFileSync('data'))
+      expect(util.checkFileSync(`${global.paths.data}`))
         .to.be.true
-      expect(util.checkDirectorySync('data/rfs.json'))
+      expect(util.checkDirectorySync(`${global.paths.data}/rfs.json`))
         .to.be.true
       expect(util.checkFileSync('any.file'))
         .to.be.false

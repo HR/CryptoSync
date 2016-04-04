@@ -1,64 +1,64 @@
 var gulp = require('gulp'),
 	shell = require('gulp-shell'),
-	mocha = require('gulp-mocha');
+	mocha = require('gulp-mocha')
 
 gulp.task('default', shell.task([
 	// Absolute path '/usr/local/lib/node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
 	// Run electron
-	// TODO: add compile less bash command > "for i in static/style/*.less; do lessc $i ${i:0:${#i} - 5}.css; done"
+	// TODO: add compile less bash command > "for i in static/style/*.less do lessc $i ${i:0:${#i} - 5}.css done"
 	// 'ELECTRON_RUN_AS_NODE=true node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron node_modules/node-inspector/bin/inspector.js'
 	'unset TEST_RUN && node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron --debug=5858 .'
 	// 'node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron --debug-brk=5858 .'
-]));
+]))
 
 gulp.task('rebuildni', shell.task([
 	// start node inspector server
 	'node_modules/.bin/node-pre-gyp --target=$(node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron -v | sed s/\v//g) --runtime=electron --fallback-to-build --directory node_modules/v8-debug/ --dist-url=https://atom.io/download/atom-shell reinstall && node_modules/.bin/node-pre-gyp --target=$(node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron -v | sed s/\v//g) --runtime=electron --fallback-to-build --directory node_modules/v8-profiler/ --dist-url=https://atom.io/download/atom-shell reinstall'
-]));
+]))
 
 gulp.task('buildnative', shell.task([
 	// start build the native module
 	'./node_modules/.bin/electron-rebuild #1'
-]));
+]))
 
 gulp.task('ni', shell.task([
 	// start node inspector server
 	'ELECTRON_RUN_AS_NODE=true node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron node_modules/node-inspector/bin/inspector.js'
-]));
+]))
 
 gulp.task('driver', shell.task([
 	// Run chromedriver
 	'./node_modules/chromedriver/bin/chromedriver'
-]));
+]))
 
 gulp.task('test', shell.task([
 	// Run test stuff
 	"electron-mocha --renderer --compilers js:babel-core/register 'test/**/*.@(js|jsx)'"
-]));
+]))
 
 gulp.task('mtest', shell.task([
 	// Run test stuff
 	"mocha --compilers js:babel-core/register"
-]));
+]))
 
 gulp.task('mntest', shell.task([
 	// Run test stuff
 	"mocha --reporter nyan --compilers js:babel-core/register"
-]));
+]))
 
 gulp.task('testcov', shell.task([
 	// Run test stuff
 	"./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover --root src/ ./node_modules/.bin/_mocha"
-]));
+]))
 
 gulp.task('lcov', shell.task([
 	// Run test stuff
 	"./node_modules/.bin/babel-node ./node_modules/.bin/isparta cover --root src/ ./node_modules/.bin/_mocha --reporter mocha-lcov-reporter | ./node_modules/coveralls/bin/coveralls.js"
-]));
+]))
 
 gulp.task('watch', function () {
-	gulp.watch(['./static/**/*', './*.js'], ['run']);
-});
+	gulp.watch(['./static/**/*', './*.js'], ['run'])
+})
 
 gulp.task('run', function () {
 	return gulp.src('*', {
@@ -67,8 +67,8 @@ gulp.task('run', function () {
 		.pipe(shell([
 			// start electron main and render process
 			'node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
-		]));
-});
+		]))
+})
 
 gulp.task('lint', function () {
 	return gulp.src('*', {
@@ -77,5 +77,5 @@ gulp.task('lint', function () {
 		.pipe(shell([
 			// lint
 			'eslint src/*.js src/*/*.js *.js'
-		]));
-});
+		]))
+})
