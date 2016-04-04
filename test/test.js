@@ -9,12 +9,12 @@ const vault = require('../src/vault')
 const MasterPassKey = require('../src/_MasterPassKey')
 const OAuth = require('../src/OAuth')
 const init = require('../src/init')
-const synker = require('../src/synker')
+// const synker = require('../src/synker')
 const MasterPass = require('../src/MasterPass')
-const logger = require('../logger')
+// const logger = require('../logger')
 const googleAuth = require('google-auth-library')
-const levelup = require('levelup')
-const sutil = require('util')
+// const levelup = require('levelup')
+// const sutil = require('util')
 const scrypto = require('crypto')
 const _ = require('lodash')
 const google = require('googleapis')
@@ -305,7 +305,7 @@ describe("CryptoSync Core Modules' tests", function () {
           return param
         })
         .then((param) => {
-          return sync.setAccountInfo(param)
+          return sync.setAccountInfo(param, global.gAuth)
         })
         .then((email) => {
           return sync.getAllFiles(email)
@@ -319,6 +319,10 @@ describe("CryptoSync Core Modules' tests", function () {
         .then(() => {
           expect(global.accounts)
             .to.have.property('cryptosync_drive')
+          expect(global.accounts['cryptosync_drive'].oauth)
+            .to.have.property('oauth2Client')
+          expect(global.accounts['cryptosync_drive'].oauth.oauth2Client.credentials)
+            .to.not.be.empty
           expect(global.files)
             .to.have.property('0B0pJLMXieC-mTWJpT3hiWjRoems')
           expect(global.files)
@@ -628,14 +632,14 @@ describe("CryptoSync Core Modules' tests", function () {
         })
     })
 
-    // it('should throw error when global object not exist for restoreGlobalObj', function() {
-    //	 return db.saveGlobalObj('fake')
-    //		 .catch((err) => {
-    // 			expect(false).to.be(true)
-    //			 expect(err).to.be.an('error')
-    //			 expect(err.message).to.equal('Unsupported state or unable to authenticate data')
-    //			 db.close()
-    //		 })
+    // it('should throw error when global object not exist for restoreGlobalObj', function () {
+    //   return db.saveGlobalObj('fake')
+    //     .catch((err) => {
+    //       expect(false).to.be(true)
+    //       expect(err).to.be.an('error')
+    //       expect(err.message).to.equal('Unsupported state or unable to authenticate data')
+    //       db.close()
+    //     })
     // })
 
   })

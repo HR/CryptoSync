@@ -1,24 +1,6 @@
 const sync = require('./sync')
 const logger = require('../logger')
 const chokidar = require('chokidar')
-
-// TODO: Modularise, write as a seperate script
-// (with check for changes at interval)
-// and spawn as child process (with shared memory)
-// Implement with ES6 Generators?
-
-// Spawn a child process for sync worker
-// const cp = require('child_process')
-// const child = cp.fork('./src/sync_worker')
-//
-// child.on('put', function (file) {
-// 	// Receive results from child process
-// 	logger.verbose('received: ' + file)
-// })
-//
-// // Send child process some work
-// child.send('Please up-case this string')
-
 const dotRegex = /\/\..+/g
 const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g
 

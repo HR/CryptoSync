@@ -19,7 +19,6 @@ const Positioner = require('electron-positioner')
 const _ = require('lodash')
 const logger = require('./logger')
 
-
 // change exec path
 // process.chdir(app.getAppPath())
 logger.info(`cwd: ${process.cwd()}`)
@@ -42,7 +41,6 @@ require('dotenv').config()
 
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')()
-
 
 // MasterPassKey is protected (private var) and only exist in Main memory
 // MasterPassKey is a derived key of the actual user MasterPass
@@ -450,21 +448,21 @@ function Settings (callback) {
   })
   ipc.on('removeAccount', function (event, account) {
     logger.verbose(`IPCMAIN: removeAccount emitted. Creating removing ${account}...`)
-    // TODO: IMPLEMENT ACCOUNT REMOVAL ROUTINE
-    // if (_.unset(global.accounts, account)) {
-      // deleted
-      // reload window to update
-      // win.loadURL(global.views.settings)
-    // TODO: decide whether to do setup is all accounts removed
-    // if (Object.keys(global.accounts).length === 0) {
-    // 	// Create Setup
-    //
-    // } else {
-    //
-    // }
-    // } else {
-      // not deleted
-    // }
+  // TODO: IMPLEMENT ACCOUNT REMOVAL ROUTINE
+  // if (_.unset(global.accounts, account)) {
+  // deleted
+  // reload window to update
+  // win.loadURL(global.views.settings)
+  // TODO: decide whether to do setup is all accounts removed
+  // if (Object.keys(global.accounts).length === 0) {
+  // 	// Create Setup
+  //
+  // } else {
+  //
+  // }
+  // } else {
+  // not deleted
+  // }
   })
   win.on('closed', function () {
     logger.verbose('win.closed event emitted for Settings.')
@@ -600,12 +598,6 @@ app.on('ready', function () {
     logger.info('First run. Creating Setup wizard...')
     // Setup()
     init.setup()
-      // .then(
-      // 	global.mdb.del('gdrive-token', function (err) {
-      // 		if (err) logger.error(`Error retrieving gdrive-token, ${err}`)
-      // 		logger.verbose("deleted gdrive-token")
-      // 	})
-      // )
       .then(() => {
         return Setup(function (err) {
           if (err) {
@@ -661,12 +653,24 @@ app.on('ready', function () {
         // TODO: start sync daemon
         // Start menubar
         return Cryptobar(function (result) {
-          // body...
+          logger.info(`Cryptobar results: ${result}`)
         })
       })
       .catch(function (error) {
         logger.error(`PROMISE ERR: ${error.stack}`)
       })
+  // Implement with ES6 Generators?
+  // Spawn a child process for sync worker
+  // const cp = require('child_process')
+  // const child = cp.fork('./src/sync_worker')
+  //
+  // child.on('put', function (file) {
+  // 	// Receive results from child process
+  // 	logger.verbose('received: ' + file)
+  // })
+  //
+  // // Send child process some work
+  // child.send('Please up-case this string')
   }
 })
 
@@ -730,12 +734,12 @@ exports.MasterPassPrompt = function (reset, callback) {
         global.MasterPassKey = new MasterPassKey(mpkey)
         // TODO: test this
         vault.init(global.MasterPassKey.get())
-        .then((value) => {
-          return global.mdb.saveGlobalObj('creds')
-        })
-        .catch((err) => {
-          throw err
-        })
+          .then((value) => {
+            return global.mdb.saveGlobalObj('creds')
+          })
+          .catch((err) => {
+            throw err
+          })
         webContents.send('setMasterPassResult', null)
       } else {
         webContents.send('setMasterPassResult', err)
