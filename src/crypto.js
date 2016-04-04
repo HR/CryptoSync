@@ -74,8 +74,7 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
 
       origin.on('end', () => {
         // Append iv used to encrypt the file to end of file
-        dest.write(`
-CryptoSync#${iv.toString('hex')}#${cipher.getAuthTag().toString('hex')}`)
+        dest.write(`CryptoSync#${iv.toString('hex')}#${cipher.getAuthTag().toString('hex')}`)
         dest.end()
       // logger.verbose(`End (of writestream) for ${destf} called, IV&authTag appended`)
       })

@@ -31,14 +31,6 @@ require('dotenv').config()
 // app.commandLine.appendSwitch('remote-debugging-port', '8315')
 // app.commandLine.appendSwitch('host-rules', 'MAP * 127.0.0.1')
 
-// report crashes to the Electron project
-// require('crash-reporter').start({
-// 	 productName: 'CryptoSync',
-// 	 companyName: 'CryptoSync',
-// 	 submitURL: 'https://git.io/HR',
-// 	 autoSubmit: false
-// })
-
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')()
 
@@ -49,15 +41,6 @@ global.accounts = {}
 global.creds = {}
 global.state = {}
 global.files = {}
-
-/* Global state
- has three queues:
- - toGet: files to download (incl. updated ones)
- - toCrypt: files to encrypt
- - toUpdate: files to upload (/update)
-*/
-// app.setPath('cs', `${app.getPath('home')}/CryptoSync`)
-
 global.stats = {}
 global.paths = {
   home: `${app.getPath('home')}/CryptoSync`,
@@ -66,7 +49,6 @@ global.paths = {
   userData: app.getPath('userData'),
   vault: `${app.getPath('home')}/CryptoSync/vault.crypto`
 }
-
 global.settings = {
   user: {
 
@@ -81,7 +63,6 @@ global.settings = {
     offlineEnc: 'true'
   }
 }
-
 global.views = {
   main: `file://${__dirname}/static/index.html`,
   masterpassprompt: `file://${__dirname}/static/masterpassprompt.html`,
@@ -104,7 +85,6 @@ let exit = false
  * Window constructors
  **/
 
-// Menubar window
 function Cryptobar (callback) {
   function click (e, bounds) {
     if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) {
@@ -749,7 +729,7 @@ exports.MasterPassPrompt = function (reset, callback) {
   win.on('closed', function () {
     logger.info('win.closed event emitted for Settings.')
     win = null
-    // callback(((reset) ? newMPset : null))
+    callback(((reset) ? newMPset : null))
     if (gotMP) {
       callback()
     } else {
