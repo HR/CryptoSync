@@ -20,11 +20,14 @@ const assert = require('assert'),
   fs = require('fs-extra'),
   exec = require('child_process').exec
 
-require('dotenv')
-  .config()
+if (!process.env.TRAVIS) {
+  require('dotenv')
+    .config()
+}
 
 process.chdir('test')
 console.log(`cwd: ${process.cwd()}`)
+
 
 describe("CryptoSync Core Modules' tests", function () {
   function resetGlobalObj (name) {
