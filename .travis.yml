@@ -30,6 +30,7 @@ before_script:
 script: ./script/travis-build.sh
 
 after_success:
+  - npm test
   - npm run coveralls
   - npm run codeclimate
 

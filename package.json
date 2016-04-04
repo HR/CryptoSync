@@ -49,6 +49,7 @@
     "electron-debug": "*",
     "electron-positioner": "*",
     "electron-prebuilt": "*",
+    "estraverse": "^4.2.0",
     "fs-extra": "*",
     "fstream": "*",
     "google-auth-library": "*",

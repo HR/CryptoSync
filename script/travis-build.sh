@@ -24,5 +24,3 @@ npm --version
 npm install --no-optional
 
 # npm run testbuild
-
-npm test
