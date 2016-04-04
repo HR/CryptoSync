@@ -2,6 +2,9 @@
 
 echo $CC
 echo $CXX
+pwd
+cd ../
+pwd
 # export CXX=g++-4.8
 export TEST_RUN=true
 
