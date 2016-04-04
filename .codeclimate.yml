@@ -1,4 +1,3 @@
----
 engines:
   csslint:
     enabled: true
@@ -7,6 +6,9 @@ engines:
     config:
       languages:
       - javascript
+    exclude_fingerprints:
+    - 555c80119b06560cd2e96eb4e4e91f26
+    - a81ed3d8cb6b36bacb95a0ab40d09d78
   eslint:
     enabled: true
   fixme:
@@ -23,10 +25,3 @@ ratings:
   - "**.rb"
 exclude_paths:
 - test/
-engines:
-  duplication:
-    enabled: true
-    exclude_fingerprints:
-    - 555c80119b06560cd2e96eb4e4e91f26
-    - a81ed3d8cb6b36bacb95a0ab40d09d78
-    - a81ed3d8cb6b36bacb95a0ab40d09d78
