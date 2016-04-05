@@ -29,9 +29,9 @@
 					</header>
 					<div class="list" id="accountsList">
 					</div>
-					<button class="button add">
+					<!-- <button class="button add">
 						<img src="images/icons/add.svg" alt="" class="icon" />
-					</button>
+					</button> -->
 				</section>
 			</div>
 			<div id="panel-crypto">
@@ -46,22 +46,12 @@
 							<div class="option">
 								<span>Key Length</span>
 								<select class="right config" data-config="keyLength">
-									<option value="128">128-bit</option>
 									<option value="256">256-bit</option>
 								</select>
 							</div>
 							<div class="option">
 								<span>Algorithm</span>
 								<select class="right config" data-config="algorithm">
-									<option value="CTR">CTR</option>
-									<option value="CBC">CBC</option>
-								</select>
-							</div>
-							<div class="option">
-								<span>Randomness</span>
-								<select class="right config" data-config="randomness">
-									<option value="pseudo">Pseudo</option>
-									<option value="true">True (experimental)</option>
 								</select>
 							</div>
 						</div>
@@ -116,9 +106,6 @@
 							<div class="option">
 								<span>Encrypt while offline</span>
 								<input type="checkbox" class="right config" data-config="offlineEnc" checked/>
-							</div>
-							<div class="option">
-								<span>Location</span>
 							</div>
 						</div>
 					</section>

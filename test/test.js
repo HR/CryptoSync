@@ -12,7 +12,7 @@ const init = require('../src/init')
 // const synker = require('../src/synker')
 const MasterPass = require('../src/MasterPass')
 // const logger = require('../logger')
-const googleAuth = require('google-auth-library')
+const GoogleAuth = require('google-auth-library')
 // const levelup = require('levelup')
 // const sutil = require('util')
 const scrypto = require('crypto')
@@ -106,8 +106,10 @@ describe("CryptoSync Core Modules' tests", function () {
     })
 
     global.execute = function (command, callback) {
-      exec(command, function (err, stdout, stderr) {
-        callback(stdout)
+      return new Promise(function(resolve, reject) {
+        exec(command, function (err, stdout, stderr) {
+          resolve(stdout)
+        })
       })
     }
   })
@@ -160,7 +162,8 @@ describe("CryptoSync Core Modules' tests", function () {
           rfile = _.cloneDeep(global.rfile)
           global.state.toGet.push(global.rfile)
         })
-        it('should pushGetQueue and then pushCryptQueue', function () {
+        it('should pushGetQueue and then pushCryptQueue then updateStats then updateHash', function () {
+          this.timeout(3000)
           // return global.state.toGet.forEach(function (file) {
           return sync.pushGetQueue(global.state.toGet[0])
             .then((file) => {
@@ -178,6 +181,22 @@ describe("CryptoSync Core Modules' tests", function () {
               expect(global.state.toCrypt).to.be.empty
               expect(global.state.toUpdate[0].id).to.equal(global.rfile.id)
               expect(global.files[file.id]).to.include.keys('cryptPath')
+              return file
+            })
+            .then((file) => {
+              const nfile = _.cloneDeep(file)
+              return sync.updateStats(nfile)
+            })
+            .then((nfile) => {
+              return sync.updateHash(nfile)
+            })
+            .then((nfile) => {
+              expect(nfile).to.have.property('md5hash')
+              expect(nfile).to.have.property('mtime')
+              expect(nfile).to.have.property('size')
+              expect(nfile.size).not.to.be.empty
+              expect(nfile.mtime).to.be.a('date')
+              expect(nfile.md5hash).not.to.be.empty
               return
             })
             // .then((file) => {
@@ -191,25 +210,6 @@ describe("CryptoSync Core Modules' tests", function () {
             })
         // })
         })
-
-        // it('should get last modified time of file and attach it', function () {
-        //   // return global.state.toGet.forEach(function (file) {
-        //   return sync.pushGetQueue(global.state.toGet[0])
-        //     .then((file) => {
-        //       return sync.updateStats(file)
-        //     })
-        //     .then((file) => {
-        //       // expect(util.checkFileSync(`${global.paths.home}/test.png`)).to.be.true
-        //       expect(file).to.have.property('mtime')
-        //       expect(file).to.have.property('size')
-        //       expect(file.mtime).to.be.empty
-        //       // expect(file.mtime).to.equal()
-        //       return
-        //     })
-        //     .catch((err) => {
-        //       throw err
-        //     })
-        // })
       })
 
     })
@@ -303,7 +303,7 @@ describe("CryptoSync Core Modules' tests", function () {
       after(function () {})
       this.timeout(4000)
       global.accounts = {}
-      const auth = new googleAuth()
+      const auth = new GoogleAuth()
       const b64Regex = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/g
       global.gAuth.oauth2Client = new auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_)
       // global.gAuth.getToken(process.env.auth_code) // Get auth token from auth code
@@ -375,20 +375,25 @@ describe("CryptoSync Core Modules' tests", function () {
     describe('Hashing & deriving', function () {
       const masterpass = 'crypto#101'
 
-      it('should get same digest hash for genFileHash as openssl', function (done) {
-        crypto.genFileHash(t1path, function (err, hash) {
-          if (err) done(err)
-          global.execute(`openssl dgst -md5 ${t1path}`, function (stdout, err, stderr) {
-            if (err !== null) done(err)
-            // if (stderr !== null) done(stderr)
-            let ohash = stdout.replace('MD5(test.txt)= ', '')
-            expect(hash)
-              .to.equal(ohash)
-            expect(crypto.verifyFileHash(hash, ohash))
-              .to.be.true
-            done()
+      it('should get same digest hash for genFileHash as openssl', function () {
+        return crypto.genFileHash(t1path)
+          .then((hash) => {
+            global.execute(`openssl dgst -md5 ${t1path}`)
+            .then((stdout) => {
+              let ohash = stdout.replace('MD5(test.txt)= ', '')
+              expect(hash)
+                .to.equal(ohash)
+              expect(crypto.verifyFileHash(hash, ohash))
+                .to.be.true
+              expect(false).to.true
+            })
+            .catch((err) => {
+              throw err
+            })
           })
-        })
+          .catch((err) => {
+            throw err
+          })
       })
 
       it('should deriveMasterPassKey using a MasterPass correctly when salt is buffer', function (done) {

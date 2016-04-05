@@ -197,20 +197,22 @@ exports.verifyPassHash = function (mpkhash, gmpkhash) {
 }
 
 exports.genFileHash = function (origpath, callback) {
-  let fd = fs.createReadStream(origpath)
-  const hash = crypto.createHash(defaults.check_hash_alg)
-  hash.setEncoding('hex')
-  fd.on('end', function () {
-    hash.end()
-    let fhash = hash.read()
-    // logger.verbose(`genFileHash: fhash = ${fhash}`)
-    callback(null, fhash)
-  })
+  return new Promise(function (resolve, reject) {
+    let fd = fs.createReadStream(origpath)
+    const hash = crypto.createHash(defaults.check_hash_alg)
+    hash.setEncoding('hex')
+    fd.on('end', function () {
+      hash.end()
+      const fhash = hash.read()
+      logger.verbose(`genFileHash: fhash = ${fhash} for ${origpath}`)
+      resolve(fhash)
+    })
 
-  fd.on('error', function (e) {
-    callback(e)
-  }).pipe(hash).on('error', function (e) {
-    callback(e)
+    fd.on('error', function (e) {
+      reject(e)
+    }).pipe(hash).on('error', function (e) {
+      reject(e)
+    })
   })
 }
 

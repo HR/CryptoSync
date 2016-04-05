@@ -4,7 +4,6 @@
  * Main cloud sync functionality
  ******************************/
 
-const sfs = require('fs')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const base64 = require('base64-stream')
@@ -31,19 +30,26 @@ exports.event = new EventEmitter()
 
 exports.updateStats = function (file) {
   return new Promise(function (resolve, reject) {
-    sfs.Stats(file.path, function (err, stats) {
-      if (err) {
-        logger.error(`fs.Stats ERROR: ${err.stack}`)
-        reject(err)
-      }
-      reject(stats)
-      logger.info(`fs.Stats: for ${file.name}, file.mtime = ${stats.mtime}`)
-      logger.info(`fs.Stats: for ${file.name}, file.size = ${stats.size}`)
+    fs.stat(file.path, function (err, stats) {
+      if (err) reject(err)
+      logger.verbose(`fs.stat: for ${file.name}, file.mtime = ${stats.mtime}, file.size = ${stats.size}`)
       file.mtime = stats.mtime
       file.size = stats.size
-      logger.info(`GOT fs.Stat of file, mtime = ${file.mtime}`)
-      resolve(null, file)
+      resolve(file)
     })
+  })
+}
+
+exports.updateHash = function (file) {
+  return new Promise(function (resolve, reject) {
+    crypto.genFileHash(file.path)
+      .then((md5hash) => {
+        file.md5hash = md5hash
+        return resolve(file)
+      })
+      .catch((err) => {
+        reject(err)
+      })
   })
 }
 
@@ -100,6 +106,7 @@ exports.pushCryptQueue = function (file) {
   })
 }
 
+// TODO: Implement rename OP
 exports.pushUpdateQueue = function (file) {
   logger.verbose(`PROMISE: pushUpdateQueue for ${file.name}`)
   return new Promise(function (resolve, reject) {
@@ -112,6 +119,24 @@ exports.pushUpdateQueue = function (file) {
       global.files[file.id] = file
       // remove file from persistent update queue
       _.pull(global.state.toUpdate, file)
+      logger.info(`DONE UPDATting ${file.name}. Removing from global status...`)
+      resolve()
+    })
+  })
+}
+
+exports.pushPutQueue = function (file) {
+  logger.verbose(`PROMISE: pushPutQueue for ${file.name}`)
+  return new Promise(function (resolve, reject) {
+    exports.putQueue.push(file, function (err, file) {
+      if (err) {
+        logger.error(`ERROR occurred while UPDATting`)
+        reject()
+      }
+      // update file globally
+      // global.files[file.id] = file
+      // remove file from persistent update queue
+      _.pull(global.state.toPut, file)
       logger.info(`DONE UPDATting ${file.name}. Removing from global status...`)
       resolve()
     })
@@ -139,12 +164,12 @@ exports.getQueue = async.queue(function (file, callback) {
       alt: 'media'
     })
       .on('error', function (err) {
-        logger.verbose('Error during download', err)
+        logger.error('Error during download', err)
         callback(err)
       })
       .pipe(dest)
       .on('error', function (err) {
-        logger.verbose('Error during writting to fs', err)
+        logger.error('Error during writting to fs', err)
         callback(err)
       })
       .on('finish', function () {
@@ -202,7 +227,7 @@ exports.updateQueue = async.queue(function (file, callback) {
     }
   }, function (err, res) {
     if (err) {
-      logger.verbose(`callback: error updating ${file.name}`)
+      logger.error(`callback: error updating ${file.name}`)
       return callback(err)
     }
     logger.verbose(`callback: update ${file.name}`)
@@ -218,13 +243,19 @@ exports.putQueue = async.queue(function (file, callback) {
     resource: {
       name: `${file.name}.crypto`
     },
+    contentHints: {
+      thumbnail: {
+        image: res.thumbnail,
+        mimeType: 'image/png'
+      }
+    },
     media: {
       mimeType: 'application/octet-stream',
       body: fs.createReadStream(file.cryptPath)
     }
   }, function (err, rfile) {
     if (err) {
-      logger.verbose(`callback: error putting ${file.name}`)
+      logger.error(`callback: error putting ${file.name}`)
       return callback(err)
     }
     logger.verbose(`callback: put ${file.name}`)
@@ -245,7 +276,7 @@ exports.genID = function (n = 1) {
       space: 'drive'
     }, function (err, res) {
       if (err) {
-        logger.verbose(`callback: error genID`)
+        logger.error(`callback: error genID`)
         return reject(err)
       }
       // logger.verbose(`callback: genID`)
@@ -261,7 +292,7 @@ exports.getAccountInfo = function () {
       'fields': 'storageQuota,user'
     }, function (err, res) {
       if (err) {
-        logger.verbose(`IPCMAIN: drive.about.get, ERR occured, ${err}`)
+        logger.error(`IPCMAIN: drive.about.get, ERR occured, ${err}`)
         reject(err)
       } else {
         // logger.verbose(`IPCMAIN: drive.about.get, RES:`)
@@ -296,7 +327,7 @@ exports.getAllFiles = function (email) {
           reject(err)
         }
         if (res.files.length === 0) {
-          logger.verbose('No files found.')
+          logger.warn('No files found.')
           reject(new Error('No files found'))
         } else {
           logger.verbose('Google Drive files (depth 2):')
@@ -321,7 +352,7 @@ exports.getAllFiles = function (email) {
           async.map(folders, exports.fetchFolderItems, function (err, fsuBtree) {
             logger.verbose(`Got ids: ${folders}. Calling async.map(folders, fetchFolderItem,...) to map`)
             if (err) {
-              logger.verbose(`Errpr while mapping folders to file array: ${err}`)
+              logger.error(`Errpr while mapping folders to file array: ${err}`)
               reject(err)
             } else {
               // logger.verbose(`Post-callback ${sutil.inspect(fsuBtree)}`)
