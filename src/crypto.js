@@ -15,15 +15,15 @@ const crypto = require('crypto')
 // Crypto default constants
 // TODO: change accordingly when changed in settings
 let defaults = {
-  iterations: 4096, // file encryption key iterations
-  keyLength: 32, // in bytes
+  iterations: 5000, // file encryption key iterations
+  keyLength: 32, // 32 bytes
   ivLength: 12,
   algorithm: 'aes-256-gcm',
   salgorithm: 'aes-256-ctr',
   digest: 'sha256',
   hash_alg: 'sha256',
   check_hash_alg: 'md5',
-  padLength: 1024,
+  padLength: 1024, // 1 MB
   mpk_iterations: 100000, // masterpass key iterations
   shares: 3,
   threshold: 2

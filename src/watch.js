@@ -30,14 +30,19 @@ watcher.on('add', (path, stats) => {
   } else {
     // Queue up to encrypt and put
     let fileName = path.match(fNameRegex)[0]
-    let relPath = path.replace(global.paths.home, '')
+    // let relPath = path.replace(global.paths.home, '')
     logger.info(`ADD added file ${fileName}, stats ${stats.mtime}`)
 
     sync.genID()
       .then((fileId) => {
         return createFileObj(fileId, fileName, path)
       })
-      .then(sync.pushCryptQueue)
+      .then((file) => {
+        return sync.pushCryptQueue(file)
+      })
+      .then((file) => {
+        return sync.pushPutQueue(file)
+      })
       .then((file) => {
         logger.info(`Done encrypting ${file.name} (${file.id})`)
       })

@@ -112,3 +112,7 @@ exports.initDrains = function () {
     resolve()
   })
 }
+
+exports.initWatcher = function () {
+
+}

@@ -1,10 +1,12 @@
 {
   "name": "Crypto.Sync",
   "productName": "CryptoSync",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A cross-platform end-to-end encryption cloud sync client",
   "license": "MIT",
-  "repository": "HR/CryptoSync",
+  "repository": "https://github.com/HR/CryptoSync",
+  "homepage": "https://github.com/HR/CryptoSync",
+  "bugs": "https://github.com/HR/CryptoSync/issues",
   "author": {
     "name": "Habib Rehman",
     "email": "Habib.R@outlook.com",
@@ -74,7 +76,6 @@
     "chai-as-promised": "^5.3.0",
     "codeclimate-test-reporter": "^0.3.1",
     "coveralls": "^2.11.9",
-    "electron-chromedriver": "^0.37.1",
     "electron-packager": "*",
     "eslint": "*",
     "eslint-plugin-html": "*",
@@ -87,12 +88,5 @@
     "standard": "^6.0.8",
     "wdio-mocha-framework": "^0.2.12",
     "xo": "*"
-  },
-  "optionalDependencies": {
-    "gulp-mocha": "*",
-    "dropbox": "*",
-    "event-kit": "*",
-    "less": "*",
-    "prr": "*"
   }
 }

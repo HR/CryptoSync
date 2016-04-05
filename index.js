@@ -20,7 +20,7 @@ const _ = require('lodash')
 const logger = require('./logger')
 
 // change exec path
-// process.chdir(app.getAppPath())
+process.chdir(app.getAppPath())
 logger.info(`cwd: ${process.cwd()}`)
 require('dotenv').config()
 
@@ -36,7 +36,7 @@ require('electron-debug')()
 
 // MasterPassKey is protected (private var) and only exist in Main memory
 // MasterPassKey is a derived key of the actual user MasterPass
-global.gAuth
+global.gAuth = {}
 global.accounts = {}
 global.creds = {}
 global.state = {}
@@ -523,7 +523,7 @@ app.on('will-quit', (event) => {
       global.mdb.saveGlobalObj('files'),
       global.mdb.saveGlobalObj('stats')
     ]).then(function () {
-      if (global.MasterPassKey !== undefined || !_.isEmpty(global.vault)) {
+      if (global.MasterPassKey !== undefined && !_.isEmpty(global.vault)) {
         logger.info(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`)
         logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`)
 
@@ -638,6 +638,7 @@ app.on('ready', function () {
       })
       .catch(function (error) {
         logger.error(`PROMISE ERR: ${error.stack}`)
+        app.quit()
       })
   // Implement with ES6 Generators?
   // Spawn a child process for sync worker
@@ -656,8 +657,9 @@ app.on('ready', function () {
 
 exports.MasterPassPrompt = function (reset, callback) {
   let tries = 0
-  let newMPset = false
   let gotMP = false
+  let newMPset = false
+  let error = null
   let win = new BrowserWindow({
     width: 300, // 300
     height: 435,
@@ -679,7 +681,8 @@ exports.MasterPassPrompt = function (reset, callback) {
       if (err) {
         // send error
         webContents.send('checkMasterPassResult', err)
-        callback(err)
+        error = err
+        win.close()
       }
       if (match) {
         logger.info('IPCMAIN: PASSWORD MATCHES!')
@@ -699,10 +702,10 @@ exports.MasterPassPrompt = function (reset, callback) {
           err: null,
           match: match
         })
-        if (tries >= 3) {
-          app.quit()
+        if (++tries >= 3) {
+          error = new Error('Limit of three tries exceeded')
+          win.close()
         }
-        tries++
       }
     })
   })
@@ -718,23 +721,22 @@ exports.MasterPassPrompt = function (reset, callback) {
             return global.mdb.saveGlobalObj('creds')
           })
           .catch((err) => {
-            throw err
+            error = err
+            win.close()
           })
         webContents.send('setMasterPassResult', null)
       } else {
         webContents.send('setMasterPassResult', err)
+        error = err
+        win.close()
       }
     })
   })
   win.on('closed', function () {
     logger.info('win.closed event emitted for Settings.')
     win = null
-    callback(((reset) ? newMPset : null))
-    if (gotMP) {
-      callback()
-    } else {
-      app.quit()
-    }
+    // callback(((reset) ? newMPset : null))
+    callback(error, gotMP)
   })
 
   return win

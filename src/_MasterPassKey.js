@@ -18,7 +18,7 @@
 const MasterPassKey = (function () {
   const mpk = new WeakMap()
 
-  function MasterPassKey(key) {
+  function MasterPassKey (key) {
     mpk.set(this, key)
   }
 
@@ -40,6 +40,5 @@ const MasterPassKey = (function () {
 
   return MasterPassKey
 }())
-
 
 module.exports = MasterPassKey

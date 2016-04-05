@@ -106,7 +106,7 @@ describe("CryptoSync Core Modules' tests", function () {
     })
 
     global.execute = function (command, callback) {
-      exec(command, function (error, stdout, stderr) {
+      exec(command, function (err, stdout, stderr) {
         callback(stdout)
       })
     }
@@ -128,12 +128,13 @@ describe("CryptoSync Core Modules' tests", function () {
       beforeEach(function () {
         fs.removeSync(global.paths.home)
       })
-      it('should get file with correct keys', function () {
-        return sync.getQueue.push(global.rfile, function (err, file) {
+      it('should get file with correct keys', function (done) {
+        sync.getQueue.push(global.rfile, function (err, file) {
           if (err) return done(err)
           expect(file)
             .to.include.keys('path')
           expect(util.checkFileSync(`${global.paths.home}/test.png`)).to.be.true
+          done()
         })
       })
 
@@ -155,11 +156,11 @@ describe("CryptoSync Core Modules' tests", function () {
 
       describe('Queue promises', () => {
         beforeEach(function () {
-          rfile = JSON.parse(fs.readFileSync(`${global.paths.data}/rfile.json`, 'utf8'))
+          resetGlobalObj('state.queues')
+          rfile = _.cloneDeep(global.rfile)
+          global.state.toGet.push(global.rfile)
         })
         it('should pushGetQueue and then pushCryptQueue', function () {
-          resetGlobalObj('state.queues')
-          global.state.toGet.push(global.rfile)
           // return global.state.toGet.forEach(function (file) {
           return sync.pushGetQueue(global.state.toGet[0])
             .then((file) => {
@@ -190,8 +191,30 @@ describe("CryptoSync Core Modules' tests", function () {
             })
         // })
         })
+
+        // it('should get last modified time of file and attach it', function () {
+        //   // return global.state.toGet.forEach(function (file) {
+        //   return sync.pushGetQueue(global.state.toGet[0])
+        //     .then((file) => {
+        //       return sync.updateStats(file)
+        //     })
+        //     .then((file) => {
+        //       // expect(util.checkFileSync(`${global.paths.home}/test.png`)).to.be.true
+        //       expect(file).to.have.property('mtime')
+        //       expect(file).to.have.property('size')
+        //       expect(file.mtime).to.be.empty
+        //       // expect(file.mtime).to.equal()
+        //       return
+        //     })
+        //     .catch((err) => {
+        //       throw err
+        //     })
+        // })
       })
+
     })
+
+
 
     describe('cryptQueue', function () {
       before(function () {
@@ -323,12 +346,6 @@ describe("CryptoSync Core Modules' tests", function () {
             .to.have.property('oauth2Client')
           expect(global.accounts['cryptosync_drive'].oauth.oauth2Client.credentials)
             .to.not.be.empty
-          expect(global.files)
-            .to.have.property('0B0pJLMXieC-mTWJpT3hiWjRoems')
-          expect(global.files)
-            .to.have.property('0B0pJLMXieC-mUV9LTkJqOHJPcFU')
-          expect(global.files)
-            .to.have.property('0B0pJLMXieC-mWElPMEtJT1Q1dDg')
           expect(global.state.toGet.length)
             .to.equal(3)
           expect(global.state.rfs)
@@ -338,7 +355,7 @@ describe("CryptoSync Core Modules' tests", function () {
         .then((dbtoken) => {
           expect(dbtoken)
             .to.equal(JSON.stringify(token))
-          expect(global.state.toGet[1].id).to.include(global.rfile.id)
+          expect(global.rfile.id).to.any.equal(global.state.toGet[0].id, global.state.toGet[1].id, global.state.toGet[2].id)
         })
         .catch(function (e) {
           throw e

@@ -10,9 +10,13 @@ const Main = (process.env.TEST_RUN) ? null : require('../index')
 
 exports.Prompt = function () {
   return new Promise(function (resolve, reject) {
-    Main.MasterPassPrompt(false, function (err) {
+    Main.MasterPassPrompt(false, function (err, gotMP) {
       if (err) reject(err)
-      resolve()
+      if (gotMP) {
+        resolve()
+      } else {
+        reject(new Error('Could not get MasterPass'))
+      }
     })
   })
 }

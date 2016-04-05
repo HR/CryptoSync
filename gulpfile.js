@@ -1,6 +1,5 @@
 const gulp = require('gulp')
 const shell = require('gulp-shell')
-const mocha = require('gulp-mocha')
 
 gulp.task('default', shell.task([
   // Absolute path '/usr/local/lib/node_modules/electron-prebuilt/dist/Electron.app/Contents/MacOS/Electron .'
@@ -33,20 +32,15 @@ gulp.task('driver', shell.task([
 
 gulp.task('test', shell.task([
   // Run test stuff
-  "electron-mocha --renderer --compilers js:babel-core/register 'test/**/*.@(js|jsx)'"
+  "mocha --compilers js:babel-core/register test/"
 ]))
 
-gulp.task('mtest', shell.task([
-  // Run test stuff
-  'mocha --compilers js:babel-core/register'
-]))
-
-gulp.task('mntest', shell.task([
+gulp.task('ntest', shell.task([
   // Run test stuff
   'mocha --reporter nyan --compilers js:babel-core/register'
 ]))
 
-gulp.task('testcov', shell.task([
+gulp.task('cov', shell.task([
   // Run test stuff
   './node_modules/.bin/babel-node ./node_modules/.bin/isparta cover --root src/ ./node_modules/.bin/_mocha'
 ]))

@@ -5,7 +5,9 @@
  ******************************/
 const winston = require('winston')
 const moment = require('moment')
+const fs = require('fs-extra')
 
+fs.ensureDirSync('debug')
 winston.emitErrs = true
 const fileTransport = new (winston.transports.File)({
   filename: `./debug/CS_debug_${moment().format('DD.MM@HH:MM').trim()}.log`,

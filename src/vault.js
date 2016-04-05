@@ -3,14 +3,10 @@
  * Vault.js
  * Vault functionality
  ******************************/
-const _ = require('lodash'),
-  moment = require('moment'),
-  util = require('./util'),
-  sutil = require('util'),
-  logger = require('../logger'),
-  crypto = require('./crypto')
-
-const self = this
+const moment = require('moment')
+const sutil = require('util')
+const logger = require('../logger')
+const crypto = require('./crypto')
 
 // function Vault(crypted, path, viv, data) {
 // 	this.crypted = encrypted
@@ -45,6 +41,7 @@ exports.init = function (mpkey) {
 
 exports.decrypt = function (mpkey) {
   return new Promise(function (resolve, reject) {
+    if (!mpkey) reject(new Error('No MasterPassKey passed'))
     crypto.decryptObj(global.paths.vault, mpkey, global.creds.viv, global.creds.authTag, function (err, vault) {
       if (err) {
         logger.error(`decryptObj ERR: ${err.stack}`)

@@ -4,6 +4,7 @@
  * Main cloud sync functionality
  ******************************/
 
+const sfs = require('fs')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const base64 = require('base64-stream')
@@ -28,19 +29,21 @@ const CONCURRENCY = 2
 
 exports.event = new EventEmitter()
 
-exports.updateStats = function (file, callback) {
-  fs.Stats(file.path, function (err, stats) {
-    if (err) {
-      logger.verbose(`fs.Stats ERROR: ${err.stack}`)
-      return callback(err)
-    }
-    logger.verbose(`fs.Stats: for ${file.name}, file.mtime = ${stats.mtime}`)
-    logger.verbose(`fs.Stats: for ${file.name}, file.size = ${stats.size}`)
-    file.mtime = stats.mtime
-    file.size = stats.size
-    // global.files[file.id] = file
-    logger.verbose(`GOT fs.Stat of file, mtime = ${file.mtime}`)
-    callback(null, file)
+exports.updateStats = function (file) {
+  return new Promise(function (resolve, reject) {
+    sfs.Stats(file.path, function (err, stats) {
+      if (err) {
+        logger.error(`fs.Stats ERROR: ${err.stack}`)
+        reject(err)
+      }
+      reject(stats)
+      logger.info(`fs.Stats: for ${file.name}, file.mtime = ${stats.mtime}`)
+      logger.info(`fs.Stats: for ${file.name}, file.size = ${stats.size}`)
+      file.mtime = stats.mtime
+      file.size = stats.size
+      logger.info(`GOT fs.Stat of file, mtime = ${file.mtime}`)
+      resolve(null, file)
+    })
   })
 }
 
