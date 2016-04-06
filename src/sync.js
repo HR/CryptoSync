@@ -94,12 +94,19 @@ exports.pushCryptQueue = function (file) {
     exports.cryptQueue.push(file, function (err, file) {
       if (err) {
         logger.error(`ERROR occurred while ENCRYPTting`)
-        reject(err)
+        return reject(err)
       }
       // update file globally
-      global.files[file.id] = file
-      global.state.toUpdate.push(file)
-      _.pull(global.state.toCrypt, file)
+      if (_.has(file, 'id')) {
+        // file to update
+        global.files[file.id] = file
+        global.state.toUpdate.push(file)
+        _.pull(global.state.toCrypt, file)
+      } else {
+        // added file to put
+        global.state.toPut.push(file)
+        _.pull(global.state.toCrypt, file)
+      }
       logger.info(`DONE ENCRYPTting ${file.name}`)
       resolve(file)
     })
@@ -113,7 +120,7 @@ exports.pushUpdateQueue = function (file) {
     exports.updateQueue.push(file, function (err, file) {
       if (err) {
         logger.error(`ERROR occurred while UPDATting`)
-        reject()
+        reject(err)
       }
       // update file globally
       global.files[file.id] = file
@@ -128,17 +135,19 @@ exports.pushUpdateQueue = function (file) {
 exports.pushPutQueue = function (file) {
   logger.verbose(`PROMISE: pushPutQueue for ${file.name}`)
   return new Promise(function (resolve, reject) {
-    exports.putQueue.push(file, function (err, file) {
+    exports.putQueue.push(file, function (err, file, rfile) {
       if (err) {
         logger.error(`ERROR occurred while UPDATting`)
-        reject()
+        reject(err)
       }
       // update file globally
-      // global.files[file.id] = file
+      file.id = rfile.id
+      global.files[rfile.id] = file
+
       // remove file from persistent update queue
       _.pull(global.state.toPut, file)
       logger.info(`DONE UPDATting ${file.name}. Removing from global status...`)
-      resolve()
+      resolve(rfile)
     })
   })
 }
@@ -185,7 +194,8 @@ exports.cryptQueue = async.queue(function (file, callback) {
     if (err) return callback(err)
     let parentPath = global.state.rfs[file.parents[0]].path
     // let parentPath = (_.has(file, parents)) ? global.state.rfs[file.parents[0]].path : file.parentPath
-    let origpath = (parentPath === '/') ? `${global.paths.home}${parentPath}${file.name}` : `${global.paths.home}${parentPath}/${file.name}`
+    // TODO: look into using path module
+    let origpath = file.path
     let destpath = `${global.paths.crypted}/${file.name}.crypto`
     // logger.verbose(`TO ENCRYTPT: ${file.name} (${file.id}) at origpath: ${origpath} to destpath: ${destpath} with parentPath ${parentPath}`)
     crypto.encrypt(origpath, destpath, global.MasterPassKey.get(), function (err, key, iv, tag) {
@@ -239,13 +249,12 @@ exports.updateQueue = async.queue(function (file, callback) {
 exports.putQueue = async.queue(function (file, callback) {
   logger.verbose(`TO PUT: ${file.name} (${file.id})`)
   global.drive.files.create({
-    fileId: file.id,
     resource: {
       name: `${file.name}.crypto`
     },
     contentHints: {
       thumbnail: {
-        image: res.thumbnail,
+        image: res.urlsafe_thumb,
         mimeType: 'image/png'
       }
     },
@@ -260,8 +269,8 @@ exports.putQueue = async.queue(function (file, callback) {
     }
     logger.verbose(`callback: put ${file.name}`)
     file.lastSynced = moment().format()
-    global.files[rfile.id] = rfile
-    callback(null, file, rfile)
+    file.id = rfile.id
+    callback(null, file)
   })
 }, CONCURRENCY)
 
@@ -269,19 +278,13 @@ exports.putQueue = async.queue(function (file, callback) {
  * Promises
  */
 
-exports.genID = function (n = 1) {
+exports.createFileObj = function (fileName, path, parents) {
   return new Promise(function (resolve, reject) {
-    global.drive.files.generateIds({
-      count: n,
-      space: 'drive'
-    }, function (err, res) {
-      if (err) {
-        logger.error(`callback: error genID`)
-        return reject(err)
-      }
-      // logger.verbose(`callback: genID`)
-      resolve((res.ids.length === 1) ? res.ids[0] : res.ids)
-    })
+    let file = {}
+    file.name = fileName
+    file.path = path
+    file.parents = parents
+    resolve(file)
   })
 }
 

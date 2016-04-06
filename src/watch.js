@@ -11,16 +11,6 @@ const watcher = chokidar.watch(global.paths.home, {
   alwaysStat: true
 })
 
-let createFileObj = function (fileId, fileName, path) {
-  return new Promise(function (resolve, reject) {
-    let file = {}
-    file.name = fileName
-    file.id = fileId
-    file.path = path
-    global.files[file.id] = file
-    resolve(file)
-  })
-}
 
 watcher.on('add', (path, stats) => {
   if (dotRegex.test(path)) {

@@ -66,6 +66,7 @@
     "moment": "*",
     "secrets.js": "*",
     "tar": "*",
+    "urlsafe-base64": "^1.0.0",
     "winston": "^2.2.0"
   },
   "devDependencies": {

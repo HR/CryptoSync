@@ -1,5 +1,6 @@
 'use strict'
 const assert = require('assert')
+const path = require('path')
 const expect = require('chai').expect
 const crypto = require('../src/crypto.js')
 const sync = require('../src/sync.js')
@@ -26,6 +27,7 @@ if (!process.env.TRAVIS) {
     .config()
 }
 console.log(`cwd: ${process.cwd()}`)
+console.log(`__dirname: ${__dirname}`)
 
 describe("CryptoSync Core Modules' tests", function () {
   function resetGlobalObj (name) {
@@ -40,13 +42,15 @@ describe("CryptoSync Core Modules' tests", function () {
   }
 
   global.paths = {
-    home: 'test/CryptoSync',
-    crypted: 'test/CryptoSync/.encrypted',
-    mdb: 'test/tmp/mdb',
-    vault: 'test/CryptoSync/vault.crypto',
-    tmp: 'test/tmp',
-    data: 'test/data'
+    home: path.join(__dirname,'/CryptoSync'),
+    crypted: path.join(__dirname,'/CryptoSync/.encrypted'),
+    mdb: path.join(__dirname,'/tmp/mdb'),
+    vault: path.join(__dirname,'/CryptoSync/vault.crypto'),
+    tmp: path.join(__dirname,'/tmp'),
+    data: path.join(__dirname,'/data')
   }
+  console.log(require('util').inspect(global.paths, { depth: null }))
+
 
   global.defaults = {
     iterations: 4096, // file encryption key iterations
@@ -91,6 +95,7 @@ describe("CryptoSync Core Modules' tests", function () {
   global.MasterPassKey = new MasterPassKey(scrypto.randomBytes(global.defaults.keyLength))
   global.mdb = new Db(global.paths.mdb)
 
+  const t1path = `${global.paths.tmp}/test.txt`
   // Before all tests have run
   before(function () {
     global.rfile = JSON.parse(fs.readFileSync(`${global.paths.data}/rfile.json`, 'utf8'))
@@ -106,7 +111,7 @@ describe("CryptoSync Core Modules' tests", function () {
     })
 
     global.execute = function (command, callback) {
-      return new Promise(function(resolve, reject) {
+      return new Promise(function (resolve, reject) {
         exec(command, function (err, stdout, stderr) {
           resolve(stdout)
         })
@@ -155,66 +160,7 @@ describe("CryptoSync Core Modules' tests", function () {
           done()
         })
       })
-
-      describe('Queue promises', () => {
-        beforeEach(function () {
-          resetGlobalObj('state.queues')
-          rfile = _.cloneDeep(global.rfile)
-          global.state.toGet.push(global.rfile)
-        })
-        it('should pushGetQueue and then pushCryptQueue then updateStats then updateHash', function () {
-          this.timeout(3000)
-          // return global.state.toGet.forEach(function (file) {
-          return sync.pushGetQueue(global.state.toGet[0])
-            .then((file) => {
-              expect(util.checkFileSync(`${global.paths.home}/test.png`)).to.be.true
-              expect(global.state.toGet).to.be.empty
-              expect(global.state.toCrypt[0].id).to.equal(global.rfile.id)
-              expect(global.files[file.id]).to.include.keys('path')
-              return file
-            })
-            .then((file) => {
-              return sync.pushCryptQueue(file)
-            })
-            .then((file) => {
-              expect(util.checkFileSync(`${global.paths.crypted}/test.png.crypto`)).to.be.true
-              expect(global.state.toCrypt).to.be.empty
-              expect(global.state.toUpdate[0].id).to.equal(global.rfile.id)
-              expect(global.files[file.id]).to.include.keys('cryptPath')
-              return file
-            })
-            .then((file) => {
-              const nfile = _.cloneDeep(file)
-              return sync.updateStats(nfile)
-            })
-            .then((nfile) => {
-              return sync.updateHash(nfile)
-            })
-            .then((nfile) => {
-              expect(nfile).to.have.property('md5hash')
-              expect(nfile).to.have.property('mtime')
-              expect(nfile).to.have.property('size')
-              expect(nfile.size).not.to.be.empty
-              expect(nfile.mtime).to.be.a('date')
-              expect(nfile.md5hash).not.to.be.empty
-              return
-            })
-            // .then((file) => {
-            // 	return sync.pushUpdateQueue(file)
-            // })
-            // .then(() => {
-            // 	return sync.updateStatus('put', file)
-            // })
-            .catch((err) => {
-              throw err
-            })
-        // })
-        })
-      })
-
     })
-
-
 
     describe('cryptQueue', function () {
       before(function () {
@@ -251,22 +197,120 @@ describe("CryptoSync Core Modules' tests", function () {
       })
     })
 
-    describe('Setup', function () {
+    describe('Queue promises', () => {
+      let rfile
       beforeEach(function () {
+        resetGlobalObj('state.queues')
+        rfile = _.cloneDeep(global.rfile)
+      })
+      afterEach(function () {
+        resetGlobalObj('state.queues')
+      })
+      it('should pushGetQueue and then pushCryptQueue then updateStats then updateHash', function () {
+        this.timeout(3000)
+        global.state.toGet.push(rfile)
+        // return global.state.toGet.forEach(function (file) {
+        return sync.pushGetQueue(global.state.toGet[0])
+          .then((file) => {
+            expect(util.checkFileSync(`${global.paths.home}/test.png`)).to.be.true
+            expect(global.state.toGet).to.be.empty
+            expect(global.state.toCrypt[0].id).to.equal(global.rfile.id)
+            expect(global.files[file.id]).to.include.keys('path')
+            return file
+          })
+          .then((file) => {
+            return sync.pushCryptQueue(file)
+          })
+          .then((file) => {
+            expect(util.checkFileSync(`${global.paths.crypted}/test.png.crypto`)).to.be.true
+            expect(global.state.toCrypt).to.be.empty
+            expect(global.state.toUpdate[0].id).to.equal(global.rfile.id)
+            expect(global.files[file.id]).to.include.keys('cryptPath')
+            return file
+          })
+          .then((file) => {
+            const nfile = _.cloneDeep(file)
+            return sync.updateStats(nfile)
+          })
+          .then((nfile) => {
+            return sync.updateHash(nfile)
+          })
+          .then((nfile) => {
+            expect(nfile).to.have.property('md5hash')
+            expect(nfile).to.have.property('mtime')
+            expect(nfile).to.have.property('size')
+            expect(nfile.size).not.to.be.empty
+            expect(nfile.mtime).to.be.a('date')
+            expect(nfile.md5hash).not.to.be.empty
+            return
+          })
+          // .then((file) => {
+          // 	return sync.pushUpdateQueue(file)
+          // })
+          // .then(() => {
+          // 	return sync.updateStatus('put', file)
+          // })
+          .catch((err) => {
+            throw err
+          })
+      // })
+      })
+      it('should pushCryptQueue then pushPutQueue when file added', function () {
+        this.timeout(3000)
+
+        function getFolderId (path, folders) {
+          for (var folder in folders) {
+            if (folders[folder].path === path) return folder
+          }
+        }
+        const addedfile = `${global.paths.home}/test2.txt`
+        fs.writeFileSync(addedfile, '#CryptoSync', 'utf8')
+        const fileName = path.basename(addedfile)
+        const rfsPath = util.resolvePath(addedfile)
+        expect(rfsPath).to.equal('/')
+        const parents = [getFolderId(rfsPath, global.state.rfs)]
+        expect(parents[0]).to.equal(Object.keys(global.state.rfs)[0])
+
+        sync.createFileObj(fileName, addedfile, parents)
+          .then((file) => {
+            expect(file).to.have.all.keys('name', 'path', 'parents')
+            global.state.toCrypt.push(file)
+            return file
+          })
+          .then((file) => {
+            return sync.pushCryptQueue(file)
+          })
+          .then((file) => {
+            expect(file).to.include.keys('cryptPath')
+            expect(global.state.toCrypt).to.be.empty
+            expect(global.state.toPut[0].name).to.equal(file.name)
+            return sync.pushPutQueue(file)
+          })
+          .then((file) => {
+            expect(global.state.toPut).to.be.empty
+            expect(file.id).not.to.be.empty
+            return
+          })
+          .catch((err) => {
+            throw err
+          })
+      })
+    })
+
+    describe('Setup', function () {
+      before(function () {
         fs.removeSync(global.paths.crypted)
       })
 
-      it("should retrieve the user's account info", function (done) {
-        sync.getAccountInfo()
+      it("should retrieve the user's account info", function () {
+        return sync.getAccountInfo()
           .then((res) => {
-            expect(res)
-              .to.have.property('user')
-            expect(res)
-              .to.have.property('storageQuota')
-            done()
+            expect(res).to.have.property('user')
+            expect(res).to.have.property('storageQuota')
+            return
           })
           .catch((err) => {
-            done(err)
+            throw(err)
           })
       })
 
@@ -346,8 +390,6 @@ describe("CryptoSync Core Modules' tests", function () {
             .to.have.property('oauth2Client')
           expect(global.accounts['cryptosync_drive'].oauth.oauth2Client.credentials)
             .to.not.be.empty
-          expect(global.state.toGet.length)
-            .to.equal(3)
           expect(global.state.rfs)
             .to.deep.equal(rfs)
           return global.mdb.getValue('gdrive-token')
@@ -367,7 +409,6 @@ describe("CryptoSync Core Modules' tests", function () {
    ******************************/
 
   describe('Crypto module', function () {
-    const t1path = `${global.paths.tmp}/test.txt`
     before(function () {
       fs.writeFileSync(t1path, '#CryptoSync', 'utf8')
     })
@@ -379,17 +420,17 @@ describe("CryptoSync Core Modules' tests", function () {
         return crypto.genFileHash(t1path)
           .then((hash) => {
             global.execute(`openssl dgst -md5 ${t1path}`)
-            .then((stdout) => {
-              let ohash = stdout.replace('MD5(test.txt)= ', '')
-              expect(hash)
-                .to.equal(ohash)
-              expect(crypto.verifyFileHash(hash, ohash))
-                .to.be.true
-              expect(false).to.true
-            })
-            .catch((err) => {
-              throw err
-            })
+              .then((stdout) => {
+                let ohash = stdout.replace('MD5(test.txt)= ', '')
+                expect(hash)
+                  .to.equal(ohash)
+                expect(crypto.verifyFileHash(hash, ohash))
+                  .to.be.true
+                expect(false).to.true
+              })
+              .catch((err) => {
+                throw err
+              })
           })
           .catch((err) => {
             throw err

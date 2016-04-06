@@ -43,34 +43,61 @@
 					<section class="category">
 						<h4>Encryption</h4>
 						<div class="options">
-							<div class="option">
-								<span>Key Length</span>
-								<select class="right config" data-config="keyLength">
-									<option value="256">256-bit</option>
-								</select>
+              <div class="option">
+								<span>Algorithm</span>
+								<span class="right config" data-config="algorithm">AES-256-GCM</span>
 							</div>
 							<div class="option">
-								<span>Algorithm</span>
-								<select class="right config" data-config="algorithm">
-								</select>
+								<span>Key length</span>
+                <span class="right config" data-config="keyLength">256 bits</span>
+								<!-- <select class="right config" data-config="keyLength">
+									<option value="256">256-bit</option>
+								</select> -->
+							</div>
+              <div class="option">
+								<span>IV length</span>
+                <span class="right config" data-config="ivLength">96 bits</span>
+							</div>
+              <div class="option">
+								<span>Salt length</span>
+                <span class="right config" data-config="ivLength">256 bits</span>
+							</div>
+              <div class="option">
+								<span>PBKDF2 iterations</span>
+                <span class="right config" data-config="ivLength">5,000</span>
+							</div>
+              <div class="option">
+								<span>Hash function</span>
+                <span class="right config" data-config="ivLength">MD5</span>
 							</div>
 						</div>
 					</section>
 					<section class="category">
 						<h4>Vault</h4>
 						<div class="options">
+              <div class="option">
+                <span>Encryption</span>
+              </div>
 							<div class="option">
-								<span>Encryption key length</span>
-								<select class="right config" data-config="MPkeyLength">
-									<option value="128">128-bit</option>
-									<option value="256" selected>256-bit</option>
-								</select>
+								<span>Key length</span>
+                <span class="right config" data-config="MPkeyLength">256-bit</span>
 							</div>
 						</div>
 					</section>
 					<section class="category">
 						<h4>MasterPass</h4>
 						<div class="options">
+              <div class="option">
+                <span>Encryption</span>
+              </div>
+              <div class="option">
+                <span>PBKDF2 iterations</span>
+                <span class="right config" data-config="ivLength">100,000</span>
+              </div>
+              <div class="option">
+								<span>Hash function</span>
+                <span class="right config" data-config="ivLength">SHA256</span>
+							</div>
 							<div class="option">
 								<span>Shares</span>
 								<select class="right config" data-config="shares">
@@ -80,11 +107,11 @@
 							</div>
 							<div class="option">
 								<img class="info" src="images/icons/info.svg" alt="">
-								<p class="info">Where n = Number of shares required to reconstruct MasterPass and S = Total number of shares</p>
+								<p class="info">s = Total number of shares and n = Number of shares required to reconstruct MasterPass</p>
 							</div>
 							<div class="option">
 								<span>Change</span>
-								<button class="right" id="resetMasterPass">Reset</button>
+								<a class=".navigationLink right button" id="resetMasterPass" data-action="resetMasterPass">Reset</a>
 							</div>
 						</div>
 					</section>
@@ -189,7 +216,7 @@
 			Handlebars = require('handlebars'),
 			ipcRenderer = require('electron').ipcRenderer,
 			settings = remote.getGlobal("settings"),
-			rconsole = remote.getGlobal("console"),
+      logger = require('../logger.js'),
 			shell = require('shell'),
 			userSettings = {};
 
@@ -224,13 +251,14 @@
 				}
 			}
 			// attach click listners
-			$(document).on("click", "#resetMasterPass", function() {
-				ipcRenderer.send("resetMasterPass");
-			});
+      // $('#resetMasterPass').click(function() {
+      //   ipcRenderer.send("resetMasterPass");
+      // })
 			$(".navigationLink").each(function(index) {
-				$(this).click(function() {
-					var target = this.getAttribute("data-target"),
-						action = this.getAttribute("data-action");
+        var $this = $(this)
+				$(this).on('click', function(event) {
+					var target = $this.data("target")
+					var action = $this.data("action")
 					if (action) {
 						// TODO: Action (i.e. check for updates/open updater)
 						console.log(`${this} has data-action attr of ${action}`);
@@ -240,12 +268,12 @@
 						} else {
 							ipcRenderer.send(action);
 						}
-						return;
 					} else {
 						$(".active").first().removeClass("active");
 						$("a[data-target='" + target + "']").addClass("active");
+            navigate(target);
 					}
-					navigate(target);
+          return false;
 				});
 			});
 
@@ -260,9 +288,9 @@
 					var config = this.getAttribute("data-config");
 					var isCheckbox = $this.is(':checkbox');
 					var value = (isCheckbox) ? $this.is(':checked') : $this.val();
-					rconsole.log(`RENDER: ${config} has changed to ${value} of type ${typeof value}`);
+					logger.verbose(`RENDER: ${config} has changed to ${value} of type ${typeof value}`);
 					userSettings[config] = value;
-					rconsole.log(`RENDER: Set userSettings[${config}] to ${userSettings[config]}`);
+					logger.verbose(`RENDER: Set userSettings[${config}] to ${userSettings[config]}`);
 					settings.user = userSettings;
 				});
 			});
