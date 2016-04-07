@@ -125,6 +125,15 @@ describe("CryptoSync Core Modules' tests", function () {
       })
   })
 
+  it('should initialise mdb', () => {
+    return init.main()
+      .catch((err) => {
+        expect(err).to.be.an('error')
+        expect(err.message).to.equal("File doesn't exist")
+        throw err
+      })
+  })
+
   // After all tests have run
   after(function () {
     fs.removeSync(global.paths.tmp)
