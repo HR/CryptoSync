@@ -8,9 +8,9 @@ const crypto = require('./crypto')
 const logger = require('../logger')
 const Main = (process.env.TEST_RUN) ? null : require('../index')
 
-exports.Prompt = function () {
+exports.Prompt = function (reset = false) {
   return new Promise(function (resolve, reject) {
-    Main.MasterPassPrompt(false, function (err, gotMP) {
+    Main.MasterPassPrompt(reset, function (err, gotMP) {
       if (err) reject(err)
       if (gotMP) {
         resolve()

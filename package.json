@@ -45,6 +45,7 @@
     "async": "*",
     "babel-core": "*",
     "base64-stream": "*",
+    "buffer": "^4.5.1",
     "chokidar": "*",
     "coveralls": "^2.11.9",
     "dotenv": "^2.0.0",

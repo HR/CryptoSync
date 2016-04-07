@@ -61,11 +61,16 @@ div.type {
   position: relative;
 }
 div.content {
+  width: 80%;
   vertical-align: top;
   margin-left   : @spacing-ic-txt;
 }
 div.name {
   font-size: @name-fsize;
+  text-overflow: ellipsis;
+  position: relative;
+  overflow: hidden;
+  width: 95%;
 }
 div.lastSynced {
   font-size: @lastSynced-fsize;
@@ -86,6 +91,7 @@ img.fileType {
   margin      : 0;
 }
 div.item {
+  width: 100%;
   border-top: 1px solid @light;
   padding   : @spacing04 0;
 }

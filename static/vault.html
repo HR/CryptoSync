@@ -56,13 +56,16 @@
         <div class="lastMod">{{lastSyncedText}}</div>
       </div>
     </script>
-
     <script id="info-template" type="text/x-handlebars-template">
       <h3>{{name}}</h3>
       <table>
         <tr>
           <td>Last Synced</td>
           <td>{{lastSyncedText}}</td>
+        </tr>
+        <tr>
+          <td>Last Encrypted</td>
+          <td>{{lastCryptedText}}</td>
         </tr>
         <tr>
           <td>Path</td>
@@ -132,6 +135,8 @@
         // TODO: ENCAPSULATE files var!
         vault = remote.getGlobal('vault'),
         files = remote.getGlobal('files'),
+        _ = require('lodash'),
+        moment = require('moment'),
         shares2pass = require('../src/crypto').shares2pass,
         Handlebars = require('handlebars')
 
@@ -161,11 +166,13 @@
 
       function renderSelFileInfo(fid) {
         // console.log(`vault: ${JSON.stringify(vault)}`)
-        var fid = (fid) ? fid : $('#filesList > .selected').first().data('fid'),
-          info_template = Handlebars.compile($('#info-template').html()),
-          share_template = Handlebars.compile($('#share-template').html()),
-          info = info_template(files[fid]),
-          shares = share_template(vault.files[fid].shares)
+        var fid = (fid) ? fid : $('#filesList > .selected').first().data('fid')
+        var info_template = Handlebars.compile($('#info-template').html())
+        var share_template = Handlebars.compile($('#share-template').html())
+        files[fid].lastSyncedText = (_.has(files[fid], 'lastSynced')) ?  moment(files[fid].lastSynced).format('LLLL') :  'not synced yet'
+        files[fid].lastCryptedText = (_.has(files[fid], 'lastCrypted')) ? moment(files[fid].lastCrypted).format('LLLL') : 'not encrypted yet'
+        var info = info_template(files[fid])
+        var shares = share_template(vault.files[fid].shares)
 
         content = $('#info > #content')
         content.html(info)
@@ -208,7 +215,7 @@
         var fileList = $('#filesList')
         for (var file in files) {
           if (files.hasOwnProperty(file)) {
-            files[file].lastSyncedText = file.lastSyncedText || 'not synced yet'
+            files[file].lastSyncedText = (_.has(file, 'lastSynced')) ?  moment(file.lastSynced).format('LLLL') :  'not synced yet'
             var template = Handlebars.compile($('#file-template').html())
             var file = template(files[file])
             fileList.append(file)
@@ -219,7 +226,7 @@
 
         // render the info for the selected file
         renderSelFileInfo()
-        
+
         $('.file.row').each(function(index) {
           var self = $(this)
           self.click(function() {

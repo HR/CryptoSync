@@ -53,10 +53,10 @@ exports.updateHash = function (file) {
   })
 }
 
-exports.updateStatus = function (status, file) {
+exports.updateStatus = function (status, file = null) {
   return new Promise(function (resolve, reject) {
-    if (_.isEqual(status, 'put')) {
-      exports.event.emit('put', file)
+    if (file) {
+      exports.event.emit(status, file)
     } else {
       exports.event.emit('statusChange', status)
     }
@@ -207,6 +207,7 @@ exports.cryptQueue = async.queue(function (file, callback) {
           file.cryptPath = destpath
           file.iv = iv.toString('hex')
           file.authTag = tag.toString('hex')
+          file.lastCrypted = moment().format()
           global.vault.files[file.id] = _.cloneDeep(file)
           global.vault.files[file.id].shares = crypto.pass2shares(key.toString('hex'))
           callback(null, file)

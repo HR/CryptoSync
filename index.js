@@ -153,7 +153,19 @@ function Cryptobar (callback) {
       name: file.name,
       fileType: file.fullFileExtension,
       type: 'gdrive',
-      lastSynced: file.lastSynced
+      lastMoment: file.lastSynced,
+      synced: 'Uploaded'
+    })
+  })
+
+  sync.event.on('crypted', (file) => {
+    logger.verbose(`PUT EVENT RECEIVED for ${file.name}`)
+    webContents.send('synced', {
+      name: file.name,
+      fileType: file.fullFileExtension,
+      type: 'gdrive',
+      lastMoment: file.lastCrypted,
+      synced: 'Encrypted'
     })
   })
 
@@ -416,15 +428,28 @@ function Settings (callback) {
     center: true
   })
   win.loadURL(global.views.settings)
+  let webContents = win.webContents
   win.openDevTools()
+  // TODO: close app after pass has been reset and vault has been re-encrypted
   ipc.on('resetMasterPass', function (event, type) {
+    event.preventDefault()
     logger.verbose('IPCMAIN: resetMasterPass emitted. Creating MasterPassPrompt...')
-    MasterPass.Prompt(true, function (newMPset) {
-      // if (newMPset) then new new MP was set otherwise it wasn't
-      // TODO: show password was set successfully
-      logger.info(`MAIN: MasterPassPrompt, newMPset finished? ${newMPset}`)
-      return
-    })
+    MasterPass.Prompt(true)
+      .then((MPKset) => {
+        webContents.send('resetMasterPassResult', MPKset)
+        return
+      })
+      .catch((err) => {
+        webContents.send('resetMasterPassResult', MPKset)
+        logger.error(`resetMasterPass err: ${err}`)
+      })
+
+    // .then((newMPset) => {
+    //   // TODO: show password was set successfully
+    //   logger.info(`MAIN: MasterPassPrompt, newMPset finished? ${newMPset}`)
+    //   return
+    // })
+
   })
   ipc.on('removeAccount', function (event, account) {
     logger.verbose(`IPCMAIN: removeAccount emitted. Creating removing ${account}...`)
@@ -658,7 +683,6 @@ app.on('ready', function () {
 exports.MasterPassPrompt = function (reset, callback) {
   let tries = 0
   let gotMP = false
-  let newMPset = false
   let error = null
   let win = new BrowserWindow({
     width: 300, // 300
@@ -713,7 +737,6 @@ exports.MasterPassPrompt = function (reset, callback) {
     logger.verbose('IPCMAIN: setMasterPass emitted, Setting Masterpass...')
     MasterPass.set(masterpass, function (err, mpkey) {
       if (!err) {
-        newMPset = true
         global.MasterPassKey = new MasterPassKey(mpkey)
         // TODO: test this
         vault.init(global.MasterPassKey.get())
@@ -724,6 +747,7 @@ exports.MasterPassPrompt = function (reset, callback) {
             error = err
             win.close()
           })
+        gotMP = true
         webContents.send('setMasterPassResult', null)
       } else {
         webContents.send('setMasterPassResult', err)
@@ -733,10 +757,9 @@ exports.MasterPassPrompt = function (reset, callback) {
     })
   })
   win.on('closed', function () {
-    logger.info('win.closed event emitted for Settings.')
-    win = null
-    // callback(((reset) ? newMPset : null))
+    logger.info('win.closed event emitted for MasterPassPrompt')
     callback(error, gotMP)
+    win = null
   })
 
   return win

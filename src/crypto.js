@@ -45,30 +45,29 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
     if (err) {
       // return error to callback YOLO#101
       callback(err)
-    } else {
+    }
       // logger.verbose(`Pbkdf2 generated key ${key.toString('hex')} using iv = ${iv.toString('hex')}, salt = ${salt.toString('hex')}`)
       const origin = fs.createReadStream(origpath)
       const dest = fs.createWriteStream(destpath)
       const iv = crypto.randomBytes(defaults.ivLength) // generate pseudorandom iv
       const cipher = crypto.createCipheriv(defaults.algorithm, key, iv)
-      let destf = destpath.match(/[^/]+[A-z0-9]+\.[A-z0-9]+/g)[0]
 
       origin.pipe(cipher).pipe(dest, {
         end: false
       })
 
       cipher.on('error', () => {
-        logger.verbose(`CIPHER STREAM: Error while encrypting ${destf} file`)
+        logger.verbose(`CIPHER STREAM: Error while encrypting file`)
         callback(err)
       })
 
       origin.on('error', () => {
-        logger.verbose(`ORIGIN STREAM: Error while reading ${destf} file to ${destpath}`)
+        logger.verbose(`ORIGIN STREAM: Error while reading file to ${destpath}`)
         callback(err)
       })
 
       dest.on('error', () => {
-        logger.verbose(`DEST STREAM: Error while writting ${destf} file to ${destpath}`)
+        logger.verbose(`DEST STREAM: Error while writting file to ${destpath}`)
         callback(err)
       })
 
@@ -84,7 +83,7 @@ exports.encrypt = function (origpath, destpath, mpkey, callback) {
         // logger.verbose(`Finished encrypted/written to ${destf}`)
         callback(null, key, iv, tag)
       })
-    }
+
   })
 }
 

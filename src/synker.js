@@ -23,11 +23,14 @@ exports.init = function () {
           .then((file) => {
             return sync.pushCryptQueue(file)
           })
+          .then((file) => {
+            return sync.updateStatus('crypted', file)
+          })
           // .then((file) => {
-          // 	return sync.pushUpdateQueue(file)
+          // 	// return sync.pushUpdateQueue(file)
           // })
           // .then(() => {
-          // 	return sync.updateStatus('put', file)
+          	// return sync.updateStatus('put', file)
           // })
           .then(() => {
             return sync.updateStatus('synced')
@@ -43,9 +46,9 @@ exports.init = function () {
       sync.updateStatus('encrypting')
       global.state.toCrypt.forEach(function (file) {
         sync.pushCryptQueue(file)
-          .then((file) => {
-            return sync.pushUpdateQueue(file)
-          })
+          // .then((file) => {
+          //   return sync.pushUpdateQueue(file)
+          // })
           .then(() => {
             return sync.updateStatus('put', file)
           })
@@ -59,22 +62,23 @@ exports.init = function () {
       })
     }
 
-    if (!_.isEmpty(global.state.toUpdate)) {
-      sync.updateStatus('putting')
-      global.state.toUpdate.forEach(function (file) {
-        sync.pushUpdateQueue(file)
-          .then(() => {
-            return sync.updateStatus('put', file)
-          })
-          .then(() => {
-            return sync.updateStatus('synced')
-          })
-          .catch((err) => {
-            sync.updateStatus('notsynced')
-            logger.error(`PROMISE ERR: ${err.stack}`)
-          })
-      })
-    }
+    // TODO:
+    // if (!_.isEmpty(global.state.toUpdate)) {
+    //   sync.updateStatus('putting')
+    //   global.state.toUpdate.forEach(function (file) {
+    //     sync.pushUpdateQueue(file)
+    //       .then(() => {
+    //         return sync.updateStatus('put', file)
+    //       })
+    //       .then(() => {
+    //         return sync.updateStatus('synced')
+    //       })
+    //       .catch((err) => {
+    //         sync.updateStatus('notsynced')
+    //         logger.error(`PROMISE ERR: ${err.stack}`)
+    //       })
+    //   })
+    // }
 
     if (!_.isEmpty(global.state.toPut)) {
       sync.updateStatus('putting')

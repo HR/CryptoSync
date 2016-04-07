@@ -39,7 +39,7 @@
         </div>
         <div class="content">
           <div class="name">{{name}}</div>
-          <div class="lastSynced" data-moment="{{moment}}">{{lastSyncedText}}</div>
+          <div class="lastSynced">{{synced}} <span data-moment="{{lastMoment}}">{{lastSyncedText}}</span></div>
         </div>
       </div>
     </script>
@@ -104,7 +104,6 @@
       }
 
       function updateList (file) {
-        file.moment = file.lastSynced
         file.lastSyncedText = moment(file.lastSynced).fromNow()
         var fileList = $('#filesList'),
           fListItem = fileList.children(),
@@ -119,11 +118,16 @@
         }
       }
 
+      // TODO: account for 'encryted text'
       function updateMoments () {
-        $('.lastSynced').each(function (index) {
-          var tmoment = $(this).data(),
-            nmoment = moment(tmoment).fromNow()
-          $(this).text(nmoment)
+        $("span[data-moment]").each(function (index) {
+          var $this = $(this)
+          var tmoment = $this.data('moment')
+          var nmoment = moment(tmoment)
+          console.log($this)
+          console.log(tmoment)
+          $this.data(moment(tmoment).format())
+          $this.text(nmoment.fromNow())
         })
       }
 
