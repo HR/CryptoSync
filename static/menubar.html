@@ -39,7 +39,9 @@
         </div>
         <div class="content">
           <div class="name">{{name}}</div>
-          <div class="lastSynced">{{synced}} <span data-moment="{{lastMoment}}">{{lastSyncedText}}</span></div>
+          <div class="lastSynced">{{synced}}
+            <span data-moment="{{lastMoment}}">{{lastSyncedText}}</span>
+          </div>
         </div>
       </div>
     </script>
@@ -51,12 +53,15 @@
     <script type="text/javascript">
       window.$ = window.jQuery = require('jquery')
       // load core modules first
-      var remote = require('electron').remote,
-        ipcRenderer = require('electron').ipcRenderer,
-        Handlebars = require('handlebars'),
-        moment = require('moment'),
-        logger = require('../logger.js'),
-        MAX_LIST_LENGTH = 6
+      var remote = require('electron').remote
+      var ipcRenderer = require('electron').ipcRenderer
+      var Handlebars = require('handlebars')
+      var _ = require('lodash')
+      var moment = require('moment')
+      var logger = require('../logger.js')
+      var MAX_LIST_LENGTH = 10
+      var state = remote.getGlobal("state")
+      var recents = []
 
       var statusTexts = {
         getting: 'Fetching...',
@@ -72,28 +77,35 @@
       $(window).on('offline', updateOnlineStatus)
       updateOnlineStatus()
 
-      $(window).load(function () {
+      $(window).load(function() {
         // attach click listners
-        $('.navigationLink').each(function (index) {
-          $(this).click(function () {
-            if (this.hasAttribute('data-target'))
+        $('.navigationLink').each(function(index) {
+          $(this).click(function() {
+            if (this.hasAttribute('data-target')) {
               emittEvent(this.getAttribute('data-target'))
-          }
-          )
+            }
+          })
         })
-        if ($.isEmptyObject(status)) {
+        if (!_.isEmpty(status)) {
           // TODO: render
+          updateStatus('synced')
         }
+
+        if (!_.isEmpty(state.recents)) {
+          // restore recents list
+          _(state.recents).forEach(function(file) {
+            updateList(file)
+          })
+        }
+        // TODO: restore last synced file list
       })
 
       /* Helper functions */
-      function updateStatus (status) {
+      function updateStatus(status) {
         var sobj = {}
-        if (status === 'getting' || status === 'putting') {
-          sobj.status = 'syncing'
-        } else {
-          sobj.status = status
-        }
+        sobj.status = (status === 'getting' || status === 'putting')
+          ? 'syncing'
+          : status
         sobj.text = statusTexts[status]
         sobj.spin = (sobj.status === 'syncing')
           ? 'spin'
@@ -103,65 +115,67 @@
         $('#status').html(statusHTML)
       }
 
-      function updateList (file) {
+      function updateList(file) {
         file.lastSyncedText = moment(file.lastSynced).fromNow()
-        var fileList = $('#filesList'),
-          fListItem = fileList.children(),
-          template = Handlebars.compile($('#file-template').html()),
-          fileHTML = template(file)
+        var fileList = $('#filesList')
+        var fListItem = fileList.children()
+        var template = Handlebars.compile($('#file-template').html())
+        recents.push(_.cloneDeep(file))
+        var fileHTML = template(file)
         fileList.prepend(fileHTML)
         if (fListItem.length > MAX_LIST_LENGTH) {
           while (fListItem.length > MAX_LIST_LENGTH) {
             fListItem.last().remove()
+            recents.pop()
             fListItem = $('#filesList').children()
           }
         }
       }
 
       // TODO: account for 'encryted text'
-      function updateMoments () {
-        $("span[data-moment]").each(function (index) {
+      function updateMoments() {
+        $("span[data-moment]").each(function(index) {
           var $this = $(this)
           var tmoment = $this.data('moment')
           var nmoment = moment(tmoment)
-          console.log($this)
-          console.log(tmoment)
           $this.data(moment(tmoment).format())
           $this.text(nmoment.fromNow())
         })
       }
 
       /* Event emitters  */
-      function emittEvent (event) {
+      function emittEvent(event) {
         // send event to main
+        if (event === 'quitApp') {
+          state.recents = recents
+        }
         logger.verbose(`RENDER: ${event} event emitted`)
         ipcRenderer.send(event)
       }
 
       // Network change event
-      function updateOnlineStatus () {
+      function updateOnlineStatus() {
         ipcRenderer.send('online-status-changed', navigator.onLine
           ? 'online'
           : 'offline')
       }
 
       /* Event listeners */
-      ipcRenderer.on('statusChange', function (event, status) {
+      ipcRenderer.on('statusChange', function(event, status) {
         logger.verbose('IPCRENDER: statusChange emitted')
         updateStatus(status)
       })
 
-      ipcRenderer.on('updateMoments', function (event) {
+      ipcRenderer.on('updateMoments', function(event) {
         logger.verbose('IPCRENDER: updateMoment emitted')
         updateMoments()
       })
 
-      ipcRenderer.on('synced', function (event, file) {
+      ipcRenderer.on('synced', function(event, file) {
         logger.verbose('IPCRENDER: synced emitted')
         file.fileType = resolveFileType(file.fileType)
         updateList(file)
       })
-
     </script>
   </body>
 

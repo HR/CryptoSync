@@ -44,7 +44,7 @@ global.files = {}
 global.stats = {}
 global.paths = {
   home: `${app.getPath('home')}/CryptoSync`,
-  crypted: `${app.getPath('home')}/CryptoSync/.encrypted`,
+  crypted: `${app.getPath('home')}/CryptoSync/.crypto`,
   mdb: `${app.getPath('userData')}/mdb`,
   userData: app.getPath('userData'),
   vault: `${app.getPath('home')}/CryptoSync/vault.crypto`
@@ -180,7 +180,7 @@ function Cryptobar (callback) {
   })
 
   ipc.on('quitApp', function (event) {
-    logger.verbose('IPCMAIN: quitApp event emitted, Calling app.quit()...')
+    logger.verbose('IPCMAIN: quitApp event emitted Calling app.quit()...')
     app.quit()
   })
 
@@ -256,8 +256,7 @@ function Setup (callback) {
   })
 
   webContents.on('did-navigate', function (event, url) {
-    logger.verbose(`IPCMAIN: did-navigate emitted,
- URL: ${url}`)
+    logger.verbose(`IPCMAIN: did-navigate emitted URL: ${url}`)
     const regex = /^http:\/\/localhost\/\?(error|code)/g
     if (regex.test(url)) {
       logger.info('localhost URL matches')
@@ -310,12 +309,11 @@ function Setup (callback) {
     }
   })
   webContents.on('will-navigate', function (event, url) {
-    logger.verbose(`IPCMAIN: will-navigate emitted,
- URL: ${url}`)
+    logger.verbose(`IPCMAIN: will-navigate emitted URL: ${url}`)
   })
 
   ipc.on('setMasterPass', function (event, masterpass) {
-    logger.verbose('IPCMAIN: setMasterPass emitted, Setting Masterpass...')
+    logger.verbose('IPCMAIN: setMasterPass emitted Setting Masterpass...')
     MasterPass.set(masterpass, function (err, mpkey) {
       global.MasterPassKey = new MasterPassKey(mpkey)
       global.mdb.saveGlobalObj('creds')
@@ -327,7 +325,7 @@ function Setup (callback) {
   })
 
   ipc.on('done', function (event, masterpass) {
-    logger.info('IPCMAIN: done emitted, setup complete. Closing this window and opening menubar...')
+    logger.info('IPCMAIN: done emitted setup complete. Closing this window and opening menubar...')
     setupComplete = true
     vault.init(global.MasterPassKey.get())
       .then(() => {
@@ -390,8 +388,7 @@ function addAccountPrompt (callback) {
   })
 
   webContents.on('did-navigate', function (event, url) {
-    logger.verbose(`IPCMAIN: did-navigate emitted,
- URL: ${url}`)
+    logger.verbose(`IPCMAIN: did-navigate emitted URL: ${url}`)
     const regex = /^http:\/\/localhost/g
     if (regex.test(url)) {
       logger.verbose('localhost URL matches')
@@ -410,8 +407,7 @@ function addAccountPrompt (callback) {
     }
   })
   webContents.on('will-navigate', function (event, url) {
-    logger.verbose(`IPCMAIN: will-navigate emitted,
- URL: ${url}`)
+    logger.verbose(`IPCMAIN: will-navigate emitted URL: ${url}`)
   })
 
   win.on('closed', function () {
@@ -443,13 +439,6 @@ function Settings (callback) {
         webContents.send('resetMasterPassResult', MPKset)
         logger.error(`resetMasterPass err: ${err}`)
       })
-
-    // .then((newMPset) => {
-    //   // TODO: show password was set successfully
-    //   logger.info(`MAIN: MasterPassPrompt, newMPset finished? ${newMPset}`)
-    //   return
-    // })
-
   })
   ipc.on('removeAccount', function (event, account) {
     logger.verbose(`IPCMAIN: removeAccount emitted. Creating removing ${account}...`)
@@ -521,7 +510,7 @@ function ErrorPrompt (err, callback) {
  **/
 // Check for connection status
 ipc.on('online-status-changed', function (event, status) {
-  logger.verbose(`APP: online-status-changed event emitted, changed to ${status}`)
+  logger.verbose(`APP: online-status-changed event emitted changed to ${status}`)
 })
 
 app.on('window-all-closed', () => {
@@ -734,7 +723,7 @@ exports.MasterPassPrompt = function (reset, callback) {
     })
   })
   ipc.on('setMasterPass', function (event, masterpass) {
-    logger.verbose('IPCMAIN: setMasterPass emitted, Setting Masterpass...')
+    logger.verbose('IPCMAIN: setMasterPass emitted Setting Masterpass...')
     MasterPass.set(masterpass, function (err, mpkey) {
       if (!err) {
         global.MasterPassKey = new MasterPassKey(mpkey)

@@ -43,7 +43,7 @@ describe("CryptoSync Core Modules' tests", function () {
 
   global.paths = {
     home: path.join(__dirname,'/CryptoSync'),
-    crypted: path.join(__dirname,'/CryptoSync/.encrypted'),
+    crypted: path.join(__dirname,'/CryptoSync/.crypto'),
     mdb: path.join(__dirname,'/tmp/mdb'),
     vault: path.join(__dirname,'/CryptoSync/vault.crypto'),
     tmp: path.join(__dirname,'/tmp'),
@@ -80,13 +80,6 @@ describe("CryptoSync Core Modules' tests", function () {
     }
   }
 
-  global.credentials = {
-    access_token: process.env.access_token,
-    token_type: process.env.token_type,
-    refresh_token: process.env.refresh_token,
-    expiry_date: process.env.expiry_date
-  }
-
   global.creds = {}
   global.state = {}
 
@@ -102,14 +95,6 @@ describe("CryptoSync Core Modules' tests", function () {
     global.files = global.rfile
     global.state.rfs = JSON.parse(fs.readFileSync(`${global.paths.data}/rfs.json`, 'utf8'))
 
-    const gAuth = new google.auth.OAuth2(process.env.clientId_, process.env.clientSecret_, process.env.redirectUri_)
-    gAuth.setCredentials(credentials)
-
-    global.drive = google.drive({
-      version: 'v3',
-      auth: gAuth
-    })
-
     global.execute = function (command, callback) {
       return new Promise(function (resolve, reject) {
         exec(command, function (err, stdout, stderr) {
@@ -117,6 +102,27 @@ describe("CryptoSync Core Modules' tests", function () {
         })
       })
     }
+  })
+
+  it('should initialise drive', () => {
+    const creds = {
+      access_token: process.env.access_token,
+      token_type: process.env.token_type,
+      refresh_token: process.env.refresh_token,
+      expiry_date: process.env.expiry_date
+    }
+
+    const gAuth = {
+      clientId_: process.env.clientId_,
+      clientSecret_: process.env.clientSecret_,
+      redirectUri_: process.env.redirectUri_,
+      credentials: creds
+    }
+
+    return init.drive(gAuth, true)
+      .catch((err) => {
+        throw err
+      })
   })
 
   // After all tests have run

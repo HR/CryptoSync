@@ -87,12 +87,12 @@ exports.stats = function () {
 
 exports.syncGlobals = function (trees) {
   return new Promise(function (resolve, reject) {
-    logger.verbose(`
- THEN saving file tree (fBtree) to global.state.toGet`)
+    logger.verbose(`Saving file tree (fBtree) to global.state.toGet`)
     global.state = {}
     global.state.toGet = _.flattenDeep(trees[0])
     global.state.toCrypt = []
     global.state.toUpdate = []
+    global.state.recents = []
     global.state.rfs = trees[1]
     resolve()
   })

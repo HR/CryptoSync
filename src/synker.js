@@ -27,14 +27,14 @@ exports.init = function () {
             return sync.updateStatus('crypted', file)
           })
           // .then((file) => {
-          // 	// return sync.pushUpdateQueue(file)
+          // 	return sync.pushUpdateQueue(file)
           // })
           // .then(() => {
-          	// return sync.updateStatus('put', file)
+          // 	return sync.updateStatus('put', file)
           // })
-          .then(() => {
-            return sync.updateStatus('synced')
-          })
+          // .then(() => {
+          //   return sync.updateStatus('synced')
+          // })
           .catch((err) => {
             sync.updateStatus('notsynced')
             logger.error(`PROMISE ERR: ${err.stack}`)
@@ -46,9 +46,9 @@ exports.init = function () {
       sync.updateStatus('encrypting')
       global.state.toCrypt.forEach(function (file) {
         sync.pushCryptQueue(file)
-          // .then((file) => {
-          //   return sync.pushUpdateQueue(file)
-          // })
+          .then((file) => {
+            return sync.pushUpdateQueue(file)
+          })
           .then(() => {
             return sync.updateStatus('put', file)
           })
