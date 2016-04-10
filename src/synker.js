@@ -10,6 +10,19 @@ const _ = require('lodash')
 // const async = require('async')
 // const moment = require('moment')
 
+// Implement with ES6 Generators?
+// Spawn a child process for sync worker
+// const cp = require('child_process')
+// const child = cp.fork('./src/sync_worker')
+//
+// child.on('put', function (file) {
+// 	// Receive results from child process
+// 	logger.verbose('received: ' + file)
+// })
+//
+// // Send child process some work
+// child.send('Please up-case this string')
+
 exports.init = function () {
   return new Promise(function (resolve, reject) {
     // Set drain (callback) handlers

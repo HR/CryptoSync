@@ -5,6 +5,7 @@ const BrowserWindow = electron.BrowserWindow
 const ipc = electron.ipcMain
 const Tray = electron.Tray
 const shell = electron.shell
+const dialog = electron.dialog
 const OAuth = require('./src/OAuth')
 const util = require('./src/util')
 const vault = require('./src/vault')
@@ -18,11 +19,12 @@ const moment = require('moment')
 const Positioner = require('electron-positioner')
 const _ = require('lodash')
 const logger = require('./logger')
-
 // change exec path
+logger.info(`AppPath: ${app.getAppPath()}`)
+logger.info(`__dirname: ${__dirname}`)
 process.chdir(app.getAppPath())
-logger.info(`cwd: ${process.cwd()}`)
-require('dotenv').config()
+logger.info(`Changed cwd to: ${process.cwd()}`)
+// require('dotenv').config()
 
 // App init
 // app.dock.setIcon('res/app-icons/CryptoSync256.png')
@@ -49,6 +51,8 @@ global.paths = {
   userData: app.getPath('userData'),
   vault: `${app.getPath('home')}/CryptoSync/vault.crypto`
 }
+
+logger.verbose(require('util').inspect(global.paths, { depth: null }))
 global.settings = {
   user: {
 
@@ -346,7 +350,7 @@ function Setup (callback) {
     if (setupComplete) {
       callback(null)
     } else {
-      callback('Setup did not finish successfully')
+      callback(new Error('Setup did not finish successfully'))
     }
   })
 }
@@ -587,43 +591,46 @@ app.on('activate', function (win) {
  **/
 
 app.on('ready', function () {
+  // Check synchronously whether paths exist
   let setupRun = ((!util.checkDirectorySync(global.paths.mdb)) || (!util.checkFileSync(global.paths.vault)))
+
+  // If the MDB or vault does not exist, run setup
+  // otherwise run main
   if (setupRun) {
-    logger.info('First run. Creating Setup wizard...')
-    // Setup()
-    init.setup()
-      .then(() => {
-        return Setup(function (err) {
-          if (err) {
-            logger.error(err)
-            ErrorPrompt(err, function (response) {
-              logger.info(`ERRPROMT response: ${response}`)
-              if (response === 'retry') {
-                Setup(null)
+    // Run Setup
+    logger.info('Setup run. Creating Setup wizard...')
+      init.setup()
+        .then(() => {
+          return new Promise(function (resolve, reject) {
+            Setup(function (err) {
+              if (err) {
+                logger.error(err)
+                reject(err)
               } else {
-                app.quit()
+                logger.info('MAIN Setup successfully completed. quitting...')
+                resolve()
               }
             })
-          // throw err
-          }
-          logger.info('MAIN Setup successfully completed. Starting menubar...')
+          })
         })
-      }) // then restart app
       .catch(function (error) {
         logger.error(`PROMISE ERR: ${error.stack}`)
+        // dialog.showErrorBox('Oops, we encountered a problem...', error.message)
+        app.quit()
       })
   } else {
-    // start menubar
-    logger.info('Normal run. Creating Menubar...')
+    // Run main
+    logger.info('Main run. Creating Menubar...')
 
-    init.main()
+    init.main() // Initialise (open mdb and get creds)
       .then(() => {
-        return MasterPass.Prompt()
+        return MasterPass.Prompt() // Obtain MP, derive MPK and set globally
       })
       .then(() => {
-        return vault.decrypt(global.MasterPassKey.get())
+        return vault.decrypt(global.MasterPassKey.get()) // Decrypt vault with MPK
       })
       .then(() => {
+        // restore global state from mdb
         return Promise.all([
           global.mdb.restoreGlobalObj('accounts'),
           global.mdb.restoreGlobalObj('state'),
@@ -633,6 +640,7 @@ app.on('ready', function () {
         ])
       })
       .then(() => {
+        // Initialise Google Drive client
         return init.drive(global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client, true)
       })
       .then(() => {
@@ -651,23 +659,14 @@ app.on('ready', function () {
         })
       })
       .catch(function (error) {
+        // Catch any fatal errors and exit
         logger.error(`PROMISE ERR: ${error.stack}`)
+        // dialog.showErrorBox('Oops, we encountered a problem...', error.message)
         app.quit()
       })
-  // Implement with ES6 Generators?
-  // Spawn a child process for sync worker
-  // const cp = require('child_process')
-  // const child = cp.fork('./src/sync_worker')
-  //
-  // child.on('put', function (file) {
-  // 	// Receive results from child process
-  // 	logger.verbose('received: ' + file)
-  // })
-  //
-  // // Send child process some work
-  // child.send('Please up-case this string')
   }
 })
+
 
 exports.MasterPassPrompt = function (reset, callback) {
   let tries = 0

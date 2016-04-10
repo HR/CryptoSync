@@ -24,14 +24,18 @@ const MasterPassKey = (function () {
 
   MasterPassKey.prototype.get = function () {
     if (mpk.get(this) === undefined) {
-      return new Error('MasterPassKey has been deleted')
+      return new Error('MasterPassKey is not set')
     } else {
       return mpk.get(this)
     }
   }
 
   MasterPassKey.prototype.set = function (key) {
-    mpk.set(this, key)
+    if (key instanceof Buffer) {
+      mpk.set(this, key)
+    } else {
+      throw new Error('MasterPassKey not a Buffer')
+    }
   }
 
   MasterPassKey.prototype.delete = function (key) {

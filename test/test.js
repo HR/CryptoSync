@@ -125,15 +125,6 @@ describe("CryptoSync Core Modules' tests", function () {
       })
   })
 
-  it('should initialise mdb', () => {
-    return init.main()
-      .catch((err) => {
-        expect(err).to.be.an('error')
-        expect(err.message).to.equal("File doesn't exist")
-        throw err
-      })
-  })
-
   // After all tests have run
   after(function () {
     fs.removeSync(global.paths.tmp)
@@ -830,12 +821,12 @@ describe("CryptoSync Core Modules' tests", function () {
       const MPK = new MasterPassKey(mpkey)
       MPK.delete()
       expect(MPK.get()).to.be.an('error')
-      expect(MPK.get().message).to.equal('MasterPassKey has been deleted')
+      expect(MPK.get().message).to.equal('MasterPassKey is not set')
     })
     it('should throw error when not instantiated with key', function () {
       const MPK = new MasterPassKey()
       expect(MPK.get()).to.be.an('error')
-      expect(MPK.get().message).to.equal('MasterPassKey has been deleted')
+      expect(MPK.get().message).to.equal('MasterPassKey is not set')
     })
   })
 })

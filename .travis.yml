@@ -12,16 +12,16 @@ branches:
 # env:
 #   - NODE_VERSION='5.8.0'
 
-# matrix:
-#   include:
-#     - os: linux
-#       env:
-#         - NODE_VERSION=5.8.0
-#         - BUILD_OS_NAME=linux
-#     - os: osx
-#       env:
-#         - NODE_VERSION=5.8.0
-#         - BUILD_OS_NAME=darwin
+matrix:
+  include:
+    - os: osx
+      env:
+        - NODE_VERSION=5.8.0
+        - BUILD_OS_NAME=darwin
+    # - os: linux
+    #   env:
+    #     - NODE_VERSION=5.8.0
+    #     - BUILD_OS_NAME=linux
 
 before_script:
  - chmod +x ./script/travis-build.sh
@@ -29,9 +29,9 @@ before_script:
  - export TEST_RUN=true
 
 script:
-  # - ./script/travis-build.sh
-  - npm install --no-optional
-  - npm test
+  - ./script/travis-build.sh
+  # - npm install --no-optional
+  # - npm test
 
 after_success:
   - npm run coveralls
