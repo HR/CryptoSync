@@ -121,35 +121,6 @@ exports.encryptObj = function (obj, destpath, mpkey, viv, callback) {
   })
 }
 
-exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
-  const iv = (viv instanceof Buffer) ? viv : new Buffer(viv.data)
-  const tag = (vtag instanceof Buffer) ? vtag : new Buffer(vtag.data)
-
-  // logger.verbose(`Decrypting using MasterPass = ${mpkey.toString('hex')}, iv = ${iv.toString('hex')}, tag = ${tag.toString('hex')}`)
-  // pass = (Array.isArray(password)) ? shares2pass(password) : password
-  const origin = fs.createReadStream(origpath)
-  const decipher = crypto.createDecipheriv(defaults.algorithm, mpkey, iv)
-  decipher.setAuthTag(tag)
-
-  const JSONstream = origin.on('error', function (e) {
-    callback(e)
-  }).pipe(decipher).on('error', function (e) {
-    callback(e)
-  })
-
-  util.streamToString(JSONstream, function (err, json) {
-    // logger.verbose(`Finished decrypting from ${origpath}`)
-    if (err) callback(err)
-    try {
-      let vault = JSON.parse(json)
-      callback(null, vault)
-    } catch (err) {
-      logger.verbose(`JSON.parse error for ${origpath}`)
-      callback(err)
-    }
-  })
-}
-
 exports.genIV = function () {
   return new Promise(function (resolve, reject) {
     try {
