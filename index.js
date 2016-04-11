@@ -166,7 +166,6 @@ app.on('will-quit', (event) => {
     event.preventDefault()
     logger.info(`APP.ON('will-quit'): will-quit event emitted`)
     logger.verbose(`platform is ${process.platform}`)
-    // TODO: global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials
     global.stats.endTime = moment().format()
 
     Promise.all([
@@ -271,7 +270,6 @@ function Cryptobar (callback) {
   let cachedBounds
   const winPosition = (process.platform === 'win32') ? 'trayBottomCenter' : 'trayCenter'
   const positioner = new Positioner(win)
-  // TODO: Change icon based on mode (dark || light) on OSX and set default to light
   Menubar = new Tray('static/images/mb/trayic_light.png')
   Menubar.on('click', click)
     .on('double-click', click)
@@ -495,7 +493,6 @@ function Info (callback) {
   win.loadURL(global.views.info)
   let webContents = win.webContents
   win.openDevTools()
-  // TODO: close app after pass has been reset and vault has been re-encrypted
   ipc.on('resetMasterPass', function (event, type) {
     event.preventDefault()
     logger.verbose('IPCMAIN: resetMasterPass emitted. Creating MasterPassPrompt...')
@@ -577,7 +574,6 @@ exports.MasterPassPrompt = function (reset, callback) {
     MasterPass.set(masterpass, function (err, mpkey) {
       if (!err) {
         global.MasterPassKey = new MasterPassKey(mpkey)
-        // TODO: test this
         vault.init(global.MasterPassKey.get())
           .then((value) => {
             return global.mdb.saveGlobalObj('creds')

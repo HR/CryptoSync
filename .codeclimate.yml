@@ -12,6 +12,9 @@ engines:
     - 9af23dc9a75d6c11f28122e9f83e7309
     - faca6a53a5a4ae580279527e261dd1da
     - 144b552ca7471e150abb4ece59240e71
+    - b6c67c6a789360da74461e8dc22b2536
+    - bf11f48abb523883890c3c231fdfe501
+    - 2ab70e3a2f2ce555ee7420b40fbe0da9
   eslint:
     enabled: true
   fixme:
