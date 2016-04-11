@@ -1,5 +1,5 @@
 const sync = require('./sync')
-const logger = require('../logger')
+const logger = require('../script/logger')
 const chokidar = require('chokidar')
 const dotRegex = /\/\..+/g
 const fNameRegex = /[^/]+[A-z0-9]+\.[A-z0-9]+/g

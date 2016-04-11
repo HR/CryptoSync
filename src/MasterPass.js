@@ -5,7 +5,7 @@
  ******************************/
 
 const crypto = require('./crypto')
-const logger = require('../logger')
+const logger = require('../script/logger')
 const Main = (process.env.TEST_RUN) ? null : require('../index')
 
 exports.Prompt = function (reset = false) {

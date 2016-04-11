@@ -5,7 +5,7 @@
  ******************************/
 const moment = require('moment')
 const sutil = require('util')
-const logger = require('../logger')
+const logger = require('../script/logger')
 const crypto = require('./crypto')
 
 // function Vault(crypted, path, viv, data) {

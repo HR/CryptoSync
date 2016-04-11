@@ -6,7 +6,7 @@
 
 const levelup = require('levelup')
 const _ = require('lodash')
-const logger = require('../logger')
+const logger = require('../script/logger')
 const util = require('util')
 
 function Db (location) {
