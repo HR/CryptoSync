@@ -9,10 +9,10 @@ const Db = require('../src/Db')
 const vault = require('../src/vault')
 const MasterPassKey = require('../src/_MasterPassKey')
 const OAuth = require('../src/OAuth')
-const init = require('../src/init')
+const init = require('../init')
 // const synker = require('../src/synker')
 const MasterPass = require('../src/MasterPass')
-// const logger = require('../logger')
+// const logger = require('../script/logger')
 const GoogleAuth = require('google-auth-library')
 // const levelup = require('levelup')
 // const sutil = require('util')
@@ -91,20 +91,6 @@ describe("CryptoSync Core Modules' tests", function () {
   const t1path = `${global.paths.tmp}/test.txt`
   // Before all tests have run
   before(function () {
-    global.rfile = JSON.parse(fs.readFileSync(`${global.paths.data}/rfile.json`, 'utf8'))
-    global.files = global.rfile
-    global.state.rfs = JSON.parse(fs.readFileSync(`${global.paths.data}/rfs.json`, 'utf8'))
-
-    global.execute = function (command, callback) {
-      return new Promise(function (resolve, reject) {
-        exec(command, function (err, stdout, stderr) {
-          resolve(stdout)
-        })
-      })
-    }
-  })
-
-  it('should initialise drive', () => {
     const creds = {
       access_token: process.env.access_token,
       token_type: process.env.token_type,
@@ -119,10 +105,22 @@ describe("CryptoSync Core Modules' tests", function () {
       credentials: creds
     }
 
-    return init.drive(gAuth, true)
+    init.drive(gAuth, true)
       .catch((err) => {
         throw err
       })
+
+    global.rfile = JSON.parse(fs.readFileSync(`${global.paths.data}/rfile.json`, 'utf8'))
+    global.files = global.rfile
+    global.state.rfs = JSON.parse(fs.readFileSync(`${global.paths.data}/rfs.json`, 'utf8'))
+
+    global.execute = function (command, callback) {
+      return new Promise(function (resolve, reject) {
+        exec(command, function (err, stdout, stderr) {
+          resolve(stdout)
+        })
+      })
+    }
   })
 
   // After all tests have run

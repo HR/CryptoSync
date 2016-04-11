@@ -5,7 +5,7 @@ const chai = require('chai')
 const expect = chai.expect
 const chaiAsPromised = require('chai-as-promised')
 const path = require('path')
-const logger = require('../../logger')
+const logger = require('../../script/logger')
 
 chai.should()
 chai.use(chaiAsPromised)

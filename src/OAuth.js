@@ -7,7 +7,7 @@
 // const fs = require('fs')
 // const google = require('googleapis')
 const googleAuth = require('google-auth-library')
-const logger = require('../logger')
+const logger = require('../script/logger')
 const SCOPES = ['https://www.googleapis.com/auth/drive']
 
 function OAuth (type) {

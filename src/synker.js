@@ -5,7 +5,7 @@
  * Ensures the sync process runs uninterruptedly (from main)
  ******************************/
 const sync = require('./sync')
-const logger = require('../logger')
+const logger = require('../script/logger')
 const _ = require('lodash')
 // const async = require('async')
 // const moment = require('moment')

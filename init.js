@@ -7,8 +7,8 @@ const _ = require('lodash')
 const moment = require('moment')
 const fs = require('fs-extra')
 const google = require('googleapis')
-const logger = require('../logger')
-const Db = require('./Db')
+const logger = require('./script/logger')
+const Db = require('./src/Db')
 
 exports.main = function () {
   // Decrypt db (the Vault) and get ready for use
