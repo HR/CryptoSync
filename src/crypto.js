@@ -121,6 +121,35 @@ exports.encryptObj = function (obj, destpath, mpkey, viv, callback) {
   })
 }
 
+exports.decryptObj = function (origpath, mpkey, viv, vtag, callback) {
+  const iv = (viv instanceof Buffer) ? viv : new Buffer(viv.data)
+  const tag = (vtag instanceof Buffer) ? vtag : new Buffer(vtag.data)
+
+  // logger.verbose(`Decrypting using MasterPass = ${mpkey.toString('hex')}, iv = ${iv.toString('hex')}, tag = ${tag.toString('hex')}`)
+  // pass = (Array.isArray(password)) ? shares2pass(password) : password
+  const origin = fs.createReadStream(origpath)
+  const decipher = crypto.createDecipheriv(defaults.algorithm, mpkey, iv)
+  decipher.setAuthTag(tag)
+
+  const JSONstream = origin.on('error', function (e) {
+    callback(e)
+  }).pipe(decipher).on('error', function (e) {
+    callback(e)
+  })
+
+  util.streamToString(JSONstream, function (err, json) {
+    // logger.verbose(`Finished decrypting from ${origpath}`)
+    if (err) callback(err)
+    try {
+      let vault = JSON.parse(json)
+      callback(null, vault)
+    } catch (err) {
+      logger.verbose(`JSON.parse error for ${origpath}`)
+      callback(err)
+    }
+  })
+}
+
 exports.genIV = function () {
   return new Promise(function (resolve, reject) {
     try {
@@ -188,57 +217,6 @@ exports.genFileHash = function (origpath, callback) {
 
 exports.verifyFileHash = function (fhash, gfhash) {
   return _.isEqual(fhash, gfhash)
-}
-
-exports.decrypt = function (origpath, destpath, key, iv, authTag, callback) {
-  // encrypts any arbitrary data passed with the pass
-  // const pass = (Array.isArray(key)) ? shares2pass(key) : key
-  if (!authTag || !iv) {
-    // extract from last line of file
-    fs.readFile(origpath, 'utf-8', function (err, data) {
-      if (err) callback(err)
-
-      let lines = data.trim().split('\n')
-      let lastLine = lines.slice(-1)[0]
-      let fields = lastLine.split('#')
-      if (_.isEqual(fields[0], 'CryptoSync')) {
-        const iv = new Buffer(fields[1], 'hex')
-        const authTag = new Buffer(fields[2], 'hex')
-        const mainData = lines.slice(0, -1).join()
-        let origin = new Readable()
-        // read as stream
-        origin.push(mainData)
-        origin.push(null)
-
-        const decipher = crypto.createDecipheriv(defaults.algorithm, key, iv)
-        decipher.setAuthTag(authTag)
-        const dest = fs.createWriteStream(destpath)
-
-        origin.pipe(decipher).pipe(dest)
-
-        decipher.on('error', () => {
-          callback(err)
-        })
-
-        origin.on('error', () => {
-          callback(err)
-        })
-
-        dest.on('error', () => {
-          callback(err)
-        })
-
-        dest.on('finish', () => {
-          logger.verbose(`Finished encrypted/written to ${destpath}`)
-          callback(null, iv)
-        })
-      } else {
-        callback(new Error('IV and authTag not supplied'))
-      }
-    })
-  } else {
-    // TODO: Implement normal flow
-  }
 }
 
 exports.pass2shares = function (pass, total = defaults.shares, th = defaults.threshold) {
