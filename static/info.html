@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>Info</title>
+    <link rel="stylesheet" href="style/info.css">
+  </head>
+
+  <body>
+    <section id="settings">
+      <div class="panel-container">
+        <div class="menu">
+          <a class="item navigationLink active" data-target="accounts">Accounts</a>
+          <a class="item navigationLink" data-target="crypto">Crypto</a>
+        </div>
+        <div id="panel-accounts" class="current">
+          <section class="accounts">
+            <header>
+              <img class="icon" src="images/icons/accounts.svg" alt=""/>
+              <h3>Cloud accounts</h3>
+            </header>
+            <div class="list" id="accountsList"></div>
+          </section>
+        </div>
+        <div id="panel-crypto">
+          <section class="crypto">
+            <header>
+              <img class="icon" src="images/icons/crypto.svg" alt="">
+              <h3>Crypto</h3>
+            </header>
+            <section class="category">
+              <h4>Encryption</h4>
+              <div class="options">
+                <div class="option">
+                  <span>Algorithm</span>
+                  <span class="right">AES-256-GCM</span>
+                </div>
+                <div class="option">
+                  <span>Key length</span>
+                  <span class="right">256 bits</span>
+                </div>
+                <div class="option">
+                  <span>IV length</span>
+                  <span class="right config">96 bits</span>
+                </div>
+                <div class="option">
+                  <span>Salt length</span>
+                  <span class="right ">256 bits</span>
+                </div>
+                <div class="option">
+                  <span>PBKDF2 iterations</span>
+                  <span class="right ">5,000</span>
+                </div>
+                <div class="option">
+                  <span>Hash function</span>
+                  <span class="right ">MD5</span>
+                </div>
+              </div>
+            </section>
+            <section class="category">
+              <h4>Vault</h4>
+              <div class="options" id="vaultCreds">
+                <div class="option">
+                  <span>Encryption</span>
+                </div>
+              </div>
+            </section>
+            <section class="category">
+              <h4>MasterPass</h4>
+              <div class="options">
+                <div class="option">
+                  <span>Encryption</span>
+                </div>
+                <div class="option">
+                  <span>PBKDF2 iterations</span>
+                  <span class="right config" data-config="ivLength">100,000</span>
+                </div>
+                <div class="option">
+                  <span>Hash function</span>
+                  <span class="right ">SHA256</span>
+                </div>
+                <div class="option">
+                  <span>Shares</span>
+                  <span class="right ">s = 2, n = 3</span>
+                </div>
+                <div class="option">
+                  <img class="info" src="images/icons/info.svg" alt="">
+                  <p class="info">s = Total number of shares <br/> n = Number of shares required to reconstruct MasterPass</p>
+                </div>
+              </div>
+            </section>
+          </section>
+        </div>
+      </div>
+    </section>
+    <script id="account-template" type="text/x-handlebars-template">
+      <div class="item">
+        <div class="type">
+          <div class="profile" style="background:url(data:image/gif;base64,{{profileImg}}) no-repeat center center;"></div>
+          <div class="cloudType">
+            <img src="images/icons/{{type}}.svg"></img>
+          </div>
+        </div>
+        <div class="content">
+          <div class="name">{{name}}</div>
+          <div class="email">{{email}}</div>
+          <div class="qouta">{{usage}} / {{limit}}</div>
+        </div>
+      </div>
+    </script>
+    <script id="vault-template" type="text/x-handlebars-template">
+      <div class="option">
+        <span>Initialisation Vector</span>
+        <span class="right">{{viv}}</span>
+      </div>
+      <div class="option">
+        <span>Authentication tag</span>
+        <span class="right">{{authTag}}</span>
+      </div>
+    </script>
+    <script type="text/javascript">
+      'use strict'
+      // TODO: Add reset config feature
+      window.$ = window.jQuery = require('jquery')
+      // load core modules first
+      var remote = require('electron').remote
+      var accounts = remote.getGlobal("accounts")
+      var creds = remote.getGlobal("creds")
+      var Buffer = require('buffer').Buffer
+      var Handlebars = require('handlebars')
+      var logger = require('../logger.js')
+      var shell = require('shell')
+
+      function formatBytes(bytes, precision) {
+        if (bytes == 0) return '0 byte'
+        if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '-'
+        if (typeof precision === 'undefined') precision = 0
+        var units = [
+          'bytes',
+          'KB',
+          'MB',
+          'GB',
+          'TB',
+          'PB'
+        ]
+        var number = Math.floor(Math.log(bytes) / Math.log(1024))
+        return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) + ' ' + units[number]
+      }
+
+      function buf2hex(buf) {
+        return (new Buffer(buf)).toString('hex')
+      }
+
+      $(window).load(function() {
+        //Compile and render template code
+        for (var account in accounts) {
+          if (accounts.hasOwnProperty(account)) {
+            var template = Handlebars.compile($("#account-template").html())
+            var account = template({
+              account: account,
+              type: accounts[account].type,
+              name: accounts[account].name,
+              profileImg: accounts[account].profileImg,
+              email: accounts[account].email,
+              usage: formatBytes(accounts[account].quota.usage, 2),
+              limit: formatBytes(accounts[account].quota.limit)
+            })
+            $('#accountsList').append(account)
+          }
+        }
+
+        var creds_temp = Handlebars.compile($("#vault-template").html())
+        $('#vaultCreds').append(creds_temp({
+          viv: buf2hex(creds.viv.data),
+          authTag: buf2hex(creds.authTag.data)
+        }))
+
+        $(".navigationLink").each(function(index) {
+          var $this = $(this)
+          $(this).on('click', function(event) {
+            var target = $this.data("target")
+            $(".active").first().removeClass("active")
+            $("a[data-target='" + target + "']").addClass("active")
+            navigate(target)
+            return false
+          })
+        })
+
+      })
+
+      /* Helper functions */
+      function navigate(dest) {
+        var URLregex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi
+        if (URLregex.test(dest)) {
+          shell.openExternal(dest)
+          return
+        }
+        var oldSel = $('.panel-container > div.current')
+        var currSel = $("#panel-" + dest)
+        if (oldSel)
+          oldSel.removeClass("current")
+        $("#panel-" + dest).addClass("current")
+      }
+    </script>
+  </body>
+
+</html>

@@ -30,6 +30,10 @@ logger.info(`Changed cwd to: ${process.cwd()}`)
 
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')()
+if (!process.env.TRAVIS) {
+  require('dotenv')
+    .config()
+}
 
 // MasterPassKey is protected (private var) and only exist in Main memory
 // MasterPassKey is a derived key of the actual user MasterPass
@@ -52,7 +56,7 @@ global.views = {
   setup: `file://${__dirname}/static/setup.html`,
   menubar: `file://${__dirname}/static/menubar.html`,
   errorprompt: `file://${__dirname}/static/errorprompt.html`,
-  settings: `file://${__dirname}/static/settings.html`,
+  info: `file://${__dirname}/static/info.html`,
   vault: `file://${__dirname}/static/vault.html`
 }
 
@@ -86,7 +90,6 @@ app.on('ready', function () {
         return Promise.all([
           global.mdb.restoreGlobalObj('accounts'),
           global.mdb.restoreGlobalObj('state'),
-          global.mdb.restoreGlobalObj('settings'),
           global.mdb.restoreGlobalObj('stats'),
           global.mdb.restoreGlobalObj('files')
         ])
@@ -169,7 +172,6 @@ app.on('will-quit', (event) => {
     Promise.all([
       global.mdb.saveGlobalObj('accounts'),
       global.mdb.saveGlobalObj('state'),
-      global.mdb.saveGlobalObj('settings'),
       global.mdb.saveGlobalObj('files'),
       global.mdb.saveGlobalObj('stats')
     ]).then(function () {
@@ -317,9 +319,9 @@ function Cryptobar (callback) {
     app.quit()
   })
 
-  ipc.on('openSettings', function (event) {
-    logger.verbose('IPCMAIN: openSettings event emitted')
-    Settings(function (result) {})
+  ipc.on('openInfo', function (event) {
+    logger.verbose('IPCMAIN: openInfo event emitted')
+    Info(function (result) {})
   })
 
   ipc.on('openVault', function (event) {
@@ -484,13 +486,13 @@ function Setup (callback) {
   })
 }
 
-function Settings (callback) {
+function Info (callback) {
   let win = new BrowserWindow({
     width: 800,
     height: 600,
     center: true
   })
-  win.loadURL(global.views.settings)
+  win.loadURL(global.views.info)
   let webContents = win.webContents
   win.openDevTools()
   // TODO: close app after pass has been reset and vault has been re-encrypted
@@ -511,7 +513,7 @@ function Settings (callback) {
     logger.verbose(`IPCMAIN: removeAccount emitted. Creating removing ${account}...`)
   })
   win.on('closed', function () {
-    logger.verbose('win.closed event emitted for Settings.')
+    logger.verbose('win.closed event emitted for Info.')
     win = null
     callback()
   })
