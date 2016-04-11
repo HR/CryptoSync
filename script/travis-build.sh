@@ -18,10 +18,10 @@ npm install --no-optional
 
 npm test
 
-if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-  export DISPLAY=:99.0
-  sh -e /etc/init.d/xvfb start
-  sleep 3
-  unset TEST_RUN
-  npm run xtest
-fi
+# if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+#   export DISPLAY=:99.0
+#   sh -e /etc/init.d/xvfb start
+#   sleep 3
+#   unset TEST_RUN
+#   npm run xtest
+# fi

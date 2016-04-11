@@ -581,9 +581,6 @@ app.on('will-quit', (event) => {
 
 app.on('activate', function (win) {
   logger.verbose('activate event emitted')
-// 	if (!win) {
-// 		win = createMainWindow()
-// 	}
 })
 
 /**
@@ -592,33 +589,11 @@ app.on('activate', function (win) {
 
 app.on('ready', function () {
   // Check synchronously whether paths exist
-  let setupRun = ((!util.checkDirectorySync(global.paths.mdb)) || (!util.checkFileSync(global.paths.vault)))
+  let mainRun = ((util.checkDirectorySync(global.paths.mdb)) && (util.checkFileSync(global.paths.vault)))
 
   // If the MDB or vault does not exist, run setup
   // otherwise run main
-  if (setupRun) {
-    // Run Setup
-    logger.info('Setup run. Creating Setup wizard...')
-      init.setup()
-        .then(() => {
-          return new Promise(function (resolve, reject) {
-            Setup(function (err) {
-              if (err) {
-                logger.error(err)
-                reject(err)
-              } else {
-                logger.info('MAIN Setup successfully completed. quitting...')
-                resolve()
-              }
-            })
-          })
-        })
-      .catch(function (error) {
-        logger.error(`PROMISE ERR: ${error.stack}`)
-        // dialog.showErrorBox('Oops, we encountered a problem...', error.message)
-        app.quit()
-      })
-  } else {
+  if (mainRun) {
     // Run main
     logger.info('Main run. Creating Menubar...')
 
@@ -648,7 +623,7 @@ app.on('ready', function () {
         return init.stats()
       })
       .then(() => {
-        // Set initial stats
+        // Initial sync worker
         return synker.init()
       })
       .then(() => {
@@ -664,8 +639,31 @@ app.on('ready', function () {
         // dialog.showErrorBox('Oops, we encountered a problem...', error.message)
         app.quit()
       })
+  } else {
+    // Run Setup
+    logger.info('Setup run. Creating Setup wizard...')
+    init.setup()
+      .then(() => {
+        return new Promise(function (resolve, reject) {
+          Setup(function (err) {
+            if (err) {
+              logger.error(err)
+              reject(err)
+            } else {
+              logger.info('MAIN Setup successfully completed. quitting...')
+              resolve()
+            }
+          })
+        })
+      })
+      .catch(function (error) {
+        logger.error(`PROMISE ERR: ${error.stack}`)
+        // dialog.showErrorBox('Oops, we encountered a problem...', error.message)
+        app.quit()
+      })
   }
 })
+
 
 
 exports.MasterPassPrompt = function (reset, callback) {
