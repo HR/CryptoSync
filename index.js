@@ -24,14 +24,9 @@ logger.info(`AppPath: ${app.getAppPath()}`)
 logger.info(`__dirname: ${__dirname}`)
 process.chdir(app.getAppPath())
 logger.info(`Changed cwd to: ${process.cwd()}`)
-// require('dotenv').config()
 
 // App init
 // app.dock.setIcon('res/app-icons/CryptoSync256.png')
-
-// enable remote debugging
-// app.commandLine.appendSwitch('remote-debugging-port', '8315')
-// app.commandLine.appendSwitch('host-rules', 'MAP * 127.0.0.1')
 
 // adds debug features like hotkeys for triggering dev tools and reload
 require('electron-debug')()
@@ -51,22 +46,6 @@ global.paths = {
   userData: app.getPath('userData'),
   vault: `${app.getPath('home')}/CryptoSync/vault.crypto`
 }
-
-logger.verbose(require('util').inspect(global.paths, { depth: null }))
-global.settings = {
-  user: {
-
-  },
-  default: {
-    keyLength: '128',
-    algorithm: 'CTR',
-    randomness: 'Pseudo',
-    MPkeyLength: '256',
-    shares: 's2n3',
-    autostart: 'true',
-    offlineEnc: 'true'
-  }
-}
 global.views = {
   main: `file://${__dirname}/static/index.html`,
   masterpassprompt: `file://${__dirname}/static/masterpassprompt.html`,
@@ -82,8 +61,159 @@ let Menubar
 let exit = false
 
 /**
- * Promises (global)
+ * Main (run once app is in ready state)
  **/
+
+app.on('ready', function () {
+  // Check synchronously whether paths exist
+  let mainRun = ((util.checkDirectorySync(global.paths.mdb)) && (util.checkFileSync(global.paths.vault)))
+
+  // If the MDB or vault does not exist, run setup
+  // otherwise run main
+  if (mainRun) {
+    // Run main
+    logger.info('Main run. Creating Menubar...')
+
+    init.main() // Initialise (open mdb and get creds)
+      .then(() => {
+        return MasterPass.Prompt() // Obtain MP, derive MPK and set globally
+      })
+      .then(() => {
+        return vault.decrypt(global.MasterPassKey.get()) // Decrypt vault with MPK
+      })
+      .then(() => {
+        // restore global state from mdb
+        return Promise.all([
+          global.mdb.restoreGlobalObj('accounts'),
+          global.mdb.restoreGlobalObj('state'),
+          global.mdb.restoreGlobalObj('settings'),
+          global.mdb.restoreGlobalObj('stats'),
+          global.mdb.restoreGlobalObj('files')
+        ])
+      })
+      .then(() => {
+        // Initialise Google Drive client
+        return init.drive(global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client, true)
+      })
+      .then(() => {
+        // Set initial stats
+        return init.stats()
+      })
+      .then(() => {
+        // Initial sync worker
+        return synker.init()
+      })
+      .then(() => {
+        // TODO: start sync daemon
+        // Start menubar
+        return Cryptobar(function (result) {
+          logger.info(`Cryptobar results: ${result}`)
+        })
+      })
+      .catch(function (error) {
+        // Catch any fatal errors and exit
+        logger.error(`PROMISE ERR: ${error.stack}`)
+        // dialog.showErrorBox('Oops, we encountered a problem...', error.message)
+        app.quit()
+      })
+  } else {
+    // Run Setup
+    logger.info('Setup run. Creating Setup wizard...')
+    init.setup()
+      .then(() => {
+        return new Promise(function (resolve, reject) {
+          Setup(function (err) {
+            if (err) {
+              logger.error(err)
+              reject(err)
+            } else {
+              logger.info('MAIN Setup successfully completed. quitting...')
+              resolve()
+            }
+          })
+        })
+      })
+      .catch(function (error) {
+        logger.error(`PROMISE ERR: ${error.stack}`)
+        // dialog.showErrorBox('Oops, we encountered a problem...', error.message)
+        app.quit()
+      })
+  }
+})
+
+/**
+ * Event handlers
+ **/
+// Check for connection status
+ipc.on('online-status-changed', function (event, status) {
+  logger.verbose(`APP: online-status-changed event emitted changed to ${status}`)
+})
+
+app.on('window-all-closed', () => {
+  logger.verbose('APP: window-all-closed event emitted')
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
+app.on('quit', () => {
+  logger.info('APP: quit event emitted')
+})
+app.on('will-quit', (event) => {
+  if (!exit) {
+    event.preventDefault()
+    logger.info(`APP.ON('will-quit'): will-quit event emitted`)
+    logger.verbose(`platform is ${process.platform}`)
+    // TODO: global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials
+    global.stats.endTime = moment().format()
+
+    Promise.all([
+      global.mdb.saveGlobalObj('accounts'),
+      global.mdb.saveGlobalObj('state'),
+      global.mdb.saveGlobalObj('settings'),
+      global.mdb.saveGlobalObj('files'),
+      global.mdb.saveGlobalObj('stats')
+    ]).then(function () {
+      if (global.MasterPassKey !== undefined && !_.isEmpty(global.vault)) {
+        logger.info(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`)
+        logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`)
+
+        vault.encrypt(global.MasterPassKey.get())
+          .then((tag) => {
+            logger.verbose(`crypto.encryptObj invoked...`)
+            logger.info(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`)
+            global.creds.authTag = tag
+            global.mdb.saveGlobalObj('creds').then(() => {
+              global.mdb.close()
+              logger.info('Closed vault and mdb (called mdb.close()).')
+              exit = true
+              app.quit()
+            }).catch((err) => {
+              logger.error(`Error while saving global.creds before quit: ${err.stack}`)
+            })
+          })
+          .catch((err) => {
+            logger.error(err.stack)
+            throw err
+          })
+      } else {
+        logger.info(`NORMAL EXIT. global.MasterPassKey / global.vault empty. Just closing mdb (global.mdb.close())...`)
+        global.mdb.close()
+        exit = true
+        app.quit()
+      }
+    }, function (reason) {
+      logger.error(`PROMISE ERR: ${reason}`)
+    }).catch(function (error) {
+      logger.error(`PROMISE ERR: ${error.stack}`)
+    })
+  } else {
+    return
+  }
+})
+
+app.on('activate', function (win) {
+  logger.verbose('activate event emitted')
+})
 
 /**
  * Window constructors
@@ -124,9 +254,8 @@ function Cryptobar (callback) {
     if (!win) {
       return
     }
-    // emit hide
+    // hide this window
     win.hide()
-  // emitt after-hide
   }
 
   let win = new BrowserWindow({
@@ -355,72 +484,6 @@ function Setup (callback) {
   })
 }
 
-function addAccountPrompt (callback) {
-  let win = new BrowserWindow({
-    width: 580,
-    height: 420,
-    center: true,
-    show: true,
-    titleBarStyle: 'hidden-inset'
-  // width: 400,
-  // height: 460
-  // resizable: false,
-  })
-  let webContents = win.webContents
-  win.loadURL(global.views.setup)
-  win.openDevTools()
-  ipc.on('initAuth', function (event, type) {
-    logger.verbose('IPCMAIN: initAuth emitted. Creating Auth...')
-    global.gAuth = new OAuth(type)
-    global.mdb.onlyGetValue('gdrive-token').then((token) => {
-      global.gAuth.authorize(token, function (authUrl) {
-        if (authUrl) {
-          logger.verbose(`Loading authUrl... ${authUrl}`)
-          win.loadURL(authUrl, {
-            'extraHeaders': 'pragma: no-cache\n'
-          })
-        } else {
-          logger.verbose('As already exists, loading masterpass...')
-          win.loadURL(`${global.views.setup}?nav_to=masterpass`)
-        }
-      })
-    })
-  })
-
-  win.on('unresponsive', function (event) {
-    logger.verbose('addAccountPrompt UNRESPONSIVE')
-  })
-
-  webContents.on('did-navigate', function (event, url) {
-    logger.verbose(`IPCMAIN: did-navigate emitted URL: ${url}`)
-    const regex = /^http:\/\/localhost/g
-    if (regex.test(url)) {
-      logger.verbose('localhost URL matches')
-      win.loadURL(`${global.views.setup}?nav_to=auth`)
-      // logger.verbose('MAIN: url matched, sending to RENDER...')
-      let err = util.getParam('error', url)
-      // if error then callback URL is http://localhost/?error=access_denied#
-      // if sucess then callback URL is http://localhost/?code=2bybyu3b2bhbr
-      if (!err) {
-        let auth_code = util.getParam('code', url)
-        logger.verbose(`IPCMAIN: Got the auth_code, ${auth_code}`)
-        logger.verbose('IPCMAIN: Calling callback with the code...')
-      } else {
-        callback(err)
-      }
-    }
-  })
-  webContents.on('will-navigate', function (event, url) {
-    logger.verbose(`IPCMAIN: will-navigate emitted URL: ${url}`)
-  })
-
-  win.on('closed', function () {
-    logger.verbose('IPCMAIN: win.closed event emitted for setupWindow.')
-    win = null
-    callback('ERROR: Cancelled the account adding flow')
-  })
-}
-
 function Settings (callback) {
   let win = new BrowserWindow({
     width: 800,
@@ -446,21 +509,6 @@ function Settings (callback) {
   })
   ipc.on('removeAccount', function (event, account) {
     logger.verbose(`IPCMAIN: removeAccount emitted. Creating removing ${account}...`)
-  // TODO: IMPLEMENT ACCOUNT REMOVAL ROUTINE
-  // if (_.unset(global.accounts, account)) {
-  // deleted
-  // reload window to update
-  // win.loadURL(global.views.settings)
-  // TODO: decide whether to do setup is all accounts removed
-  // if (Object.keys(global.accounts).length === 0) {
-  // 	// Create Setup
-  //
-  // } else {
-  //
-  // }
-  // } else {
-  // not deleted
-  // }
   })
   win.on('closed', function () {
     logger.verbose('win.closed event emitted for Settings.')
@@ -468,203 +516,6 @@ function Settings (callback) {
     callback()
   })
 }
-
-// TODO: replace with dialog.showErrorBox(title, content) for native dialog?
-function ErrorPrompt (err, callback) {
-  let win = new BrowserWindow({
-    width: 240,
-    height: 120,
-    center: true,
-    titleBarStyle: 'hidden-inset',
-    show: true
-  })
-  let webContents = win.webContents
-  let res
-  win.loadURL(global.views.errorprompt)
-  logger.info(`ERROR PROMPT: the error is ${err}`)
-  webContents.on('did-finish-load', function () {
-    webContents.send('error', err)
-  })
-
-  ipc.on('response', function (event, response) {
-    logger.verbose('ERROR PROMPT: Got user response')
-    res = response
-    win.close()
-  })
-
-  win.on('closed', function (response) {
-    logger.verbose('win.closed event emitted for ErrPromptWindow.')
-    win = null
-    if (callback) {
-      if (response) {
-        callback(res)
-      } else {
-        callback(null)
-      }
-    }
-  })
-}
-
-/**
- * Functions
- **/
-
-/**
- * Event handlers
- **/
-// Check for connection status
-ipc.on('online-status-changed', function (event, status) {
-  logger.verbose(`APP: online-status-changed event emitted changed to ${status}`)
-})
-
-app.on('window-all-closed', () => {
-  logger.verbose('APP: window-all-closed event emitted')
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-app.on('quit', () => {
-  logger.info('APP: quit event emitted')
-})
-app.on('will-quit', (event) => {
-  if (!exit) {
-    event.preventDefault()
-    logger.info(`APP.ON('will-quit'): will-quit event emitted`)
-    logger.verbose(`platform is ${process.platform}`)
-    // TODO: global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client.credentials = global.gAuth.credentials
-    global.stats.endTime = moment().format()
-
-    Promise.all([
-      global.mdb.saveGlobalObj('accounts'),
-      global.mdb.saveGlobalObj('state'),
-      global.mdb.saveGlobalObj('settings'),
-      global.mdb.saveGlobalObj('files'),
-      global.mdb.saveGlobalObj('stats')
-    ]).then(function () {
-      if (global.MasterPassKey !== undefined && !_.isEmpty(global.vault)) {
-        logger.info(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`)
-        logger.verbose(`Encrypting using MasterPass = ${global.MasterPassKey.get().toString('hex')}, viv = ${global.creds.viv.toString('hex')}`)
-
-        vault.encrypt(global.MasterPassKey.get())
-          .then((tag) => {
-            logger.verbose(`crypto.encryptObj invoked...`)
-            logger.info(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`)
-            global.creds.authTag = tag
-            global.mdb.saveGlobalObj('creds').then(() => {
-              global.mdb.close()
-              logger.info('Closed vault and mdb (called mdb.close()).')
-              exit = true
-              app.quit()
-            }).catch((err) => {
-              logger.error(`Error while saving global.creds before quit: ${err.stack}`)
-            })
-          })
-          .catch((err) => {
-            logger.error(err.stack)
-            throw err
-          })
-      } else {
-        logger.info(`NORMAL EXIT. global.MasterPassKey / global.vault empty. Just closing mdb (global.mdb.close())...`)
-        global.mdb.close()
-        exit = true
-        app.quit()
-      }
-    }, function (reason) {
-      logger.error(`PROMISE ERR: ${reason}`)
-    }).catch(function (error) {
-      logger.error(`PROMISE ERR: ${error.stack}`)
-    })
-  } else {
-    return
-  }
-})
-
-app.on('activate', function (win) {
-  logger.verbose('activate event emitted')
-})
-
-/**
- * Main
- **/
-
-app.on('ready', function () {
-  // Check synchronously whether paths exist
-  let mainRun = ((util.checkDirectorySync(global.paths.mdb)) && (util.checkFileSync(global.paths.vault)))
-
-  // If the MDB or vault does not exist, run setup
-  // otherwise run main
-  if (mainRun) {
-    // Run main
-    logger.info('Main run. Creating Menubar...')
-
-    init.main() // Initialise (open mdb and get creds)
-      .then(() => {
-        return MasterPass.Prompt() // Obtain MP, derive MPK and set globally
-      })
-      .then(() => {
-        return vault.decrypt(global.MasterPassKey.get()) // Decrypt vault with MPK
-      })
-      .then(() => {
-        // restore global state from mdb
-        return Promise.all([
-          global.mdb.restoreGlobalObj('accounts'),
-          global.mdb.restoreGlobalObj('state'),
-          global.mdb.restoreGlobalObj('settings'),
-          global.mdb.restoreGlobalObj('stats'),
-          global.mdb.restoreGlobalObj('files')
-        ])
-      })
-      .then(() => {
-        // Initialise Google Drive client
-        return init.drive(global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client, true)
-      })
-      .then(() => {
-        // Set initial stats
-        return init.stats()
-      })
-      .then(() => {
-        // Initial sync worker
-        return synker.init()
-      })
-      .then(() => {
-        // TODO: start sync daemon
-        // Start menubar
-        return Cryptobar(function (result) {
-          logger.info(`Cryptobar results: ${result}`)
-        })
-      })
-      .catch(function (error) {
-        // Catch any fatal errors and exit
-        logger.error(`PROMISE ERR: ${error.stack}`)
-        // dialog.showErrorBox('Oops, we encountered a problem...', error.message)
-        app.quit()
-      })
-  } else {
-    // Run Setup
-    logger.info('Setup run. Creating Setup wizard...')
-    init.setup()
-      .then(() => {
-        return new Promise(function (resolve, reject) {
-          Setup(function (err) {
-            if (err) {
-              logger.error(err)
-              reject(err)
-            } else {
-              logger.info('MAIN Setup successfully completed. quitting...')
-              resolve()
-            }
-          })
-        })
-      })
-      .catch(function (error) {
-        logger.error(`PROMISE ERR: ${error.stack}`)
-        // dialog.showErrorBox('Oops, we encountered a problem...', error.message)
-        app.quit()
-      })
-  }
-})
-
-
 
 exports.MasterPassPrompt = function (reset, callback) {
   let tries = 0
