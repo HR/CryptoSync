@@ -398,10 +398,8 @@ exports.setAccountInfo = function (param, gAuth) {
   const profileImgB64 = param[0]
   const acc = param[1]
   return new Promise(function (resolve, reject) {
-    const accName = `${acc.user.displayName.toLocaleLowerCase().replace(/ /g, '')}_drive`
-    logger.verbose(`Accounts object key, accName = ${accName}`)
     // Add account to global acc obj
-    global.accounts[accName] = new Account('gdrive', acc.user.displayName, acc.user.emailAddress, profileImgB64, {
+    global.account = new Account('gdrive', acc.user.displayName, acc.user.emailAddress, profileImgB64, {
       'limit': acc.storageQuota.limit,
       'usage': acc.storageQuota.usage,
       'usageInDrive': acc.storageQuota.usageInDrive,

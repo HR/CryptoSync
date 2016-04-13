@@ -388,11 +388,9 @@ describe("CryptoSync Core Modules' tests", function () {
           return global.mdb.storeToken(token)
         })
         .then(() => {
-          expect(global.accounts)
-            .to.have.property('cryptosync_drive')
-          expect(global.accounts['cryptosync_drive'].oauth)
+          expect(global.account.oauth)
             .to.have.property('oauth2Client')
-          expect(global.accounts['cryptosync_drive'].oauth.oauth2Client.credentials)
+          expect(global.account.oauth.oauth2Client.credentials)
             .to.not.be.empty
           expect(global.state.rfs)
             .to.deep.equal(rfs)

@@ -75,11 +75,11 @@
 						</div>
 					</div>
 				</section>
-				<footer>
+				<!-- <footer>
 					<a href="#" class="back navigationLink" data-target="default">
 						<img src="images/icons/back.svg" alt="" />
 					</a>
-				</footer>
+				</footer> -->
 			</div>
 			<div id="panel-auth">
 				<header class="minimal">
@@ -113,11 +113,11 @@
 						NOTE: If lost, all previously synced data will be unrecoverable! So, please store it safely.
 					</p>
 				</section>
-				<footer>
+				<!-- <footer>
 					<a href="#" class="back navigationLink" data-target="accounts">
 						<img src="images/icons/back.svg" alt="" />
 					</a>
-				</footer>
+				</footer> -->
 			</div>
 			<div id="panel-done">
 				<header>
@@ -145,30 +145,8 @@
     var errLabel
     window.$ = window.jQuery = require('jquery')
 
-    /* Network change event */
-    function updateOnlineStatus () {
-      ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline')
-    }
-    $(window).on('online', updateOnlineStatus)
-    $(window).on('offline', updateOnlineStatus)
-    updateOnlineStatus()
-
     /* Encryption animation */
     $(window).load(function () {
-      $(document).keydown(function (e) {
-        switch (e.which) {
-          case 39: // right
-            navigate($('#panel-default button').first().data('target'))
-            break
-          case 37: // left
-            navigate($('.current .back').first().data('target'))
-            break
-
-          default:
-            return // exit this handler for other keys
-        }
-        e.preventDefault() // prevent the default action (scroll / move caret)
-      })
       /* Variable assignments */
       authErr = $('div.item.err > div.name').first()
       errLabel = $('label[for="password"]').first()
@@ -237,7 +215,7 @@
       var oldSel = $('.panel-container > div.current')
       var currSel = $('#panel-' + panelID)
       if (authType) {
-        logger.verbose.log(`authType: ${authType}`)
+        logger.verbose(`authType: ${authType}`)
         authErr.hide()
         initAuth(authType)
       }

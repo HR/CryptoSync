@@ -38,11 +38,10 @@ if (!process.env.TRAVIS) {
 // MasterPassKey is protected (private var) and only exist in Main memory
 // MasterPassKey is a derived key of the actual user MasterPass
 global.gAuth = {}
-global.accounts = {}
+global.account = {}
 global.creds = {}
 global.state = {}
 global.files = {}
-global.stats = {}
 global.paths = {
   home: `${app.getPath('home')}/CryptoSync`,
   crypted: `${app.getPath('home')}/CryptoSync/.crypto`,
@@ -55,7 +54,6 @@ global.views = {
   masterpassprompt: `file://${__dirname}/static/masterpassprompt.html`,
   setup: `file://${__dirname}/static/setup.html`,
   menubar: `file://${__dirname}/static/menubar.html`,
-  errorprompt: `file://${__dirname}/static/errorprompt.html`,
   info: `file://${__dirname}/static/info.html`,
   vault: `file://${__dirname}/static/vault.html`
 }
@@ -88,19 +86,14 @@ app.on('ready', function () {
       .then(() => {
         // restore global state from mdb
         return Promise.all([
-          global.mdb.restoreGlobalObj('accounts'),
+          global.mdb.restoreGlobalObj('account'),
           global.mdb.restoreGlobalObj('state'),
-          global.mdb.restoreGlobalObj('stats'),
           global.mdb.restoreGlobalObj('files')
         ])
       })
       .then(() => {
         // Initialise Google Drive client
-        return init.drive(global.accounts[Object.keys(global.accounts)[0]].oauth.oauth2Client, true)
-      })
-      .then(() => {
-        // Set initial stats
-        return init.stats()
+        return init.drive(global.account.oauth.oauth2Client, true)
       })
       .then(() => {
         // Initial sync worker
@@ -147,11 +140,6 @@ app.on('ready', function () {
 /**
  * Event handlers
  **/
-// Check for connection status
-ipc.on('online-status-changed', function (event, status) {
-  logger.verbose(`APP: online-status-changed event emitted changed to ${status}`)
-})
-
 app.on('window-all-closed', () => {
   logger.verbose('APP: window-all-closed event emitted')
   if (process.platform !== 'darwin') {
@@ -166,13 +154,11 @@ app.on('will-quit', (event) => {
     event.preventDefault()
     logger.info(`APP.ON('will-quit'): will-quit event emitted`)
     logger.verbose(`platform is ${process.platform}`)
-    global.stats.endTime = moment().format()
 
     Promise.all([
-      global.mdb.saveGlobalObj('accounts'),
+      global.mdb.saveGlobalObj('account'),
       global.mdb.saveGlobalObj('state'),
-      global.mdb.saveGlobalObj('files'),
-      global.mdb.saveGlobalObj('stats')
+      global.mdb.saveGlobalObj('files')
     ]).then(function () {
       if (global.MasterPassKey !== undefined && !_.isEmpty(global.vault)) {
         logger.info(`DEFAULT EXIT. global.MasterPassKey and global.vault not empty. Calling crypto.encryptObj...`)
@@ -183,14 +169,17 @@ app.on('will-quit', (event) => {
             logger.verbose(`crypto.encryptObj invoked...`)
             logger.info(`Encrypted successfully with tag = ${tag.toString('hex')}, saving auth tag and closing mdb...`)
             global.creds.authTag = tag
-            global.mdb.saveGlobalObj('creds').then(() => {
-              global.mdb.close()
-              logger.info('Closed vault and mdb (called mdb.close()).')
-              exit = true
-              app.quit()
-            }).catch((err) => {
-              logger.error(`Error while saving global.creds before quit: ${err.stack}`)
-            })
+            return
+          })
+          .then((value) => {
+            return global.mdb.saveGlobalObj('creds')
+          })
+          .then(() => {
+            global.mdb.close()
+            logger.info('Closed vault and mdb (called mdb.close()).')
+            exit = true
+            app.quit()
+            return
           })
           .catch((err) => {
             logger.error(err.stack)
@@ -415,9 +404,6 @@ function Setup (callback) {
           .then(() => {
             return sync.getAccountInfo()
           })
-          .then((res) => {
-            return sync.getPhoto(res)
-          })
           .then((param) => {
             return sync.setAccountInfo(param, global.gAuth)
           })
@@ -517,7 +503,6 @@ function Info (callback) {
 }
 
 exports.MasterPassPrompt = function (reset, callback) {
-  let tries = 0
   let gotMP = false
   let error = null
   let win = new BrowserWindow({
@@ -553,6 +538,7 @@ exports.MasterPassPrompt = function (reset, callback) {
           match: match
         })
         gotMP = true
+        // Close after 1 second
         setTimeout(function () {
           win.close()
         }, 1000)
@@ -562,10 +548,6 @@ exports.MasterPassPrompt = function (reset, callback) {
           err: null,
           match: match
         })
-        if (++tries >= 3) {
-          error = new Error('Limit of three tries exceeded')
-          win.close()
-        }
       }
     })
   })

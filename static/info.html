@@ -8,28 +8,22 @@
   </head>
 
   <body>
-    <section id="settings">
+    <section id="info">
       <div class="panel-container">
-        <div class="menu">
-          <a class="item navigationLink active" data-target="accounts">Accounts</a>
-          <a class="item navigationLink" data-target="crypto">Crypto</a>
-        </div>
-        <div id="panel-accounts" class="current">
-          <section class="accounts">
-            <header>
-              <img class="icon" src="images/icons/accounts.svg" alt=""/>
-              <h3>Cloud accounts</h3>
-            </header>
-            <div class="list" id="accountsList"></div>
-          </section>
-        </div>
-        <div id="panel-crypto">
+        <div id="panel-crypto" class="current">
           <section class="crypto">
             <header>
-              <img class="icon" src="images/icons/crypto.svg" alt="">
-              <h3>Crypto</h3>
+              <img class="icon" src="images/icons/info.svg" alt="">
+              <h3>Information about setup</h3>
             </header>
             <section class="category">
+              <h4>Account</h4>
+              <div class="options">
+                <div class="option">
+                  <span>Email</span>
+                  <span class="right" id="accountEmail"></span>
+                </div>
+              </div>
               <h4>Encryption</h4>
               <div class="options">
                 <div class="option">
@@ -124,7 +118,7 @@
       window.$ = window.jQuery = require('jquery')
       // load core modules first
       var remote = require('electron').remote
-      var accounts = remote.getGlobal("accounts")
+      var account = remote.getGlobal("account")
       var creds = remote.getGlobal("creds")
       var Buffer = require('buffer').Buffer
       var Handlebars = require('handlebars')
@@ -153,54 +147,13 @@
 
       $(window).load(function() {
         //Compile and render template code
-        for (var account in accounts) {
-          if (accounts.hasOwnProperty(account)) {
-            var template = Handlebars.compile($("#account-template").html())
-            var account = template({
-              account: account,
-              type: accounts[account].type,
-              name: accounts[account].name,
-              profileImg: accounts[account].profileImg,
-              email: accounts[account].email,
-              usage: formatBytes(accounts[account].quota.usage, 2),
-              limit: formatBytes(accounts[account].quota.limit)
-            })
-            $('#accountsList').append(account)
-          }
-        }
-
+        $('#accountEmail').text(account.email)
         var creds_temp = Handlebars.compile($("#vault-template").html())
         $('#vaultCreds').append(creds_temp({
           viv: buf2hex(creds.viv.data),
           authTag: buf2hex(creds.authTag.data)
         }))
-
-        $(".navigationLink").each(function(index) {
-          var $this = $(this)
-          $(this).on('click', function(event) {
-            var target = $this.data("target")
-            $(".active").first().removeClass("active")
-            $("a[data-target='" + target + "']").addClass("active")
-            navigate(target)
-            return false
-          })
-        })
-
       })
-
-      /* Helper functions */
-      function navigate(dest) {
-        var URLregex = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi
-        if (URLregex.test(dest)) {
-          shell.openExternal(dest)
-          return
-        }
-        var oldSel = $('.panel-container > div.current')
-        var currSel = $("#panel-" + dest)
-        if (oldSel)
-          oldSel.removeClass("current")
-        $("#panel-" + dest).addClass("current")
-      }
     </script>
   </body>
 

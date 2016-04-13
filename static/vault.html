@@ -5,7 +5,6 @@
     <meta charset="utf-8">
     <title>The Vault</title>
     <link rel="stylesheet" href="style/vault.css" charset="utf-8">
-    <!-- <script language="javascript" type="text/javascript" src="js/handle.js"></script> -->
   </head>
 
   <body>
@@ -14,20 +13,11 @@
         <img src="images/icons/CryptoSyncVault.svg" class="icon centre" alt="">
       </header>
       <div class="main">
-        <div class="segment" id="accounts">
-          <div class="table" id="accountsList"></div>
-        </div>
         <div class="segment" id="files">
-          <!-- <input type="text" placeholder="    Search files"/> -->
           <div class="table" id="filesList"></div>
         </div>
         <div class="segment" id="info">
           <div id="content"></div>
-          <footer>
-            <a class="right" data-action="delete">
-              <img src="images/icons/trashcan.svg" alt="delete"/>
-            </a>
-          </footer>
         </div>
       </div>
     </section>
@@ -140,10 +130,6 @@
         shares2pass = require('../src/crypto').shares2pass,
         Handlebars = require('handlebars')
 
-      $(window).on('online', updateOnlineStatus)
-      $(window).on('offline', updateOnlineStatus)
-      updateOnlineStatus()
-
       Handlebars.registerHelper('each', function(context, options) {
         var ret = ""
         for (var i = 0, j = context.length; i < j; i++) {
@@ -152,20 +138,7 @@
         return ret
       })
 
-      function handleDelete(fid) {
-        $('#filesList > .selected').first().remove()
-        var firstFile = $('#filesList > .row').first().addClass('selected')
-        if (firstFile) {
-          renderSelFileInfo()
-        } else {
-          var template = Handlebars.compile($('#file-template').html())
-          var file = template({name: 'No files to show...'})
-          fileList.append(file)
-        }
-      }
-
       function renderSelFileInfo(fid) {
-        // console.log(`vault: ${JSON.stringify(vault)}`)
         var fid = (fid) ? fid : $('#filesList > .selected').first().data('fid')
         var info_template = Handlebars.compile($('#info-template').html())
         var share_template = Handlebars.compile($('#share-template').html())
@@ -202,16 +175,6 @@
 
       $(window).load(function() {
         /* Render accounts */
-        for (var account in accounts) {
-          if (accounts.hasOwnProperty(account)) {
-            var template = Handlebars.compile($('#account-template').html())
-            var account = template(accounts[account])
-            $('#accountsList').append(account)
-          }
-        }
-        // select first account by default
-        $('#accountsList').find('.row').first().addClass('selected')
-
         var fileList = $('#filesList')
         for (var file in files) {
           if (files.hasOwnProperty(file)) {
@@ -242,14 +205,6 @@
           })
         })
       })
-
-      /* Helper functions */
-      // Network change event
-      function updateOnlineStatus() {
-        ipcRenderer.send('online-status-changed', navigator.onLine
-          ? 'online'
-          : 'offline')
-      }
     </script>
   </body>
 

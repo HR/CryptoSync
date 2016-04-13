@@ -86,12 +86,11 @@
   <script type="text/javascript">
     var ipcRenderer = require('electron').ipcRenderer
     var logger = require('../script/logger.js')
-    var logger = require('../script/logger.js')
     var getParam = require('../src/util').getParam
     var nav_to = getParam('nav_to', window.document.URL)
     window.$ = window.jQuery = require('jquery')
     var responses = {
-      invalid: 'INVALID MASTERPASS',
+      invalid: 'MUST CONTAIN 1 ALPHABET, 1 NUMBER, 1 SYMBOL AND BE AT LEAST 8 CHARACTERS',
       incorrect: 'INCORRECT MASTERPASS',
       correct: 'CORRECT MASTERPASS',
       setSuccess: 'MASTERPASS SUCCESSFULLY SET',
@@ -138,7 +137,6 @@
       }
 
       if (result.match) {
-        // TODO: show confirmation
         errLabelCheckMP.text(responses.correct)
         .css('color', colors.good)
         .show()
