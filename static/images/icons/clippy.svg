@@ -1,10 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 28 32" enable-background="new 0 0 28 32" xml:space="preserve">
-<path fill="#333333" d="M4,24h8v2H4V24z M14,12H4v2h10V12z M18,18v-4l-6,6l6,6v-4h10v-4H18z M9,16H4v2h5V16z M4,22h5v-2H4V22z
-	 M22,24h2v4c0,0.6-0.2,1-0.6,1.4S22.6,30,22,30H2c-1.1,0-2-0.9-2-2V6c0-1.1,0.9-2,2-2h6c0-2.2,1.8-4,4-4s4,1.8,4,4h6
-	c1.1,0,2,0.9,2,2v10h-2v-6H2v18h20V24z M4,8h16c0-1.1-0.9-2-2-2h-2c-1.1,0-2-0.9-2-2s-0.9-2-2-2s-2,0.9-2,2S9.1,6,8,6H6
-	C4.9,6,4,6.9,4,8z"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="Layer_1" x="0" y="0" enable-background="new 0 0 28 32" version="1.1" viewBox="0 0 28 32" xml:space="preserve"><path fill="#333" d="M4,24h8v2H4V24z M14,12H4v2h10V12z M18,18v-4l-6,6l6,6v-4h10v-4H18z M9,16H4v2h5V16z M4,22h5v-2H4V22z M22,24h2v4c0,0.6-0.2,1-0.6,1.4S22.6,30,22,30H2c-1.1,0-2-0.9-2-2V6c0-1.1,0.9-2,2-2h6c0-2.2,1.8-4,4-4s4,1.8,4,4h6	c1.1,0,2,0.9,2,2v10h-2v-6H2v18h20V24z M4,8h16c0-1.1-0.9-2-2-2h-2c-1.1,0-2-0.9-2-2s-0.9-2-2-2s-2,0.9-2,2S9.1,6,8,6H6	C4.9,6,4,6.9,4,8z"/></svg>
